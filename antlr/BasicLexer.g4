@@ -22,7 +22,6 @@ ARRAY_LENGTH: 'len' ;
 ORD: 'ord' ;
 CHR: 'chr' ;
 
-
 //brackets
 OPEN_PARENTHESES : '(' ;
 CLOSE_PARENTHESES : ')' ;
@@ -31,6 +30,29 @@ CLOSE_PARENTHESES : ')' ;
 fragment DIGIT : '0'..'9' ; 
 
 INTEGER: DIGIT+ ;
+
+//function call
+CALL: 'call' ;
+
+//statements
+SKIP: 'skip' ;
+ASSIGMENT: '=' ;
+READ: 'read' ;
+FREE: 'free' ;
+RETURN: 'return' ;
+EXIT: 'exit' ;
+PRINT: 'print' ;
+PRINTLN: 'println' ;
+IF: 'if' ;
+THEN: 'then' ;
+ELSE: 'else' ;
+FI: 'fi' ;
+WHILE: 'while' ;
+DO: 'do' ;
+DONE: 'done' ;
+BEGIN: 'begin' ;
+END: 'end' ;
+STATEMENT_SEPERATOR: ';' ;
 
 //base type
 INT_TYPE: 'int' ;
@@ -42,26 +64,58 @@ STRING_TYPR: 'string' ;
 OPEN_SQUARE_BR: '[' ;
 CLOSE_SQUARE_BR: ']' ;
 
+//array literal
+ARRAY_SEPERATOR: ',' ;
+
 //pair type
 PAIR_SEPERATOR: ',' ;
 PAIR: 'pair' ;
+NEW_PAIR: 'newpair' ;
 
 //pair elem
 FIRST_ELEM: 'fst' ;
 SECOND_ELEM: 'snd' ;
 
-//bool liter
+//bool literal
 TRUE: 'true' ;
 FALSE: 'false' ;
 
-//char liter
+//char literal
 QUOTE: '\'' ;
 
-//string liter
+//string literal
 DOUBLE_QUOTE: '"' ;
 
+//int sign
+POSITIVE_SIGN: '+' ;
+NEGATIVE_SIGN: '-' ;
+
 //character
-CHAR: (~('\\' | '\'' | '"')  | '\\n') ;
+CHAR: (~('\\' | '\'' | '"')  | '\\' ESCAPED_CHAR) ;
 
 //escaped char
 ESCAPED_CHAR: ('0' | 'b' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\') ;
+
+//ident begin
+BEGIN_IDENT: ('_' | ['a'-'z'] | ['A'-'Z']);
+REST_IDENT: ('_' | ['a'-'z'] | ['A'-'Z'] | ['0'-'9']) ;
+
+//pair literal
+NULL: 'null' ;
+
+//comment
+COMMENT: '#' (~('\n'))* ;
+
+//arg list
+ARG_SEPERATOR: ',' ;
+
+//param list
+PARAM_SEPERATOR: ',' ;
+
+//func
+FUNC_BEGIN: 'is' ;
+FUNC_END: 'end' ;
+
+//program
+PROG_BEGIN: 'begin' ;
+PROG_END: 'end' ;
