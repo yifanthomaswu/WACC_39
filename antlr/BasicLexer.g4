@@ -1,11 +1,11 @@
 lexer grammar BasicLexer;
 
 //binary operators
-PLUS: '+' ;
-MINUS: '-' ;
 MULTIPLY: '*' ;
 DIVIDE: '/' ;
 MODULUS: '%' ;
+PLUS: '+' ;
+MINUS: '-' ;
 GREATER_THAN: '>' ;
 GREATER_THAN_EQ: '>=' ;
 SMALLER_THAN: '<' ;
@@ -36,7 +36,7 @@ CALL: 'call' ;
 
 //statements
 SKIP: 'skip' ;
-ASSIGMENT: '=' ;
+ASSIGNMENT: '=' ;
 READ: 'read' ;
 FREE: 'free' ;
 RETURN: 'return' ;
@@ -52,23 +52,23 @@ DO: 'do' ;
 DONE: 'done' ;
 BEGIN: 'begin' ;
 END: 'end' ;
-STATEMENT_SEPERATOR: ';' ;
+STATEMENT_SEPARATOR: ';' ;
 
 //base type
 INT_TYPE: 'int' ;
 BOOL_TYPE: 'bool' ;
-CHAR_TYPR: 'char' ;
-STRING_TYPR: 'string' ;
+CHAR_TYPE: 'char' ;
+STRING_TYPE: 'string' ;
 
 //array type
 OPEN_SQUARE_BR: '[' ;
 CLOSE_SQUARE_BR: ']' ;
 
 //array literal
-ARRAY_SEPERATOR: ',' ;
+ARRAY_SEPARATOR: ',' ;
 
 //pair type
-PAIR_SEPERATOR: ',' ;
+PAIR_SEPARATOR: ',' ;
 PAIR: 'pair' ;
 NEW_PAIR: 'newpair' ;
 
@@ -107,10 +107,10 @@ NULL: 'null' ;
 COMMENT: '#' (~('\n'))* ;
 
 //arg list
-ARG_SEPERATOR: ',' ;
+ARG_SEPARATOR: ',' ;
 
 //param list
-PARAM_SEPERATOR: ',' ;
+PARAM_SEPARATOR: ',' ;
 
 //func
 FUNC_BEGIN: 'is' ;

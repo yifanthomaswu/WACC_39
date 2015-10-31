@@ -4,13 +4,19 @@ options {
   tokenVocab=BasicLexer;
 }
 
-func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES stat END
+// EOF indicates that the program must consume to the end of the input.
+// prog: (expr)*  EOF ;
+program: PROG_BEGIN (func)* stat PROG_END EOF;
 
-paramList: param (',' param)*
+func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES stat FUNC_END;
+
+paramList: param (PARAM_SEPARATOR param)*;
+
+param: type ident;
 
 stat: SKIP
-| type ident '=' assignRhs
-| assignLhs '=' assignRhs
+| type ident ASSIGNMENT assignRhs
+| assignLhs ASSIGNMENT assignRhs
 | READ assignLhs
 | FREE expr
 | RETURN expr
@@ -20,39 +26,46 @@ stat: SKIP
 | IF expr THEN stat ELSE stat FI
 | WHILE expr DO stat DONE
 | BEGIN stat END
-| stat ';' stat
+| stat STATEMENT_SEPARATOR stat
+;
 
 assignLhs: ident
 | arrayElem
 | pairElem
+;
 
 assignRhs: expr
 | arrayLiter
-| NEWPAIR OPEN_PARENTHESES expr ',' expr CLOSE_PARENTHESES
+| NEW_PAIR OPEN_PARENTHESES expr PAIR_SEPARATOR expr CLOSE_PARENTHESES
 | pairElem
 | CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES
+;
 
-aryList: expr (',' expr)*
+argList: expr (ARG_SEPARATOR expr)*;
 
-pairElem: FST expr
-| SND expr
+pairElem: FIRST_ELEM expr
+| SECOND_ELEM expr
+;
 
 type: baseType
 | arrayType
 | pairType
+;
 
-baseType: INT
-| BOOL
-| CHAR
-| STRING
+baseType: INT_TYPE
+| BOOL_TYPE
+| CHAR_TYPE
+| STRING_TYPE
+;
 
-arrayType: type '[' ']'
+arrayType: type OPEN_SQUARE_BR CLOSE_SQUARE_BR;
 
-pairType: PAIR OPEN_PARENTHESES pairElemType '.' pairElemType CLOSE_PARENTHESES
+pairType: PAIR OPEN_PARENTHESES pairElemType PAIR_SEPARATOR pairElemType CLOSE_PARENTHESES;
 
 pairElemType: baseType
 | arrayType
 | PAIR
+;
 
 expr: intLiter
 | boolLiter
@@ -67,6 +80,54 @@ expr: intLiter
 | OPEN_PARENTHESES expr CLOSE_PARENTHESES
 ;
 
-// EOF indicates that the program must consume to the end of the input.
-// prog: (expr)*  EOF ;
-program: BEGIN (func)* stat END EOF;
+unaryOper: NOT
+| NEGATIVE
+| ARRAY_LENGTH
+| ORD
+| CHR
+;
+
+binaryOper: MULTIPLY
+| DIVIDE
+| MODULUS
+| PLUS
+| MINUS
+| GREATER_THAN
+| GREATER_THAN_EQ
+| SMALLER_THAN
+| SMALLER_THAN_EQ
+| EQUAL
+| NOT_EQUAL
+| AND
+| OR
+;
+
+ident: BEGIN_IDENT REST_IDENT*;
+
+array_elem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+;
+
+intLiter: intSign? (digit)+;
+
+digit: DIGIT;
+
+intSign: POSITIVE_SIGN
+| NEGATIVE_SIGN
+;
+
+boolLiter: TRUE
+| FALSE
+;
+
+charLiter: QUOTE char QUOTE;
+
+strLiter: DOUBLE_QUOTE (char)* DOUBLE_QUOTE;
+
+char: CHAR;
+
+escapedChar: ESCAPED_CHAR;
+
+arrayLiter: OPEN_SQUARE_BR (expr (ARRAY_SEPARATOR expr)*)? CLOSE_SQUARE_BR;
+
+pairLiter: NULL;
+
+comment: COMMENT EOL;
