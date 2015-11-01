@@ -27,9 +27,7 @@ OPEN_PARENTHESES : '(' ;
 CLOSE_PARENTHESES : ')' ;
 
 //numbers
-fragment DIGIT : '0'..'9' ; 
-
-INTEGER: DIGIT+ ;
+DIGIT : '0'..'9' ;
 
 //function call
 CALL: 'call' ;
@@ -104,7 +102,7 @@ REST_IDENT: ('_' | ['a'-'z'] | ['A'-'Z'] | ['0'-'9']) ;
 NULL: 'null' ;
 
 //comment
-COMMENT: '#' (~('\n'))* ;
+COMMENT: '#' ~[\r\n]* -> skip;
 
 //arg list
 ARG_SEPARATOR: ',' ;

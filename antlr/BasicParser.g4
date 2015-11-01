@@ -103,7 +103,7 @@ binaryOper: MULTIPLY
 
 ident: BEGIN_IDENT (REST_IDENT)* ;
 
-array_elem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
+arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
 intLiter: (intSign)? (digit)+ ;
 
@@ -129,4 +129,4 @@ arrayLiter: OPEN_SQUARE_BR (expr (ARRAY_SEPARATOR expr)*)? CLOSE_SQUARE_BR ;
 
 pairLiter: NULL ;
 
-comment: COMMENT EOL ;
+comment: COMMENT ;
