@@ -6,13 +6,13 @@ options {
 
 // EOF indicates that the program must consume to the end of the input.
 // prog: (expr)*  EOF ;
-program: PROG_BEGIN (func)* stat PROG_END EOF;
+program: PROG_BEGIN (func)* stat PROG_END EOF ;
 
-func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES stat FUNC_END;
+func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES FUNC_BEGIN stat FUNC_END ;
 
-paramList: param (PARAM_SEPARATOR param)*;
+paramList: param (PARAM_SEPARATOR param)* ;
 
-param: type ident;
+param: type ident ;
 
 stat: SKIP
 | type ident ASSIGNMENT assignRhs
@@ -41,7 +41,7 @@ assignRhs: expr
 | CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES
 ;
 
-argList: expr (ARG_SEPARATOR expr)*;
+argList: expr (ARG_SEPARATOR expr)* ;
 
 pairElem: FIRST_ELEM expr
 | SECOND_ELEM expr
@@ -58,9 +58,9 @@ baseType: INT_TYPE
 | STRING_TYPE
 ;
 
-arrayType: type OPEN_SQUARE_BR CLOSE_SQUARE_BR;
+arrayType: type OPEN_SQUARE_BR CLOSE_SQUARE_BR ;
 
-pairType: PAIR OPEN_PARENTHESES pairElemType PAIR_SEPARATOR pairElemType CLOSE_PARENTHESES;
+pairType: PAIR OPEN_PARENTHESES pairElemType PAIR_SEPARATOR pairElemType CLOSE_PARENTHESES ;
 
 pairElemType: baseType
 | arrayType
@@ -76,7 +76,6 @@ expr: intLiter
 | arrayElem
 | unaryOper expr
 | expr binaryOper expr
-// | INTEGER
 | OPEN_PARENTHESES expr CLOSE_PARENTHESES
 ;
 
@@ -102,13 +101,13 @@ binaryOper: MULTIPLY
 | OR
 ;
 
-ident: BEGIN_IDENT REST_IDENT*;
+ident: BEGIN_IDENT (REST_IDENT)* ;
 
-array_elem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+;
+array_elem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
-intLiter: intSign? (digit)+;
+intLiter: (intSign)? (digit)+ ;
 
-digit: DIGIT;
+digit: DIGIT ;
 
 intSign: POSITIVE_SIGN
 | NEGATIVE_SIGN
@@ -118,16 +117,16 @@ boolLiter: TRUE
 | FALSE
 ;
 
-charLiter: QUOTE char QUOTE;
+charLiter: QUOTE character QUOTE ;
 
-strLiter: DOUBLE_QUOTE (char)* DOUBLE_QUOTE;
+strLiter: DOUBLE_QUOTE (character)* DOUBLE_QUOTE ;
 
-char: CHAR;
+character: CHAR ;
 
-escapedChar: ESCAPED_CHAR;
+escapedChar: ESCAPED_CHAR ;
 
-arrayLiter: OPEN_SQUARE_BR (expr (ARRAY_SEPARATOR expr)*)? CLOSE_SQUARE_BR;
+arrayLiter: OPEN_SQUARE_BR (expr (ARRAY_SEPARATOR expr)*)? CLOSE_SQUARE_BR ;
 
-pairLiter: NULL;
+pairLiter: NULL ;
 
-comment: COMMENT EOL;
+comment: COMMENT EOL ;
