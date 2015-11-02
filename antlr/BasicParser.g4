@@ -5,17 +5,17 @@ options {
 }
 
 // EOF indicates that the program must consume to the end of the input.
-program: PROG_BEGIN (func)* stat PROG_END EOF ;
+program: BEGIN (func)* stat END EOF ;
 
-func: (type | arrayType) ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES FUNC_BEGIN stat FUNC_END ;
+func: (type | arrayType) IDENT OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
 
-paramList: param (PARAM_SEPARATOR param)* ;
+paramList: param (COMMA param)* ;
 
-param: (type | arrayType) ident ;
+param: (type | arrayType) IDENT ;
 
 stat: SKIP
-| (type | arrayType) ident ASSIGNMENT assignRhs
-| assignLhs ASSIGNMENT assignRhs
+| (type | arrayType) IDENT ASSIGN assignRhs
+| assignLhs ASSIGN assignRhs
 | READ assignLhs
 | FREE expr
 | RETURN expr
@@ -25,40 +25,40 @@ stat: SKIP
 | IF expr THEN stat ELSE stat FI
 | WHILE expr DO stat DONE
 | BEGIN stat END
-| stat STATEMENT_SEPARATOR stat
+| stat SEMICOLON stat
 ;
 
-assignLhs: ident
+assignLhs: IDENT
 | arrayElem
 | pairElem
 ;
 
 assignRhs: expr
 | arrayLiter
-| NEW_PAIR OPEN_PARENTHESES expr PAIR_SEPARATOR expr CLOSE_PARENTHESES
+| NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES
 | pairElem
-| CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES
+| CALL IDENT OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES
 ;
 
-argList: expr (ARG_SEPARATOR expr)* ;
+argList: expr (COMMA expr)* ;
 
-pairElem: FIRST_ELEM expr
-| SECOND_ELEM expr
+pairElem: FST expr
+| SND expr
 ;
 
 type: baseType
 | pairType
 ;
 
-baseType: INT_TYPE
-| BOOL_TYPE
-| CHAR_TYPE
-| STRING_TYPE
+baseType: INT
+| BOOL
+| CHAR
+| STRING
 ;
 
 arrayType: type (OPEN_SQUARE_BR CLOSE_SQUARE_BR)* ;
 
-pairType: PAIR OPEN_PARENTHESES pairElemType PAIR_SEPARATOR pairElemType CLOSE_PARENTHESES ;
+pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 
 pairElemType: baseType
 | arrayType
@@ -69,8 +69,8 @@ expr: intLiter
 | boolLiter
 | CHAR_LITER
 | STR_LITER
-| pairLiter
-| ident
+| PAIR_LITER
+| IDENT
 | arrayElem
 | unaryOper expr
 | expr binaryOper expr
@@ -78,41 +78,37 @@ expr: intLiter
 ;
 
 unaryOper: NOT
-| NEGATIVE
-| ARRAY_LENGTH
+| MINUS
+| LEN
 | ORD
 | CHR
 ;
 
-binaryOper: MULTIPLY
-| DIVIDE
-| MODULUS
+binaryOper: MULT
+| DIV
+| MOD
 | PLUS
 | MINUS
-| GREATER_THAN
-| GREATER_THAN_EQ
-| SMALLER_THAN
-| SMALLER_THAN_EQ
-| EQUAL
-| NOT_EQUAL
+| GT
+| GTEQ
+| LT
+| LTEQ
+| EQ
+| NE
 | AND
 | OR
 ;
 
-ident: BEGIN_IDENT (REST_IDENT)* ;
-
-arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
+arrayElem: IDENT (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
 intLiter: (intSign)? INTEGER ;
 
-intSign: POSITIVE_SIGN
-| NEGATIVE_SIGN
+intSign: PLUS
+| MINUS
 ;
 
 boolLiter: TRUE
 | FALSE
 ;
 
-arrayLiter: OPEN_SQUARE_BR (expr (ARRAY_SEPARATOR expr)*)? CLOSE_SQUARE_BR ;
-
-pairLiter: NULL ;
+arrayLiter: OPEN_SQUARE_BR (expr (COMMA expr)*)? CLOSE_SQUARE_BR ;

@@ -1,41 +1,12 @@
 lexer grammar BasicLexer;
 
-//binary operators
-MULTIPLY: '*' ;
-DIVIDE: '/' ;
-MODULUS: '%' ;
-PLUS: '+' ;
-MINUS: '-' ;
-GREATER_THAN: '>' ;
-GREATER_THAN_EQ: '>=' ;
-SMALLER_THAN: '<' ;
-SMALLER_THAN_EQ: '<=' ;
-EQUAL: '==' ;
-NOT_EQUAL: '!=' ;
-AND: '&&' ;
-OR: '||' ;
+// keywords
+BEGIN: 'begin' ;
+END: 'end' ;
 
-//unary operators
-NOT: '!' ;
-NEGATIVE: '-' ;
-ARRAY_LENGTH: 'len' ;
-ORD: 'ord' ;
-CHR: 'chr' ;
+IS: 'is' ;
 
-//brackets
-OPEN_PARENTHESES : '(' ;
-CLOSE_PARENTHESES : ')' ;
-
-//numbers
-fragment DIGIT : '0'..'9' ;
-INTEGER: DIGIT+ ;
-
-//function call
-CALL: 'call' ;
-
-//statements
 SKIP: 'skip' ;
-ASSIGNMENT: '=' ;
 READ: 'read' ;
 FREE: 'free' ;
 RETURN: 'return' ;
@@ -49,74 +20,79 @@ FI: 'fi' ;
 WHILE: 'while' ;
 DO: 'do' ;
 DONE: 'done' ;
-BEGIN: 'begin' ;
-END: 'end' ;
-STATEMENT_SEPARATOR: ';' ;
 
-//base type
-INT_TYPE: 'int' ;
-BOOL_TYPE: 'bool' ;
-CHAR_TYPE: 'char' ;
-STRING_TYPE: 'string' ;
-
-//array type
-OPEN_SQUARE_BR: '[' ;
-CLOSE_SQUARE_BR: ']' ;
-
-//array literal
-ARRAY_SEPARATOR: ',' ;
-
-//pair type
-PAIR_SEPARATOR: ',' ;
-PAIR: 'pair' ;
 NEW_PAIR: 'newpair' ;
+CALL: 'call' ;
 
-//pair elem
-FIRST_ELEM: 'fst' ;
-SECOND_ELEM: 'snd' ;
+FST: 'fst' ;
+SND: 'snd' ;
 
-//bool literal
+INT: 'int' ;
+BOOL: 'bool' ;
+CHAR: 'char' ;
+STRING: 'string' ;
+
+PAIR: 'pair' ;
+
+LEN: 'len' ;
+ORD: 'ord' ;
+CHR: 'chr' ;
+
 TRUE: 'true' ;
 FALSE: 'false' ;
 
-//char literal
+// brackets
+OPEN_PARENTHESES : '(' ;
+CLOSE_PARENTHESES : ')' ;
+
+OPEN_SQUARE_BR: '[' ;
+CLOSE_SQUARE_BR: ']' ;
+
+// operators
+MULT: '*' ;
+DIV: '/' ;
+MOD: '%' ;
+PLUS: '+' ;
+MINUS: '-' ;
+GT: '>' ;
+GTEQ: '>=' ;
+LT: '<' ;
+LTEQ: '<=' ;
+EQ: '==' ;
+NE: '!=' ;
+AND: '&&' ;
+OR: '||' ;
+
+NOT: '!' ;
+
+// symbols
+ASSIGN: '=' ;
+
+SEMICOLON: ';' ;
+
+COMMA: ',' ;
+
 QUOTE: '\'' ;
 
-//string literal
 DOUBLE_QUOTE: '"' ;
 
-//int sign
-POSITIVE_SIGN: '+' ;
-NEGATIVE_SIGN: '-' ;
+// ident
+IDENT: IDENT_CHAR (IDENT_CHAR | DIGIT)* ;
+fragment IDENT_CHAR: [_a-zA-Z] ;
 
-//character
+// digit
+INTEGER: DIGIT+ ;
+fragment DIGIT : [0-9] ;
+
+// character
 CHAR_LITER: '\'' CHARACTER '\'' ;
-STR_LITER: '"' CHARACTER '"' ;
+STR_LITER: '"' (CHARACTER)* '"' ;
 fragment CHARACTER: (~('\\' | '\'' | '"') | '\\' ESCAPED_CHAR) ;
 fragment ESCAPED_CHAR: ('0' | 'b' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\') ;
 
-//ident begin
-BEGIN_IDENT: ('_' | ['a'-'z'] | ['A'-'Z']) ;
-REST_IDENT: ('_' | ['a'-'z'] | ['A'-'Z'] | ['0'-'9']) ;
+// pair
+PAIR_LITER: 'null' ;
 
-//pair literal
-NULL: 'null' ;
-
-//comment
+// comment and whitespace
 COMMENT: '#' ~[\r\n]* '\r'? '\n' -> skip ;
-
-//arg list
-ARG_SEPARATOR: ',' ;
-
-//param list
-PARAM_SEPARATOR: ',' ;
-
-//func
-FUNC_BEGIN: 'is' ;
-FUNC_END: 'end' ;
-
-//program
-PROG_BEGIN: 'begin' ;
-PROG_END: 'end' ;
-
 WS: [ \t\r\n]+ -> skip ;
