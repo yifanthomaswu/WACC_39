@@ -41,6 +41,8 @@ CHR: 'chr' ;
 TRUE: 'true' ;
 FALSE: 'false' ;
 
+NULL: 'null' ;
+
 // brackets
 OPEN_PARENTHESES : '(' ;
 CLOSE_PARENTHESES : ')' ;
@@ -89,9 +91,6 @@ CHAR_LITER: '\'' CHARACTER '\'' ;
 STR_LITER: '"' (CHARACTER)* '"' ;
 fragment CHARACTER: (~('\\' | '\'' | '"') | '\\' ESCAPED_CHAR) ;
 fragment ESCAPED_CHAR: ('0' | 'b' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\') ;
-
-// pair
-PAIR_LITER: 'null' ;
 
 // comment and whitespace
 COMMENT: '#' ~[\r\n]* '\r'? '\n' -> skip ;
