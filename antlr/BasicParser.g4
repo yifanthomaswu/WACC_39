@@ -5,17 +5,16 @@ options {
 }
 
 // EOF indicates that the program must consume to the end of the input.
-// prog: (expr)*  EOF ;
 program: PROG_BEGIN (func)* stat PROG_END EOF ;
 
-func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES FUNC_BEGIN stat FUNC_END ;
+func: (type | arrayType) ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES FUNC_BEGIN stat FUNC_END ;
 
 paramList: param (PARAM_SEPARATOR param)* ;
 
-param: type ident ;
+param: (type | arrayType) ident ;
 
 stat: SKIP
-| type ident ASSIGNMENT assignRhs
+| (type | arrayType) ident ASSIGNMENT assignRhs
 | assignLhs ASSIGNMENT assignRhs
 | READ assignLhs
 | FREE expr
@@ -48,7 +47,6 @@ pairElem: FIRST_ELEM expr
 ;
 
 type: baseType
-| arrayType
 | pairType
 ;
 
@@ -58,7 +56,7 @@ baseType: INT_TYPE
 | STRING_TYPE
 ;
 
-arrayType: type OPEN_SQUARE_BR CLOSE_SQUARE_BR ;
+arrayType: type (OPEN_SQUARE_BR CLOSE_SQUARE_BR)* ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType PAIR_SEPARATOR pairElemType CLOSE_PARENTHESES ;
 
@@ -69,8 +67,8 @@ pairElemType: baseType
 
 expr: intLiter
 | boolLiter
-| charLiter
-| strLiter
+| CHAR_LITER
+| STR_LITER
 | pairLiter
 | ident
 | arrayElem
@@ -105,9 +103,7 @@ ident: BEGIN_IDENT (REST_IDENT)* ;
 
 arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
-intLiter: (intSign)? (digit)+ ;
-
-digit: DIGIT ;
+intLiter: (intSign)? INTEGER ;
 
 intSign: POSITIVE_SIGN
 | NEGATIVE_SIGN
@@ -117,16 +113,6 @@ boolLiter: TRUE
 | FALSE
 ;
 
-charLiter: QUOTE character QUOTE ;
-
-strLiter: DOUBLE_QUOTE (character)* DOUBLE_QUOTE ;
-
-character: CHAR ;
-
-escapedChar: ESCAPED_CHAR ;
-
 arrayLiter: OPEN_SQUARE_BR (expr (ARRAY_SEPARATOR expr)*)? CLOSE_SQUARE_BR ;
 
 pairLiter: NULL ;
-
-comment: COMMENT ;

@@ -27,7 +27,8 @@ OPEN_PARENTHESES : '(' ;
 CLOSE_PARENTHESES : ')' ;
 
 //numbers
-DIGIT : '0'..'9' ;
+fragment DIGIT : '0'..'9' ;
+INTEGER: DIGIT+ ;
 
 //function call
 CALL: 'call' ;
@@ -89,20 +90,20 @@ POSITIVE_SIGN: '+' ;
 NEGATIVE_SIGN: '-' ;
 
 //character
-CHAR: (~('\\' | '\'' | '"')  | '\\' ESCAPED_CHAR) ;
-
-//escaped char
-ESCAPED_CHAR: ('0' | 'b' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\') ;
+CHAR_LITER: '\'' CHARACTER '\'' ;
+STR_LITER: '"' CHARACTER '"' ;
+fragment CHARACTER: (~('\\' | '\'' | '"') | '\\' ESCAPED_CHAR) ;
+fragment ESCAPED_CHAR: ('0' | 'b' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\') ;
 
 //ident begin
-BEGIN_IDENT: ('_' | ['a'-'z'] | ['A'-'Z']);
+BEGIN_IDENT: ('_' | ['a'-'z'] | ['A'-'Z']) ;
 REST_IDENT: ('_' | ['a'-'z'] | ['A'-'Z'] | ['0'-'9']) ;
 
 //pair literal
 NULL: 'null' ;
 
 //comment
-COMMENT: '#' ~[\r\n]* -> skip;
+COMMENT: '#' ~[\r\n]* '\r'? '\n' -> skip ;
 
 //arg list
 ARG_SEPARATOR: ',' ;
@@ -117,3 +118,5 @@ FUNC_END: 'end' ;
 //program
 PROG_BEGIN: 'begin' ;
 PROG_END: 'end' ;
+
+WS: [ \t\r\n]+ -> skip ;
