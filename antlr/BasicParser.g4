@@ -7,14 +7,14 @@ options {
 // EOF indicates that the program must consume to the end of the input.
 program: BEGIN (func)* stat END EOF ;
 
-func: (type | arrayType) IDENT OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
+func: (type | arrayType) ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
 
 paramList: param (COMMA param)* ;
 
-param: (type | arrayType) IDENT ;
+param: (type | arrayType) ident ;
 
 stat: SKIP
-| (type | arrayType) IDENT ASSIGN assignRhs
+| (type | arrayType) ident ASSIGN assignRhs
 | assignLhs ASSIGN assignRhs
 | READ assignLhs
 | FREE expr
@@ -28,7 +28,7 @@ stat: SKIP
 | stat SEMICOLON stat
 ;
 
-assignLhs: IDENT
+assignLhs: ident
 | arrayElem
 | pairElem
 ;
@@ -37,7 +37,7 @@ assignRhs: expr
 | arrayLiter
 | NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES
 | pairElem
-| CALL IDENT OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES
+| CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES
 ;
 
 argList: expr (COMMA expr)* ;
@@ -67,10 +67,10 @@ pairElemType: baseType
 
 expr: intLiter
 | boolLiter
-| CHAR_LITER
-| STR_LITER
-| PAIR_LITER
-| IDENT
+| charLiter
+| stringLiter
+| pairLiter
+| ident
 | arrayElem
 | unaryOper expr
 | expr binaryOper expr
@@ -99,16 +99,20 @@ binaryOper: MULT
 | OR
 ;
 
-arrayElem: IDENT (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
+ident: IDENT ;
 
-intLiter: (intSign)? INTEGER ;
+arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
-intSign: PLUS
-| MINUS
-;
+intLiter: (PLUS | MINUS)? INTEGER ;
 
 boolLiter: TRUE
 | FALSE
 ;
 
+charLiter: CHAR_LITER ;
+
+stringLiter: STR_LITER ;
+
 arrayLiter: OPEN_SQUARE_BR (expr (COMMA expr)*)? CLOSE_SQUARE_BR ;
+
+pairLiter: NULL;
