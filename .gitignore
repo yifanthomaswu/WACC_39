@@ -37,3 +37,12 @@ testing/test_files/
 *.vrb
 *.nav
 *.toc
+
+#ignore generated folders
+/bin
+src/antlr/
+
+#ignore eclipse files
+.classpath
+.externalToolBuilders/
+.project
