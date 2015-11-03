@@ -103,7 +103,7 @@ ident: IDENT ;
 
 arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
-intLiter: (PLUS | MINUS)? INTEGER ;
+intLiter: INT_LITER ;
 
 boolLiter: TRUE
 | FALSE

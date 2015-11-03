@@ -83,14 +83,15 @@ IDENT: IDENT_CHAR (IDENT_CHAR | DIGIT)* ;
 fragment IDENT_CHAR: [_a-zA-Z] ;
 
 // digit
-INTEGER: DIGIT+ ;
-fragment DIGIT : [0-9] ;
+INT_LITER: (INT_SIGN)? (DIGIT)+ ;
+fragment DIGIT: [0-9] ;
+fragment INT_SIGN: PLUS | MINUS ;
 
 // character
 CHAR_LITER: '\'' CHARACTER '\'' ;
 STR_LITER: '"' (CHARACTER)* '"' ;
-fragment CHARACTER: (~('\\' | '\'' | '"') | '\\' ESCAPED_CHAR) ;
-fragment ESCAPED_CHAR: ('0' | 'b' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\') ;
+fragment CHARACTER: ~[\\'"] | ('\\' ESCAPED_CHAR) ;
+fragment ESCAPED_CHAR: [0btnfr"'\\] ;
 
 // comment and whitespace
 COMMENT: '#' ~[\r\n]* '\r'? '\n' -> skip ;
