@@ -27,21 +27,17 @@ CALL: 'call' ;
 FST: 'fst' ;
 SND: 'snd' ;
 
-INT: 'int' ;
-BOOL: 'bool' ;
-CHAR: 'char' ;
-STRING: 'string' ;
-
 PAIR: 'pair' ;
 
-LEN: 'len' ;
-ORD: 'ord' ;
-CHR: 'chr' ;
-
-TRUE: 'true' ;
-FALSE: 'false' ;
-
 NULL: 'null' ;
+
+// type
+BASE_TYPE: 'int' | 'bool' | 'char' | 'string' ;
+
+// operators
+UNARY_OPER: '!' | '-' | 'len' | 'ord' | 'chr' ;
+
+BINARY_OPER: '*' | '/' | '%' | '+' | '-' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||' ;
 
 // brackets
 OPEN_PARENTHESES : '(' ;
@@ -49,23 +45,6 @@ CLOSE_PARENTHESES : ')' ;
 
 OPEN_SQUARE_BR: '[' ;
 CLOSE_SQUARE_BR: ']' ;
-
-// operators
-MULT: '*' ;
-DIV: '/' ;
-MOD: '%' ;
-PLUS: '+' ;
-MINUS: '-' ;
-GT: '>' ;
-GTEQ: '>=' ;
-LT: '<' ;
-LTEQ: '<=' ;
-EQ: '==' ;
-NE: '!=' ;
-AND: '&&' ;
-OR: '||' ;
-
-NOT: '!' ;
 
 // symbols
 ASSIGN: '=' ;
@@ -85,7 +64,10 @@ fragment IDENT_CHAR: [_a-zA-Z] ;
 // digit
 INT_LITER: (INT_SIGN)? (DIGIT)+ ;
 fragment DIGIT: [0-9] ;
-fragment INT_SIGN: PLUS | MINUS ;
+fragment INT_SIGN: [+-] ;
+
+// bool
+BOOL_LITER: 'true' | 'false' ;
 
 // character
 CHAR_LITER: '\'' CHARACTER '\'' ;
