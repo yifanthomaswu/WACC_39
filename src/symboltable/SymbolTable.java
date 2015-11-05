@@ -1,23 +1,34 @@
 package symboltable;
 
 import java.util.Dictionary;
+import java.util.Hashtable;
 
 public class SymbolTable {
-	SymbolTable encSymTable;
-	Dictionary<String, String> dict;	
-	
 
-	public SymbolTable(SymbolTable st) {
-		dict = new HashTable<String, String>;
-		encSymTable = st;
-    }
-	
-	public void add(String name, String obj) {
-		dict.add(name, obj);
-	}
-	
-	public void lookup(String name) {
-		dict.get(name);
-	}
+  private SymbolTable encSymTable;
+  private final Dictionary<String, String> dict = new Hashtable<>();
 
+  public SymbolTable(SymbolTable st) {
+    encSymTable = st;
+  }
+
+  public void add(String name, String obj) {
+    dict.put(name, obj);
+  }
+
+  public String lookup(String name) {
+    return dict.get(name);
+  }
+
+  public String lookupAll(String name) {
+    SymbolTable s = this;
+    do {
+      String obj = s.lookup(name);
+      if (obj != null) {
+        return obj;
+      }
+      s = s.encSymTable;
+    } while (s != null);
+    return null;
+  }
 }
