@@ -7,14 +7,14 @@ options {
 // EOF indicates that the program must consume to the end of the input.
 program: BEGIN (func)* stat END EOF ;
 
-func: (type | arrayType) ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
+func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
 
 paramList: param (COMMA param)* ;
 
-param: (type | arrayType) ident ;
+param: type ident ;
 
 stat: SKIP
-| (type | arrayType) ident ASSIGN assignRhs
+| type ident ASSIGN assignRhs
 | assignLhs ASSIGN assignRhs
 | READ assignLhs
 | FREE expr
@@ -47,16 +47,13 @@ pairElem: FST expr
 ;
 
 type: baseType
+| arrayType
 | pairType
 ;
 
-baseType: INT
-| BOOL
-| CHAR
-| STRING
-;
+baseType: BASE_TYPE ;
 
-arrayType: type (OPEN_SQUARE_BR CLOSE_SQUARE_BR)* ;
+arrayType: (baseType | pairType) (OPEN_SQUARE_BR CLOSE_SQUARE_BR)* ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 
@@ -77,27 +74,9 @@ expr: intLiter
 | OPEN_PARENTHESES expr CLOSE_PARENTHESES
 ;
 
-unaryOper: NOT
-| MINUS
-| LEN
-| ORD
-| CHR
-;
+unaryOper: UNARY_OPER ;
 
-binaryOper: MULT
-| DIV
-| MOD
-| PLUS
-| MINUS
-| GT
-| GTEQ
-| LT
-| LTEQ
-| EQ
-| NE
-| AND
-| OR
-;
+binaryOper: BINARY_OPER ;
 
 ident: IDENT ;
 
@@ -105,9 +84,7 @@ arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
 intLiter: INT_LITER ;
 
-boolLiter: TRUE
-| FALSE
-;
+boolLiter: BOOL_LITER ;
 
 charLiter: CHAR_LITER ;
 
