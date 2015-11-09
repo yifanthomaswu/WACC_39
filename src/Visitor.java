@@ -20,7 +20,19 @@ public class Visitor {
     // create a parser that feeds off the tokens buffer
     BasicParser parser = new BasicParser(tokens);
 
-    ParseTree tree = parser.program(); // begin parsing at program rule
+    // add an error listener for custom syntactic error messages
+    parser.removeErrorListeners();
+    parser.addErrorListener(SyntacticErrorListener.INSTANCE);
+
+    // begin parsing at program rule
+    ParseTree tree = parser.program();
+
+    // exit with code 100 if syntactic error exits
+    if (parser.getNumberOfSyntaxErrors() > 0) {
+      System.out.println(parser.getNumberOfSyntaxErrors() +
+          " parser error(s) detected, no further compilation attempted.");
+      System.exit(100);
+    }
 
     // build and run my custom visitor
     MyVisitor visitor = new MyVisitor();
