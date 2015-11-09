@@ -1,6 +1,18 @@
-#!/usr/bin/ruby
+#!/bin/bash
 # Ruby front-end for your compiler.
 # You are free to change the language used for this script,
 # but do *not* change its name.
 
-puts "TODO: setup this script to call your WACC compiler"
+echo "-- Compiling..."
+
+message=`java -cp bin:lib/antlr-4.4-complete.jar Visitor < $1`
+
+exit=$?
+
+if [ $exit != 0 ]
+then
+  echo "Errors detected during compilation! Exit code $exit returned."
+  echo "$message"
+else
+  echo "-- Finished"
+fi
