@@ -39,7 +39,7 @@ UNARY_OPER: '!' | 'len' | 'ord' | 'chr' ;
 
 BINARY_OPER: '*' | '/' | '%' | '+' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||' ;
 
-NEG: '-' ;
+MINUS: '-' ;
 
 // brackets
 OPEN_PARENTHESES : '(' ;

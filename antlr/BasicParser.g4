@@ -76,15 +76,20 @@ expr: intLiter
 | OPEN_PARENTHESES expr CLOSE_PARENTHESES
 ;
 
-unaryOper: UNARY_OPER | NEG;
+unaryOper: UNARY_OPER | MINUS ;
 
-binaryOper: BINARY_OPER | NEG;
+binaryOper: BINARY_OPER | MINUS ;
 
 ident: IDENT ;
 
 arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
-intLiter: INT_LITER ;
+intLiter: INT_LITER {
+  long n = Long.parseLong($INT_LITER.getText());
+  if (n > Integer.MAX_VALUE || n < Integer.MIN_VALUE) {
+    notifyErrorListeners("Syntactic Error at " + $INT_LITER.getLine() + ":" + $INT_LITER.getCharPositionInLine() + " -- " + "Integer value " + n + " is too large for a 32-bit signed integer");
+  }
+} ;
 
 boolLiter: BOOL_LITER ;
 
@@ -94,4 +99,4 @@ stringLiter: STR_LITER ;
 
 arrayLiter: OPEN_SQUARE_BR (expr (COMMA expr)*)? CLOSE_SQUARE_BR ;
 
-pairLiter: NULL;
+pairLiter: NULL ;
