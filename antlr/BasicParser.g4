@@ -74,9 +74,9 @@ expr: intLiter
 | OPEN_PARENTHESES expr CLOSE_PARENTHESES
 ;
 
-unaryOper: UNARY_OPER ;
+unaryOper: UNARY_OPER | NEG;
 
-binaryOper: BINARY_OPER ;
+binaryOper: BINARY_OPER | NEG;
 
 ident: IDENT ;
 
