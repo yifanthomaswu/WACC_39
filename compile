@@ -7,12 +7,14 @@ echo "-- Compiling..."
 
 message=`java -cp bin:lib/antlr-4.4-complete.jar Visitor < $1`
 
-exit=$?
+ecode=$?
 
-if [ $exit != 0 ]
+if [ $ecode != 0 ]
 then
-  echo "Errors detected during compilation! Exit code $exit returned."
+  echo "Errors detected during compilation! Exit code $ecode returned."
   echo "$message"
 else
   echo "-- Finished"
 fi
+
+exit $ecode
