@@ -32,12 +32,16 @@ PAIR: 'pair' ;
 NULL: 'null' ;
 
 // type
-BASE_TYPE: 'int' | 'bool' | 'char' | 'string' ;
+INT: 'int' ;
+BOOL: 'bool' ;
+CHAR: 'char' ;
+STRING: 'string' ;
 
 // operators
+BINARY_OPER: '*' | '/' | '%' | '+' | '-' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||' ;
+
 UNARY_OPER: '!' | '-' | 'len' | 'ord' | 'chr' ;
 
-BINARY_OPER: '*' | '/' | '%' | '+' | '-' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||' ;
 
 // brackets
 OPEN_PARENTHESES : '(' ;
@@ -58,7 +62,7 @@ QUOTE: '\'' ;
 DOUBLE_QUOTE: '"' ;
 
 // ident
-IDENT: IDENT_CHAR (IDENT_CHAR | DIGIT)* ;
+ID: IDENT_CHAR (IDENT_CHAR | DIGIT)* ;
 fragment IDENT_CHAR: [_a-zA-Z] ;
 
 // digit

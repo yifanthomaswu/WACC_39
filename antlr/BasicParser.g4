@@ -51,7 +51,10 @@ type: baseType
 | pairType
 ;
 
-baseType: BASE_TYPE ;
+baseType: INT
+| BOOL
+| CHAR
+| STRING ;
 
 arrayType: (baseType | pairType) (OPEN_SQUARE_BR CLOSE_SQUARE_BR)* ;
 
@@ -62,7 +65,8 @@ pairElemType: baseType
 | PAIR
 ;
 
-expr: intLiter
+expr: expr binaryOper expr
+| intLiter
 | boolLiter
 | charLiter
 | stringLiter
@@ -70,7 +74,6 @@ expr: intLiter
 | ident
 | arrayElem
 | unaryOper expr
-| expr binaryOper expr
 | OPEN_PARENTHESES expr CLOSE_PARENTHESES
 ;
 
@@ -78,7 +81,7 @@ unaryOper: UNARY_OPER ;
 
 binaryOper: BINARY_OPER ;
 
-ident: IDENT ;
+ident: ID ;
 
 arrayElem: ident (OPEN_SQUARE_BR expr CLOSE_SQUARE_BR)+ ;
 
