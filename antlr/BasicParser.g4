@@ -7,19 +7,23 @@ options {
 // EOF indicates that the program must consume to the end of the input.
 program: BEGIN (func)* stat END EOF ;
 
-func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
+func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat (EXIT | RETURN) END ;
 
 paramList: param (COMMA param)* ;
 
 param: type ident ;
 
+
+//statFunc: stat* (EXIT | RETURN) ;
+
+
 stat: SKIP
+| RETURN expr
+| EXIT expr
 | type ident ASSIGN assignRhs
 | assignLhs ASSIGN assignRhs
 | READ assignLhs
 | FREE expr
-| RETURN expr
-| EXIT expr
 | PRINT expr
 | PRINTLN expr
 | IF expr THEN stat ELSE stat FI
