@@ -35,9 +35,11 @@ NULL: 'null' ;
 BASE_TYPE: 'int' | 'bool' | 'char' | 'string' ;
 
 // operators
-UNARY_OPER: '!' | '-' | 'len' | 'ord' | 'chr' ;
+UNARY_OPER: '!' | 'len' | 'ord' | 'chr' ;
 
-BINARY_OPER: '*' | '/' | '%' | '+' | '-' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||' ;
+BINARY_OPER: '*' | '/' | '%' | '+' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||' ;
+
+NEG: '-' ;
 
 // brackets
 OPEN_PARENTHESES : '(' ;
