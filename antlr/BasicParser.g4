@@ -15,42 +15,42 @@ paramList: param (COMMA param)* ;
 
 param: type ident ;
 
-stat: SKIP
-| type ident ASSIGN assignRhs
-| assignLhs ASSIGN assignRhs
-| READ assignLhs
-| FREE expr
-| RETURN expr
-| EXIT expr
-| PRINT expr
-| PRINTLN expr
-| IF expr THEN stat ELSE stat FI
-| WHILE expr DO stat DONE
-| BEGIN stat END
-| stat SEMICOLON stat
+stat: SKIP                                                       # SkipStat
+| type ident ASSIGN assignRhs                                    # AssignVarStat
+| assignLhs ASSIGN assignRhs                                     # AssignLhsToRhsStat
+| READ assignLhs                                                 # ReadStat
+| FREE expr                                                      # FreeStat
+| RETURN expr                                                    # ReturnStat
+| EXIT expr                                                      # ExitStat
+| PRINT expr                                                     # PrintStat
+| PRINTLN expr                                                   # PrintlnStat
+| IF expr THEN stat ELSE stat FI                                 # IfThenElseStat
+| WHILE expr DO stat DONE                                        # WhileStat
+| BEGIN stat END                                                 # BeginStat
+| stat SEMICOLON stat                                            # StatList
 ;
 
-assignLhs: ident
-| arrayElem
-| pairElem
+assignLhs: ident                                                 # LhsIdent
+| arrayElem                                                      # LhsArrayElem
+| pairElem                                                       # LhsPairElem
 ;
 
-assignRhs: expr
-| arrayLiter
-| NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES
-| pairElem
-| CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES
+assignRhs: expr                                                  # RhsExpr
+| arrayLiter                                                     # RhsArrayLiter
+| NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES    # RhsNewPair
+| pairElem                                                       # RhsPairElem
+| CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES       # RhsFunctionCall
 ;
 
 argList: expr (COMMA expr)* ;
 
-pairElem: FST expr
-| SND expr
+pairElem: FST expr                                               # FstPairElem
+| SND expr                                                       # SndPairElem
 ;
 
-type: baseType
-| arrayType
-| pairType
+type: baseType                                                   
+| arrayType                                                      
+| pairType                                                       
 ;
 
 baseType: BASE_TYPE ;
@@ -59,21 +59,21 @@ arrayType: (baseType | pairType) (OPEN_SQUARE_BR CLOSE_SQUARE_BR)* ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 
-pairElemType: baseType
-| arrayType
-| PAIR
+pairElemType: baseType                                           # PairElemBase
+| arrayType                                                      # PairElemArray
+| PAIR                                                           # PairPairElem
 ;
 
-expr: intLiter
-| boolLiter
-| charLiter
-| stringLiter
-| pairLiter
-| ident
-| arrayElem
-| unaryOper expr
-| expr binaryOper expr
-| OPEN_PARENTHESES expr CLOSE_PARENTHESES
+expr: intLiter                                                   # IntExpr
+| boolLiter                                                      # BoolExpr
+| charLiter                                                      # CharExpr
+| stringLiter                                                    # StringExpr
+| pairLiter                                                      # PairExpr
+| ident                                                          # IdentExpr
+| arrayElem                                                      # ArrayElemExpr
+| unaryOper expr                                                 # UnOpExpr
+| expr binaryOper expr                                           # BinOpExpr
+| OPEN_PARENTHESES expr CLOSE_PARENTHESES                        # ParensExpr
 ;
 
 unaryOper: UNARY_OPER | MINUS ;
