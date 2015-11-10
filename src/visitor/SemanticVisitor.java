@@ -37,5 +37,9 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 	public Void visitExpr(BasicParser.ExprContext ctx) {
 		return visitChildren(ctx);
 	}
+	
+	@Override
+	public Void visitAssignVarStat(BasicParser.AssignVarStatContext ctx) {
+		return visitChildren(ctx); }
 
 }
