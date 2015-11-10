@@ -1,4 +1,6 @@
+package visitor;
 // import ANTLR's runtime libraries
+
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
@@ -34,8 +36,8 @@ public class Visitor {
       System.exit(100);
     }
 
-    // build and run my custom visitor
-    MyVisitor visitor = new MyVisitor();
+    // build and run custom visitor for semantic checks
+    SemanticVisitor visitor = new SemanticVisitor();
     visitor.visit(tree);
 
   }
