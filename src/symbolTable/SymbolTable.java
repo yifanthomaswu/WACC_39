@@ -6,26 +6,26 @@ import java.util.Hashtable;
 public class SymbolTable {
 
   private SymbolTable encSymTable;
-  private final Dictionary<String, String> dict = new Hashtable<>();
+  private final Dictionary<String, Identifier> dict = new Hashtable<>();
 
   public SymbolTable(SymbolTable st) {
     encSymTable = st;
   }
 
-  public void add(String name, String obj) {
-    dict.put(name, obj);
+  public void add(String name, Identifier object) {
+    dict.put(name, object);
   }
 
-  public String lookup(String name) {
+  public Identifier lookup(String name) {
     return dict.get(name);
   }
 
-  public String lookupAll(String name) {
+  public Identifier lookupAll(String name) {
     SymbolTable s = this;
     do {
-      String obj = s.lookup(name);
-      if (obj != null) {
-        return obj;
+      Identifier object = s.lookup(name);
+      if (object != null) {
+        return object;
       }
       s = s.encSymTable;
     } while (s != null);
