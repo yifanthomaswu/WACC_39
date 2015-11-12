@@ -1,4 +1,4 @@
-package symbolTable.identifier;
+package wacc.symboltable.identifier;
 
 public class Scalar extends Type {
   int min;

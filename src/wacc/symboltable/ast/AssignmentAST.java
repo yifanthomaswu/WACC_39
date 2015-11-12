@@ -1,4 +1,4 @@
-package symbolTable.ast;
+package wacc.symboltable.ast;
 
 public class AssignmentAST {
 

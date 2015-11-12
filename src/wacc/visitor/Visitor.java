@@ -1,6 +1,6 @@
-package visitor;
-// import ANTLR's runtime libraries
+package wacc.visitor;
 
+// import ANTLR's runtime libraries
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 

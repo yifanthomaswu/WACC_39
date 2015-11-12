@@ -1,13 +1,13 @@
-package symbolTable;
+package wacc.symboltable;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import symbolTable.identifier.Identifier;
+import wacc.symboltable.identifier.Identifier;
 
 public class SymbolTable {
 
-  private SymbolTable encSymTable;
+  private final SymbolTable encSymTable;
   private final Dictionary<String, Identifier> dict = new Hashtable<>();
 
   public SymbolTable(SymbolTable st) {
@@ -33,4 +33,5 @@ public class SymbolTable {
     } while (s != null);
     return null;
   }
+
 }

@@ -1,7 +1,7 @@
-package visitor;
+package wacc.visitor;
 
 import antlr.*;
-import symbolTable.SymbolTable;
+import wacc.symboltable.SymbolTable;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 	

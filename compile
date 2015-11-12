@@ -5,7 +5,7 @@
 
 echo "-- Compiling..."
 
-message=`java -cp bin:lib/antlr-4.4-complete.jar Visitor < $1`
+message=`java -cp bin:lib/antlr-4.4-complete.jar wacc.visitor.Visitor < $1`
 
 ecode=$?
 

@@ -1,4 +1,5 @@
-package visitor;
+package wacc.visitor;
+
 import org.antlr.v4.runtime.*;
 
 public class SyntacticErrorListener extends BaseErrorListener {

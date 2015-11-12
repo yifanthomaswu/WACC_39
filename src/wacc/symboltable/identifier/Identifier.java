@@ -1,4 +1,4 @@
-package symbolTable.identifier;
+package wacc.symboltable.identifier;
 
 public class Identifier {
 

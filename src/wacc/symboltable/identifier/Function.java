@@ -1,6 +1,6 @@
-package symbolTable.identifier;
+package wacc.symboltable.identifier;
 
-import symbolTable.SymbolTable;
+import wacc.symboltable.SymbolTable;
 
 public class Function extends Identifier {
   Type returnType;
