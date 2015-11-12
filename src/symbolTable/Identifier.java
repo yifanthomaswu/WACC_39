@@ -1,15 +1,16 @@
 package symbolTable;
 
-public class Identifier {}
+public class Identifier {
+}
 
 class Type extends Identifier {
-	public boolean isDeclarable() {
-		return true;
-	}
+  public boolean isDeclarable() {
+    return true;
+  }
 }
 
 class Variable extends Identifier {
-	Type type;
+  Type type;
 }
 
 class Param extends Identifier {
@@ -37,16 +38,8 @@ class Array extends Type {
 	}
 }
 
-class Package extends Identifier {
-	SymbolTable table;
-}
-
-class Class extends Type {
-	Class superClass;
-	SymbolTable table;
-}
-
 class Function extends Identifier {
+
 	Type returnType;
 	Param params[];
 	SymbolTable table;
@@ -54,4 +47,5 @@ class Function extends Identifier {
         this.returnType = returnType;
         this.formals = formals;
     }
+
 }
