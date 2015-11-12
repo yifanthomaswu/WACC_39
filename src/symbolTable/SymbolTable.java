@@ -3,6 +3,8 @@ package symbolTable;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
+import symbolTable.identifier.Identifier;
+
 public class SymbolTable {
 
   private SymbolTable encSymTable;
