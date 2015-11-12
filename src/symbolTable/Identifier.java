@@ -14,6 +14,9 @@ class Variable extends Identifier {
 
 class Param extends Identifier {
 	Type type;
+    public  Param() {
+        this.type=type;
+    }
 }
 
 class Scalar extends Type {
@@ -28,6 +31,10 @@ class Scalar extends Type {
 class Array extends Type {
 	Type type;
 	int numOfElems;
+	public Array(Type type, int numOfElems) {
+		this.type = type;
+		this.numOfElems = numOfElems;
+	}
 }
 
 class Package extends Identifier {
@@ -43,4 +50,8 @@ class Function extends Identifier {
 	Type returnType;
 	Param params[];
 	SymbolTable table;
+	public Function(Type returnType, Param formals) {
+        this.returnType = returnType;
+        this.formals = formals;
+    }
 }
