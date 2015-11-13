@@ -73,6 +73,14 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
      return visitChildren(ctx);
    }
 
+   @Override
+   public Void visitScopingStat(BasicParser.ScopingStatContext ctx) {
+     st = new SymbolTable(st);
+     visit(ctx.stat());
+     st = st.getEncSymTable();
+     return null;
+   }
+
   // @Override
   // public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
   // return visitChildren(ctx);
