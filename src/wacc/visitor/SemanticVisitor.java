@@ -30,6 +30,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitFunc(BasicParser.FuncContext ctx) {
     st = new SymbolTable(st);
+      if (ctx.paramList() != null)
     visit(ctx.paramList());
     visit(ctx.funcStat()); // TODO
     st = st.getEncSymTable();
@@ -122,21 +123,34 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // public Void visitFreeStat(BasicParser.FreeStatContext ctx) {
   // return visitChildren(ctx);
   // }
-  //
-  // @Override
-  // public Void visitReturnStat(BasicParser.ReturnStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
+
+
+
    @Override
-   public Void visitExitStat(BasicParser.ExitStatContext ctx) {
-       visit(ctx.expr());
-       if (!(ctx.expr() instanceof IntExprContext)) {
-           String msg = " Incompatible type at " + ctx.expr().getText() +
-                   " (expected: INT, actual: " + ctx.expr();
-           throw new SemanticErrorException(ctx.getStart(), msg);
+   public Void visitReturnStat(BasicParser.ReturnStatContext ctx) {
+       //Check if in global scope
+       ParserRuleContext context = ctx.getParent();
+       while (!(context instanceof FuncContext)) {
+           if (context instanceof ProgramContext) {
+               String msg = " Cannot return from the global scope. ";
+               throw new SemanticErrorException(ctx.getStart(), msg);
+           }
+           context = context.getParent();
        }
    return visitChildren(ctx);
+   }
+
+   @Override
+   public Void visitExitStat(BasicParser.ExitStatContext ctx) {
+       //Visit expr first to check it for semantic errors
+       visit(ctx.expr());
+       //Carry out check that return value of expr is an INT as required by EXIT Stat
+       if (!(ctx.expr() instanceof IntExprContext)) {
+           String msg = " Incompatible type at " + ctx.expr().getText() +
+                   " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName() + ")"; //expr().getClass().getSimpleName();
+           throw new SemanticErrorException(ctx.expr().getStart(), msg);
+       }
+       return visitChildren(ctx);
    }
 
   // @Override
