@@ -1,5 +1,8 @@
 package wacc.visitor;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
+
 import antlr.*;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
@@ -28,7 +31,9 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitFunc(BasicParser.FuncContext ctx) {
     st = new SymbolTable(st);
     visit(ctx.paramList());
-    return visitChildren(ctx);
+    visit(ctx.funcStat()); // TODO
+    st = st.getEncSymTable();
+    return null;
   }
 
    @Override
@@ -37,11 +42,34 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
       String ident = param.ident().getText();
       if (st.lookup(ident) != null) {
         String msg = "\"" + ident + "\" is already defined in this scope";
-        throw new SemanticErrorException(ctx.getStart(), msg);
+        throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       } else {
         st.add(ident, param);
       }
     }
+     return null;
+   }
+
+   @Override
+   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+     String ident = ctx.ident().getText();
+     ParserRuleContext c = st.lookup(ident);
+     if (c != null && !(c instanceof FuncContext)) {
+       String msg = "\"" + ident + "\" is already defined in this scope";
+       throw new SemanticErrorException(ctx.getStart(), msg);
+     } else {
+       st.add(ident, ctx);
+     }
+     return visitChildren(ctx);
+   }
+
+   @Override
+   public Void visitIdent(BasicParser.IdentContext ctx) {
+     String ident = ctx.getText();
+     if (st.lookupAll(ident) == null) {
+       String msg = "Variable \"" + ident + "\" is not defined in this scope";
+       throw new SemanticErrorException(ctx.getParent().getStart(), msg);
+     }
      return visitChildren(ctx);
    }
 

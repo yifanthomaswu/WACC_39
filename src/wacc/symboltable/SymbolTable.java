@@ -18,6 +18,10 @@ public class SymbolTable {
     dict.put(name, object);
   }
 
+  public SymbolTable getEncSymTable() {
+    return encSymTable;
+  }
+
   public ParserRuleContext lookup(String name) {
     return dict.get(name);
   }
