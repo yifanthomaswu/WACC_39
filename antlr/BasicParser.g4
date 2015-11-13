@@ -16,8 +16,8 @@ paramList: param (COMMA param)* ;
 param: type ident ;
 
 stat: SKIP                                                       # SkipStat
-| type ident ASSIGN assignRhs                                    # AssignVarStat
-| assignLhs ASSIGN assignRhs                                     # AssignLhsToRhsStat
+| type ident ASSIGN assignRhs                                    # VarDeclStat
+| assignLhs ASSIGN assignRhs                                     # AssignStat
 | READ assignLhs                                                 # ReadStat
 | FREE expr                                                      # FreeStat
 | RETURN expr                                                    # ReturnStat
@@ -26,8 +26,8 @@ stat: SKIP                                                       # SkipStat
 | PRINTLN expr                                                   # PrintlnStat
 | IF expr THEN stat ELSE stat FI                                 # IfThenElseStat
 | WHILE expr DO stat DONE                                        # WhileStat
-| BEGIN stat END                                                 # BeginStat
-| stat SEMICOLON stat                                            # StatList
+| BEGIN stat END                                                 # ScopingStat
+| stat SEMICOLON stat                                            # CompStat
 ;
 
 assignLhs: ident                                                 # LhsIdent
@@ -48,9 +48,9 @@ pairElem: FST expr                                               # FstPairElem
 | SND expr                                                       # SndPairElem
 ;
 
-type: baseType                                                   
-| arrayType                                                      
-| pairType                                                       
+type: baseType
+| arrayType
+| pairType
 ;
 
 baseType: BASE_TYPE ;
@@ -61,7 +61,7 @@ pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESE
 
 pairElemType: baseType                                           # PairElemBase
 | arrayType                                                      # PairElemArray
-| PAIR                                                           # PairPairElem
+| PAIR                                                           # PairElemPair
 ;
 
 expr: intLiter                                                   # IntExpr

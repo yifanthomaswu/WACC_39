@@ -37,8 +37,13 @@ public class Visitor {
     }
 
     // build and run custom visitor for semantic checks
-    SemanticVisitor visitor = new SemanticVisitor();
-    visitor.visit(tree);
+    try {
+      SemanticVisitor visitor = new SemanticVisitor();
+      visitor.visit(tree);
+    } catch (SemanticErrorException e) {
+      System.out.println(e.getMessage());
+      System.exit(200);
+    }
 
   }
 }

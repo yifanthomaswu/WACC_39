@@ -1,5 +1,5 @@
 package wacc.symboltable.identifier;
 
-public class Type extends Identifier {
+public class BaseType extends Type {
 
 }
