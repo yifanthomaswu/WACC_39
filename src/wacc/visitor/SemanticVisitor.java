@@ -26,8 +26,24 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitFunc(BasicParser.FuncContext ctx) {
+    st = new SymbolTable(st);
+    visit(ctx.paramList());
     return visitChildren(ctx);
   }
+
+   @Override
+   public Void visitParamList(BasicParser.ParamListContext ctx) {
+     for (ParamContext param : ctx.param()) {
+      String ident = param.ident().getText();
+      if (st.lookup(ident) != null) {
+        String msg = "\"" + ident + "\" is already defined in this scope";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      } else {
+        st.add(ident, param);
+      }
+    }
+     return visitChildren(ctx);
+   }
 
   // @Override
   // public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
