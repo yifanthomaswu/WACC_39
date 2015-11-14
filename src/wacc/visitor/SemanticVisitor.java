@@ -1,7 +1,6 @@
 package wacc.visitor;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
@@ -30,16 +29,16 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitFunc(BasicParser.FuncContext ctx) {
     st = new SymbolTable(st);
-      if (ctx.paramList() != null)
-    visit(ctx.paramList());
+    if (ctx.paramList() != null)
+      visit(ctx.paramList());
     visit(ctx.funcStat()); // TODO
     st = st.getEncSymTable();
     return null;
   }
 
-   @Override
-   public Void visitParamList(BasicParser.ParamListContext ctx) {
-     for (ParamContext param : ctx.param()) {
+  @Override
+  public Void visitParamList(BasicParser.ParamListContext ctx) {
+    for (ParamContext param : ctx.param()) {
       String ident = param.ident().getText();
       if (st.lookup(ident) != null) {
         String msg = "\"" + ident + "\" is already defined in this scope";
@@ -48,39 +47,39 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
         st.add(ident, param);
       }
     }
-     return null;
-   }
+    return null;
+  }
 
-   @Override
-   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
-     String ident = ctx.ident().getText();
-     ParserRuleContext c = st.lookup(ident);
-     if (c != null && !(c instanceof FuncContext)) {
-       String msg = "\"" + ident + "\" is already defined in this scope";
-       throw new SemanticErrorException(ctx.getStart(), msg);
-     } else {
-       st.add(ident, ctx);
-     }
-     return visitChildren(ctx);
-   }
+  @Override
+  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+    String ident = ctx.ident().getText();
+    ParserRuleContext c = st.lookup(ident);
+    if (c != null && !(c instanceof FuncContext)) {
+      String msg = "\"" + ident + "\" is already defined in this scope";
+      throw new SemanticErrorException(ctx.getStart(), msg);
+    } else {
+      st.add(ident, ctx);
+    }
+    return visitChildren(ctx);
+  }
 
-   @Override
-   public Void visitIdent(BasicParser.IdentContext ctx) {
-     String ident = ctx.getText();
-     if (st.lookupAll(ident) == null) {
-       String msg = "Variable \"" + ident + "\" is not defined in this scope";
-       throw new SemanticErrorException(ctx.getParent().getStart(), msg);
-     }
-     return visitChildren(ctx);
-   }
+  @Override
+  public Void visitIdent(BasicParser.IdentContext ctx) {
+    String ident = ctx.getText();
+    if (st.lookupAll(ident) == null) {
+      String msg = "Variable \"" + ident + "\" is not defined in this scope";
+      throw new SemanticErrorException(ctx.getParent().getStart(), msg);
+    }
+    return visitChildren(ctx);
+  }
 
-   @Override
-   public Void visitScopingStat(BasicParser.ScopingStatContext ctx) {
-     st = new SymbolTable(st);
-     visit(ctx.stat());
-     st = st.getEncSymTable();
-     return null;
-   }
+  @Override
+  public Void visitScopingStat(BasicParser.ScopingStatContext ctx) {
+    st = new SymbolTable(st);
+    visit(ctx.stat());
+    st = st.getEncSymTable();
+    return null;
+  }
 
   // @Override
   // public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
@@ -124,44 +123,43 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
 
+  @Override
+  public Void visitReturnStat(BasicParser.ReturnStatContext ctx) {
+    // Check if in global scope
+    ParserRuleContext context = ctx.getParent();
+    while (!(context instanceof FuncContext)) {
+      if (context instanceof ProgramContext) {
+        String msg = " Cannot return from the global scope. ";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      }
+      context = context.getParent();
+    }
+    // Visit expr first to check it for semantic errors
+    visit(ctx.expr());
+    // Check return exp type matches func type
+    context = ((FuncContext) context).type();
+    if (context.equals(ctx.expr())) {
+      String msg = " Incompatible type at " + ctx.expr().getText() + " (expected: INT, actual: "
+          + ctx.expr().getClass().getSimpleName() + ")";
+      throw new SemanticErrorException(ctx.getStart(), msg);
+    }
+    return visitChildren(ctx);
 
+  }
 
-   @Override
-   public Void visitReturnStat(BasicParser.ReturnStatContext ctx) {
-       //Check if in global scope
-       ParserRuleContext context = ctx.getParent();
-       while (!(context instanceof FuncContext)) {
-           if (context instanceof ProgramContext) {
-               String msg = " Cannot return from the global scope. ";
-               throw new SemanticErrorException(ctx.getStart(), msg);
-           }
-           context = context.getParent();
-       }
-       //Visit expr first to check it for semantic errors
-       visit(ctx.expr());
-       //Check return exp type matches func type
-       context = ((FuncContext) context).type();
-       if (context.equals(ctx.expr())) {
-           String msg = " Incompatible type at " + ctx.expr().getText() +
-                   " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName() + ")";
-           throw new SemanticErrorException(ctx.getStart(), msg);
-       }
-       return visitChildren(ctx);
-
-   }
-
-   @Override
-   public Void visitExitStat(BasicParser.ExitStatContext ctx) {
-       //Visit expr first to check it for semantic errors
-       visit(ctx.expr());
-       //Carry out check that return value of expr is an INT as required by EXIT Stat
-       if (!(ctx.expr() instanceof IntExprContext)) {
-           String msg = " Incompatible type at " + ctx.expr().getText() +
-                   " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName() + ")";
-           throw new SemanticErrorException(ctx.expr().getStart(), msg);
-       }
-       return visitChildren(ctx);
-   }
+  @Override
+  public Void visitExitStat(BasicParser.ExitStatContext ctx) {
+    // Visit expr first to check it for semantic errors
+    visit(ctx.expr());
+    // Carry out check that return value of expr is an INT as required by EXIT
+    // Stat
+    if (!(ctx.expr() instanceof IntExprContext)) {
+      String msg = " Incompatible type at " + ctx.expr().getText() + " (expected: INT, actual: "
+          + ctx.expr().getClass().getSimpleName() + ")";
+      throw new SemanticErrorException(ctx.expr().getStart(), msg);
+    }
+    return visitChildren(ctx);
+  }
 
   // @Override
   // public Void visitPrintStat(BasicParser.PrintStatContext ctx) {
@@ -248,10 +246,10 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-   @Override
-   public Void visitType(BasicParser.TypeContext ctx) {
-   return visitChildren(ctx);
-   }
+  @Override
+  public Void visitType(BasicParser.TypeContext ctx) {
+    return visitChildren(ctx);
+  }
   //
   // @Override
   // public Void visitBaseType(BasicParser.BaseTypeContext ctx) {
