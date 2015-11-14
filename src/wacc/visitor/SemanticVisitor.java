@@ -137,7 +137,17 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
            }
            context = context.getParent();
        }
-   return visitChildren(ctx);
+       //Visit expr first to check it for semantic errors
+       visit(ctx.expr());
+       //Check return exp type matches func type
+       context = ((FuncContext) context).type();
+       if (context.equals(ctx.expr())) {
+           String msg = " Incompatible type at " + ctx.expr().getText() +
+                   " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName() + ")";
+           throw new SemanticErrorException(ctx.getStart(), msg);
+       }
+       return visitChildren(ctx);
+
    }
 
    @Override
@@ -147,7 +157,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
        //Carry out check that return value of expr is an INT as required by EXIT Stat
        if (!(ctx.expr() instanceof IntExprContext)) {
            String msg = " Incompatible type at " + ctx.expr().getText() +
-                   " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName() + ")"; //expr().getClass().getSimpleName();
+                   " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName() + ")";
            throw new SemanticErrorException(ctx.expr().getStart(), msg);
        }
        return visitChildren(ctx);
