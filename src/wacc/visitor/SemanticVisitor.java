@@ -20,7 +20,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
         String msg = "\"" + ident + "\" is already defined in this scope";
         throw new SemanticErrorException(ctx.getStart(), msg);
       } else {
-        st.add(ident, func);
+        st.add(ident, func.type());
       }
     }
     return visitChildren(ctx);
@@ -44,7 +44,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
         String msg = "\"" + ident + "\" is already defined in this scope";
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       } else {
-        st.add(ident, param);
+        st.add(ident, param.type());
       }
     }
     return null;
@@ -58,7 +58,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
       String msg = "\"" + ident + "\" is already defined in this scope";
       throw new SemanticErrorException(ctx.getStart(), msg);
     } else {
-      st.add(ident, ctx);
+      st.add(ident, ctx.type());
     }
     return visitChildren(ctx);
   }

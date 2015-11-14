@@ -1,6 +1,6 @@
 package wacc.visitor.utils;
 
-import antlr.BasicParser.ArrayTypeContext;
+import antlr.BasicParser.*;
 
 public class ArrayType extends Type {
 
@@ -16,12 +16,9 @@ public class ArrayType extends Type {
     this.level = ctx.ARRAY_SQUARE_BRS().size();
   }
 
-  public Type getBase() {
-    return base;
-  }
-
-  public int getLevel() {
-    return level;
+  public ArrayType(ArrayElemContext ctx, ArrayType identType) {
+    base = identType.base;
+    level = identType.level - ctx.expr().size();
   }
 
   @Override
@@ -31,10 +28,10 @@ public class ArrayType extends Type {
     }
 
     ArrayType that = (ArrayType) obj;
-    if (this.getLevel() != that .getLevel()) {
+    if (level != that.level) {
       return false;
     }
-    return base.equals(that.getBase());
+    return base.equals(that.base);
   }
 
   @Override

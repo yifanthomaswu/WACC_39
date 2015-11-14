@@ -4,9 +4,10 @@ import antlr.BasicParser.*;
 
 public class PairType extends Type {
 
-  private final Type[] base = new Type[2];
+  private final Type[] base;
 
   public PairType(PairTypeContext ctx) {
+    base = new Type[2];
     for (int i = 0; i < base.length; i++) {
       PairElemTypeContext pairElemType = ctx.pairElemType(i);
       if (pairElemType.baseType() != null) {
@@ -19,8 +20,8 @@ public class PairType extends Type {
     }
   }
 
-  public Type getBase(int i) {
-    return base[i];
+  public PairType(PairExprContext ctx) {
+    base = null;
   }
 
   @Override
@@ -29,16 +30,22 @@ public class PairType extends Type {
       return false;
     }
 
-    PairType that = (PairType) obj;
-    for (int i = 0; i < base.length; i++) {
-      if (!(base[i] == null && that.getBase(i) == null)) {
-        if (base[i] != null && that.getBase(i) != null) {
-          if (!base[i].equals(that.getBase(i))) {
-            return false;
+    Type[] thatBase = ((PairType) obj).base;
+    if (!(base == null && thatBase == null)) {
+      if (base != null && thatBase != null) {
+        for (int i = 0; i < base.length; i++) {
+          if (!(base[i] == null && thatBase[i] == null)) {
+            if (base[i] != null && thatBase[i] != null) {
+              if (!base[i].equals(thatBase[i])) {
+                return false;
+              }
+            } else {
+              return false;
+            }
           }
-        } else {
-          return false;
         }
+      } else {
+        return false;
       }
     }
     return true;
@@ -46,8 +53,12 @@ public class PairType extends Type {
 
   @Override
   public int hashCode() {
-    return ((base[1] == null) ? 0 : base[1].hashCode()) +
-        ((base[2] == null) ? 0 : base[2].hashCode());
+    if (base == null) {
+      return 0;
+    } else {
+      return ((base[1] == null) ? 0 : base[1].hashCode()) +
+          ((base[2] == null) ? 0 : base[2].hashCode());
+    }
   }
 
 }
