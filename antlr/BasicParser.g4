@@ -55,13 +55,13 @@ type: baseType
 
 baseType: BASE_TYPE ;
 
-arrayType: (baseType | pairType) (OPEN_SQUARE_BR CLOSE_SQUARE_BR)* ;
+arrayType: (baseType | pairType) (ARRAY_SQUARE_BRS)* ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 
-pairElemType: baseType                                           # PairElemBase
-| arrayType                                                      # PairElemArray
-| PAIR                                                           # PairElemPair
+pairElemType: baseType                                           //# PairElemBase
+| arrayType                                                      //# PairElemArray
+| PAIR                                                           //# PairElemPair
 ;
 
 expr: intLiter                                                   # IntExpr

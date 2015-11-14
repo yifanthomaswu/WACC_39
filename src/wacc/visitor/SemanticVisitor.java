@@ -1,8 +1,8 @@
 package wacc.visitor;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+
 import antlr.*;
-import antlr.BasicParser.ExprContext;
 import antlr.BasicParser.LhsArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
