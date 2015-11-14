@@ -3,6 +3,7 @@ package wacc.visitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
+import antlr.BasicParser.LhsArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
 
@@ -113,10 +114,26 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  // @Override
-  // public Void visitReadStat(BasicParser.ReadStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
+  @Override
+  public Void visitReadStat(BasicParser.ReadStatContext ctx) {
+    if (ctx.assignLhs() instanceof LhsIdentContext) {
+      String ident = ctx.assignLhs().getText();
+      TypeContext identType = ((VarDeclStatContext) st.lookup(ident)).type();
+      if (!(identType.getText().equals("int") |
+            identType.getText().equals("char"))) {
+        String msg = "Incompatible type " + identType.getText();
+        throw new SemanticErrorException(ctx.start, msg);
+      }
+
+    }
+    if (ctx.assignLhs() instanceof LhsArrayElemContext) {
+    }
+
+    if (ctx.assignLhs() instanceof LhsPairElemContext) {
+    }
+    return visitChildren(ctx);
+  }
+
   //
   // @Override
   // public Void visitFreeStat(BasicParser.FreeStatContext ctx) {
@@ -129,7 +146,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     ParserRuleContext context = ctx.getParent();
     while (!(context instanceof FuncContext)) {
       if (context instanceof ProgramContext) {
-        String msg = " Cannot return from the global scope. ";
+        String msg = "Cannot return from the global scope. ";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
       context = context.getParent();
@@ -139,8 +156,9 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     // Check return exp type matches func type
     context = ((FuncContext) context).type();
     if (context.equals(ctx.expr())) {
-      String msg = " Incompatible type at " + ctx.expr().getText() + " (expected: INT, actual: "
-          + ctx.expr().getClass().getSimpleName() + ")";
+      String msg = "Incompatible type at " + ctx.expr().getText()
+          + " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName()
+          + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
@@ -154,8 +172,9 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     // Carry out check that return value of expr is an INT as required by EXIT
     // Stat
     if (!(ctx.expr() instanceof IntExprContext)) {
-      String msg = " Incompatible type at " + ctx.expr().getText() + " (expected: INT, actual: "
-          + ctx.expr().getClass().getSimpleName() + ")";
+      String msg = "Incompatible type at " + ctx.expr().getText()
+          + " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName()
+          + ")";
       throw new SemanticErrorException(ctx.expr().getStart(), msg);
     }
     return visitChildren(ctx);
