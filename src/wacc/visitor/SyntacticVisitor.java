@@ -3,6 +3,7 @@ package wacc.visitor;
 import antlr.BasicParser;
 import antlr.BasicParserBaseVisitor;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -34,53 +35,54 @@ SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
         }
         else if (stat instanceof BasicParser.IfThenElseStatContext)
         {
-            BasicParser.IfThenElseStatContext ctx = (BasicParser.IfThenElseStatContext)stat;
-            return hasReturn(ctx.stat(0)) && hasReturn(ctx.stat(1));
+            return hasReturn(((BasicParser.IfThenElseStatContext)stat).stat(0)) &&
+                    hasReturn(((BasicParser.IfThenElseStatContext)stat).stat(1));
         }
         else if (stat instanceof BasicParser.WhileStatContext)
         {
-            BasicParser.WhileStatContext ctx = (BasicParser.WhileStatContext)stat;
-            return hasReturn(ctx.stat());
+            return hasReturn(((BasicParser.WhileStatContext)stat).stat());
         }
         else if (stat instanceof BasicParser.ScopingStatContext)
         {
-            BasicParser.ScopingStatContext ctx = (BasicParser.ScopingStatContext)stat;
-            return hasReturn(ctx.stat());
+            return hasReturn(((BasicParser.ScopingStatContext)stat).stat());
         }
         else if (stat instanceof BasicParser.CompStatContext)
         {
-            BasicParser.CompStatContext ctx = (BasicParser.CompStatContext)stat;
-            List<BasicParser.StatContext> stats = ctx.stat();
+            List<BasicParser.StatContext> stats = ((BasicParser.CompStatContext)stat).stat();
             return checkBlock(stats);
         }
         return false;
     }
 
     private boolean checkBlock(List<BasicParser.StatContext> stats) {
-        for (BasicParser.StatContext st : stats)
-        {
-            if (st instanceof BasicParser.ReturnStatContext || st instanceof BasicParser.ExitStatContext)
-                return true;
-        }
         for (int i = 0; i < stats.size(); i++)
         {
-            BasicParser.StatContext stat = stats.get(i);
-            if (stat instanceof BasicParser.ScopingStatContext) {
-                stats.add(stat);
-                return checkBlock(stats);
+            if (stats.get(i) instanceof BasicParser.ReturnStatContext || stats.get(i) instanceof BasicParser.ExitStatContext)
+                return true;
+        }
+        List<BasicParser.StatContext> list = new LinkedList<>();
+        for (int i = 0; i < stats.size(); i++)
+        {
+            if (stats.get(i) instanceof BasicParser.ScopingStatContext ||
+                    stats.get(i) instanceof BasicParser.CompStatContext ||
+                    stats.get(i) instanceof BasicParser.IfThenElseStatContext)
+                list.add(stats.get(i));
+        }
+        for (int i = 0; i < list.size(); i++)
+        {
+            if (list.get(i) instanceof BasicParser.ScopingStatContext) {
+                if (hasReturn(((BasicParser.ScopingStatContext)list.get(i)).stat()))
+                    return true;
             }
-            else if (stat instanceof BasicParser.CompStatContext)
+            else if (list.get(i) instanceof BasicParser.CompStatContext)
             {
-                for (BasicParser.StatContext st : ((BasicParser.CompStatContext)stat).stat())
-                {
-                    stats.add(st);
-                }
-                return checkBlock(stats);
+                if (checkBlock(((BasicParser.CompStatContext)list.get(i)).stat()))
+                    return true;
             }
-            else if (stat instanceof BasicParser.IfThenElseStatContext)
+            else if (list.get(i) instanceof BasicParser.IfThenElseStatContext)
             {
-                BasicParser.IfThenElseStatContext ifStat = (BasicParser.IfThenElseStatContext)stat;
-                if (hasReturn(ifStat.stat(0)) && hasReturn(ifStat.stat(1)))
+                if (hasReturn(((BasicParser.IfThenElseStatContext)list.get(i)).stat(0)) &&
+                        hasReturn(((BasicParser.IfThenElseStatContext)list.get(i)).stat(1)))
                     return true;
             }
         }
