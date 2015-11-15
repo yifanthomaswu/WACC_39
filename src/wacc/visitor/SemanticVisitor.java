@@ -110,6 +110,27 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
+    Type exprType = Utils.getType(ctx.expr(), st);
+    if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
+      String expr = ctx.expr().getText();
+      String msg = "Incompatible type at \"" + expr + "\" (expected: "
+          + BaseLiter.BOOL + ", actual: " + exprType.toString() + ")";
+      throw new SemanticErrorException(ctx.expr().getStart(), msg);
+    }
+
+    visit(ctx.expr());
+    st = new SymbolTable(st);
+    visit(ctx.stat(0));
+    st = st.getEncSymTable();
+
+    st = new SymbolTable(st);
+    visit(ctx.stat(1));
+    st = st.getEncSymTable();
+    return null;
+  }
+
+  @Override
   public Void visitWhileStat(WhileStatContext ctx) {
     Type exprType = Utils.getType(ctx.expr(), st);
     if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
@@ -118,6 +139,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
           + BaseLiter.BOOL + ", actual: " + exprType.toString() + ")";
       throw new SemanticErrorException(ctx.expr().getStart(), msg);
     }
+
     visit(ctx.expr());
     st = new SymbolTable(st);
     visit(ctx.stat());
@@ -177,21 +199,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
       throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
-  }
-
-  @Override
-  public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
-    visit(ctx.expr());
-    Type ifExpr = Utils.getType(ctx.expr(), st);
-    if (Utils.isSameBaseType(ifExpr, BaseLiter.BOOL)) {
-      st = new SymbolTable(st);
-      visit(ctx.stat(0));
-      st = st.getEncSymTable();
-      st = new SymbolTable(st);
-      visit(ctx.stat(1));
-      st = st.getEncSymTable();
-    }
-    return null;
   }
 
   @Override
