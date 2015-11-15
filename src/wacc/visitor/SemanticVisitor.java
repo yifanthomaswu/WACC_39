@@ -88,7 +88,48 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitFreeStat(BasicParser.FreeStatContext ctx) {
+    Type exprType = Utils.getType(ctx.expr(), st);
+    if (!(exprType instanceof PairType || exprType instanceof ArrayType)) {
+      String msg = "Incompatible type " + exprType.toString();
+      throw new SemanticErrorException(ctx.getStart(), msg);
+    }
     return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitExitStat(BasicParser.ExitStatContext ctx) {
+    Type exprType = Utils.getType(ctx.expr(), st);
+    if (!Utils.isSameBaseType(exprType, BaseLiter.INT)) {
+      String expr = ctx.expr().getText();
+      String msg = "Incompatible type at \"" + expr + "\" (expected: "
+          + BaseLiter.INT + ", actual: " + exprType.toString() + ")";
+      throw new SemanticErrorException(ctx.expr().getStart(), msg);
+    }
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitWhileStat(BasicParser.WhileStatContext ctx) {
+    visit(ctx.expr());
+    Type exprType = Utils.getType(ctx.expr(), st);
+    if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
+      String expr = ctx.expr().getText();
+      String msg = "Incompatible type at \"" + expr + "\" (expected: "
+          + BaseLiter.BOOL + ", actual: " + exprType.toString() + ")";
+      throw new SemanticErrorException(ctx.expr().getStart(), msg);
+    }
+    st = new SymbolTable(st);
+    visit(ctx.stat());
+    st = st.getEncSymTable();
+    return null;
+  }
+
+  @Override
+  public Void visitScopingStat(BasicParser.ScopingStatContext ctx) {
+    st = new SymbolTable(st);
+    visit(ctx.stat());
+    st = st.getEncSymTable();
+    return null;
   }
 
   @Override
@@ -101,19 +142,44 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     return visitChildren(ctx);
   }
 
-  @Override
-  public Void visitScopingStat(BasicParser.ScopingStatContext ctx) {
-    st = new SymbolTable(st);
-    visit(ctx.stat());
-    st = st.getEncSymTable();
-    return null;
-  }
+  // @Override
+  // public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
+  // return visitChildren(ctx);
+  // }
+  //
+  //
+  // @Override
+  // public Void visitParamList(BasicParser.ParamListContext ctx) {
+  // return visitChildren(ctx);
+  // }
+  //
+  // @Override
+  // public Void visitParam(BasicParser.ParamContext ctx) {
+  // return visitChildren(ctx);
+  // }
+  //
+  // @Override
+  // public Void visitSkipStat(BasicParser.SkipStatContext ctx) {
+  // return visitChildren(ctx);
+  // }
+  //
+  // @Override
+  // public Void visitAssignVarStat(BasicParser.AssignVarStatContext ctx) {
+  // return visitChildren(ctx);
+  // }
+  //
+  // @Override
+  // public Void visitAssignLhsToRhsStat(BasicParser.AssignLhsToRhsStatContext
+  // ctx) {
+  // return visitChildren(ctx);
+  // }
+  //
 
   @Override
   public Void visitReadStat(ReadStatContext ctx) {
 
     Type targetType = Utils.getType(ctx.assignLhs(), st);
-    if (!(Utils.isSameBaseType(targetType, BaseLiter.INT) 
+    if (!(Utils.isSameBaseType(targetType, BaseLiter.INT)
         | Utils.isSameBaseType(targetType, BaseLiter.CHAR))) {
       String msg = "Expected type INT or CHAR. Actual type " + targetType;
       throw new SemanticErrorException(ctx.start, msg);
@@ -146,21 +212,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   }
 
-  @Override
-  public Void visitExitStat(ExitStatContext ctx) {
-    // Visit expr first to check it for semantic errors
-    visit(ctx.expr());
-    // Carry out check that return value of expr is an INT as required by EXIT
-    // Stat
-    if (!(ctx.expr() instanceof IntExprContext)) {
-      String msg = "Incompatible type at " + ctx.expr().getText()
-          + " (expected: INT, actual: "
-          + Utils.getType(ctx.expr(), st).toString() + ")";
-      throw new SemanticErrorException(ctx.expr().getStart(), msg);
-    }
-    return visitChildren(ctx);
-  }
-
   // @Override
   // public Void visitPrintStat(PrintStatContext ctx) {
   // return visitChildren(ctx);
@@ -170,7 +221,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // public Void visitPrintlnStat(PrintlnStatContext ctx) {
   // return visitChildren(ctx);
   // }
-  //
+
    @Override
    public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
      visit(ctx.expr());
@@ -185,11 +236,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
      }
      return visitChildren(ctx);
    }
-  //
-  // @Override
-  // public Void visitWhileStat(WhileStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
+
   //
   // @Override
   // public Void visitBeginStat(BeginStatContext ctx) {
@@ -339,7 +386,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-
   @Override
   public Void visitParensExpr(BasicParser.ParensExprContext ctx) {
     return visitChildren(ctx);
