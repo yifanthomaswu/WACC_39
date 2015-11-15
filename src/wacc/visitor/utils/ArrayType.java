@@ -39,4 +39,11 @@ public class ArrayType extends Type {
     return base.hashCode() + level;
   }
 
+  public int getLevel() {
+    return level;
+  }
+  
+  public Type getBaseType() {
+    return base;
+  }
 }
