@@ -1,7 +1,10 @@
 package wacc.visitor.utils;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
+import wacc.visitor.SemanticErrorException;
 
 public class Utils {
 
@@ -19,8 +22,13 @@ public class Utils {
 
   public static Type getType(IdentContext ctx, SymbolTable st) {
     String ident = ctx.getText();
-    TypeContext typeContext = (TypeContext) st.lookupAll(ident);
-    return getType(typeContext);
+    ParserRuleContext context = st.lookupAll(ident);
+    if (context == null) {
+      String msg = "Variable \"" + ident + "\" is not defined in this scope";
+      throw new SemanticErrorException(ctx.getParent().getStart(), msg);
+    } else {
+      return getType((TypeContext) context);
+    }
   }
 
   private static Type getType(ArrayElemContext ctx, SymbolTable st) {
