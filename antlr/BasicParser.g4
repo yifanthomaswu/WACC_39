@@ -44,8 +44,8 @@ assignRhs: expr                                                  # RhsExpr
 
 argList: expr (COMMA expr)* ;
 
-pairElem: FST expr                                               # FstPairElem
-| SND expr                                                       # SndPairElem
+pairElem: FST expr                                               //# FstPairElem
+| SND expr                                                       //# SndPairElem
 ;
 
 type: baseType
@@ -55,7 +55,7 @@ type: baseType
 
 baseType: BASE_TYPE ;
 
-arrayType: (baseType | pairType) (ARRAY_SQUARE_BRS)* ;
+arrayType: (baseType | pairType) (ARRAY_SQUARE_BRS)+ ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 

@@ -3,7 +3,6 @@ package wacc.visitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
-import antlr.BasicParser.LhsArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
@@ -62,6 +61,34 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     } else {
       st.add(ident, ctx.type());
     }
+    Type identType = Utils.getType(ctx.type());
+    Type assignRhsType = Utils.getType(ctx.assignRhs(), st);
+    if (!identType.equals(assignRhsType)) {
+      String assignRhs = ctx.assignRhs().getText();
+      String msg = "Incompatible type at \"" + assignRhs + "\" (expected: "
+          + identType.toString() + ", actual: " + assignRhsType.toString()
+          + ")";
+      throw new SemanticErrorException(ctx.assignRhs().getStart(), msg);
+    }
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
+    Type assignLhsType = Utils.getType(ctx.assignLhs(), st);
+    Type assignRhsType = Utils.getType(ctx.assignRhs(), st);
+    if (!assignLhsType.equals(assignRhsType)) {
+      String assignRhs = ctx.assignRhs().getText();
+      String msg = "Incompatible type at \"" + assignRhs + "\" (expected: "
+          + assignLhsType.toString() + ", actual: " + assignRhsType.toString()
+          + ")";
+      throw new SemanticErrorException(ctx.assignRhs().getStart(), msg);
+    }
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitFreeStat(BasicParser.FreeStatContext ctx) {
     return visitChildren(ctx);
   }
 
@@ -120,8 +147,8 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     if (ctx.assignLhs() instanceof LhsIdentContext) {
       String ident = ctx.assignLhs().getText();
       TypeContext identType = ((VarDeclStatContext) st.lookup(ident)).type();
-      if (!(identType.getText().equals("int") |
-            identType.getText().equals("char"))) {
+      if (!(identType.getText().equals("int") | identType.getText().equals(
+          "char"))) {
         String msg = "Incompatible type " + identType.getText();
         throw new SemanticErrorException(ctx.start, msg);
       }
@@ -134,12 +161,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     }
     return visitChildren(ctx);
   }
-
-  //
-  // @Override
-  // public Void visitFreeStat(BasicParser.FreeStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
 
   @Override
   public Void visitReturnStat(BasicParser.ReturnStatContext ctx) {
@@ -174,8 +195,8 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     // Stat
     if (!(ctx.expr() instanceof IntExprContext)) {
       String msg = "Incompatible type at " + ctx.expr().getText()
-          + " (expected: INT, actual: " + Utils.getType(ctx.expr(), st).toString()
-          + ")";
+          + " (expected: INT, actual: "
+          + Utils.getType(ctx.expr(), st).toString() + ")";
       throw new SemanticErrorException(ctx.expr().getStart(), msg);
     }
     return visitChildren(ctx);
@@ -404,22 +425,17 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  
-  
-  
-//   @Override
-//   public Void visitIntLiter(BasicParser.IntLiterContext ctx) {
-//   return visitChildren(ctx);
-//   }
+
+  // @Override
+  // public Void visitIntLiter(BasicParser.IntLiterContext ctx) {
+  // return visitChildren(ctx);
+  // }
   //
   // @Override
   // public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
   // return visitChildren(ctx);
   // }
-  
-  
-  
-  
+
   //
   // @Override
   // public Void visitCharLiter(BasicParser.CharLiterContext ctx) {

@@ -61,6 +61,9 @@ QUOTE: '\'' ;
 
 DOUBLE_QUOTE: '"' ;
 
+// bool
+BOOL_LITER: 'true' | 'false' ;
+
 // ident
 IDENT: IDENT_CHAR (IDENT_CHAR | DIGIT)* ;
 fragment IDENT_CHAR: [_a-zA-Z] ;
@@ -69,9 +72,6 @@ fragment IDENT_CHAR: [_a-zA-Z] ;
 INT_LITER: (INT_SIGN)? (DIGIT)+ ;
 fragment DIGIT: [0-9] ;
 fragment INT_SIGN: [+-] ;
-
-// bool
-BOOL_LITER: 'true' | 'false' ;
 
 // character
 CHAR_LITER: '\'' CHARACTER '\'' ;
