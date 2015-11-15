@@ -65,10 +65,10 @@ public class BaseType extends Type {
   public int hashCode() {
     return base.hashCode();
   }
-  
+
   @Override
   public String toString() {
-	  return base.toString();
+    return base.toString();
   }
 
 }

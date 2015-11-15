@@ -8,4 +8,7 @@ public abstract class Type {
   @Override
   public abstract int hashCode();
 
+  @Override
+  public abstract String toString();
+
 }

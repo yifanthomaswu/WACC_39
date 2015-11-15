@@ -42,8 +42,17 @@ public class ArrayType extends Type {
   public int getLevel() {
     return level;
   }
-  
+
   public Type getBaseType() {
     return base;
+  }
+
+  @Override
+  public String toString() {
+    String brackets = "";
+    for (int i = 0; i < level; i++) {
+      brackets += "[]";
+    }
+    return base.toString() + brackets;
   }
 }
