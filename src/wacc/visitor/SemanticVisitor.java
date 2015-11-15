@@ -212,15 +212,17 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   }
 
-  // @Override
-  // public Void visitPrintStat(PrintStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPrintlnStat(PrintlnStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
+   @Override
+   public Void visitPrintStat(PrintStatContext ctx) {
+     // no semantic checks needed
+     return visitChildren(ctx);
+   }
+  
+   @Override
+   public Void visitPrintlnStat(PrintlnStatContext ctx) {
+     // no semantic checks needed
+     return visitChildren(ctx);
+   }
 
    @Override
    public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
