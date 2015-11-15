@@ -15,7 +15,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitProgram(ProgramContext ctx) {
     SymbolTable globalTable = new SymbolTable(null);
     st = globalTable;
-    initialiseGlobalTable();
     for (FuncContext func : ctx.func()) {
       String ident = func.ident().getText();
       if (st.lookup(ident) != null) {
@@ -26,11 +25,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
       }
     }
     return visitChildren(ctx);
-  }
-
-  private void initialiseGlobalTable() {
-    st.add("true", new BoolExprContext(new ExprContext(null, 0)));
-    st.add("false", new BoolExprContext(new ExprContext(null, 0)));
   }
 
   @Override
