@@ -33,10 +33,10 @@ SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
         {
             return true;
         }
-        else if (stat instanceof BasicParser.IfThenElseStatContext)
+        else if (stat instanceof BasicParser.IfStatContext)
         {
-            return hasReturn(((BasicParser.IfThenElseStatContext)stat).stat(0)) &&
-                    hasReturn(((BasicParser.IfThenElseStatContext)stat).stat(1));
+            return hasReturn(((BasicParser.IfStatContext)stat).stat(0)) &&
+                    hasReturn(((BasicParser.IfStatContext)stat).stat(1));
         }
         else if (stat instanceof BasicParser.WhileStatContext)
         {
@@ -65,7 +65,7 @@ SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
         {
             if (stats.get(i) instanceof BasicParser.ScopingStatContext ||
                     stats.get(i) instanceof BasicParser.CompStatContext ||
-                    stats.get(i) instanceof BasicParser.IfThenElseStatContext)
+                    stats.get(i) instanceof BasicParser.IfStatContext)
                 list.add(stats.get(i));
         }
         for (int i = 0; i < list.size(); i++)
@@ -79,10 +79,10 @@ SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
                 if (checkBlock(((BasicParser.CompStatContext)list.get(i)).stat()))
                     return true;
             }
-            else if (list.get(i) instanceof BasicParser.IfThenElseStatContext)
+            else if (list.get(i) instanceof BasicParser.IfStatContext)
             {
-                if (hasReturn(((BasicParser.IfThenElseStatContext)list.get(i)).stat(0)) &&
-                        hasReturn(((BasicParser.IfThenElseStatContext)list.get(i)).stat(1)))
+                if (hasReturn(((BasicParser.IfStatContext)list.get(i)).stat(0)) &&
+                        hasReturn(((BasicParser.IfStatContext)list.get(i)).stat(1)))
                     return true;
             }
         }

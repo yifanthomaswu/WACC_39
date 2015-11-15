@@ -48,8 +48,6 @@ CLOSE_PARENTHESES : ')' ;
 OPEN_SQUARE_BR: '[' ;
 CLOSE_SQUARE_BR: ']' ;
 
-ARRAY_SQUARE_BRS: '[]' ;
-
 // symbols
 ASSIGN: '=' ;
 

@@ -22,7 +22,7 @@ stat: SKIP                                                       # SkipStat
 | EXIT expr                                                      # ExitStat
 | PRINT expr                                                     # PrintStat
 | PRINTLN expr                                                   # PrintlnStat
-| IF expr THEN stat ELSE stat FI                                 # IfThenElseStat
+| IF expr THEN stat ELSE stat FI                                 # IfStat
 | WHILE expr DO stat DONE                                        # WhileStat
 | BEGIN stat END                                                 # ScopingStat
 | stat SEMICOLON stat                                            # CompStat
@@ -53,7 +53,7 @@ type: baseType
 
 baseType: BASE_TYPE ;
 
-arrayType: (baseType | pairType) (ARRAY_SQUARE_BRS)+ ;
+arrayType: (baseType | pairType) (OPEN_SQUARE_BR CLOSE_SQUARE_BR)+ ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 

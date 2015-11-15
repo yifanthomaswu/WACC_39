@@ -143,7 +143,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
+  public Void visitIfStat(IfStatContext ctx) {
     Type exprType = Utils.getType(ctx.expr(), st);
     if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
       String expr = ctx.expr().getText();

@@ -75,8 +75,14 @@ public class Utils {
     if (ctx instanceof RhsExprContext) {
       return getType(((RhsExprContext) ctx).expr(), st);
     } else if (ctx instanceof RhsArrayLiterContext) {
-      return new ArrayType(getType(((RhsArrayLiterContext) ctx).arrayLiter()
-          .expr(0), st));
+      ArrayLiterContext context = ((RhsArrayLiterContext) ctx).arrayLiter();
+      Type exprType;
+      if (context.expr().size() == 0) {
+        exprType = null;
+      } else {
+        exprType = getType(context.expr(0), st);
+      }
+      return new ArrayType(exprType);
     } else if (ctx instanceof RhsNewPairContext) {
       Type[] elemTypes = new Type[2];
       for (int i = 0; i < elemTypes.length; i++) {
@@ -89,7 +95,7 @@ public class Utils {
       String ident = ((RhsCallContext) ctx).ident().getText();
       ParserRuleContext context = st.lookupAll(ident);
       if (context == null || context instanceof TypeContext) {
-        String msg = "Function \"" + ident + "\" is not defined in this scope";//TODO
+        String msg = "Function \"" + ident + "\" is not defined in this scope";// TODO
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       }
       TypeContext typeContext = ((FuncContext) context).type();

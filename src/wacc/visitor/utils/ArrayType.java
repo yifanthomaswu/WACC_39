@@ -13,7 +13,7 @@ public class ArrayType extends Type {
     } else {
       base = new PairType(ctx.pairType());
     }
-    this.level = ctx.ARRAY_SQUARE_BRS().size();
+    this.level = ctx.OPEN_SQUARE_BR().size();
   }
 
   public ArrayType(ArrayElemContext ctx, ArrayType identType) {
@@ -33,23 +33,18 @@ public class ArrayType extends Type {
     }
 
     ArrayType that = (ArrayType) obj;
-    if (level != that.level && level != 0) {
+    if (level != that.level) {
       return false;
+    }
+    if (base == null || that.base == null) {
+      return true;
     }
     return base.equals(that.base);
   }
 
   @Override
   public int hashCode() {
-    return base.hashCode() + level;
-  }
-
-  public int getLevel() {
-    return level;
-  }
-
-  public Type getBaseType() {
-    return base;
+    return base == null ? 0 : base.hashCode() + level;
   }
 
   @Override
@@ -58,6 +53,6 @@ public class ArrayType extends Type {
     for (int i = 0; i < level; i++) {
       brackets += "[]";
     }
-    return base.toString() + brackets;
+    return base == null ? "T" : base.toString() + brackets;
   }
 }
