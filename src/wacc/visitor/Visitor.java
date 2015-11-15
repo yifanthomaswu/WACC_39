@@ -29,9 +29,19 @@ public class Visitor {
     // begin parsing at program rule
     ParseTree tree = parser.program();
 
+    int numberOfSyntaxErrorsErrors = parser.getNumberOfSyntaxErrors();
+
+    try {
+      SyntacticVisitor syntacticVisitor = new SyntacticVisitor();
+      syntacticVisitor.visit(tree);
+    } catch (SyntacticErrorException e) {
+      System.out.println(e.getMessage());
+      numberOfSyntaxErrorsErrors++;
+    }
+
     // exit with code 100 if syntactic error exits
-    if (parser.getNumberOfSyntaxErrors() > 0) {
-      System.out.println(parser.getNumberOfSyntaxErrors() +
+    if (numberOfSyntaxErrorsErrors > 0) {
+      System.out.println(numberOfSyntaxErrorsErrors +
           " parser error(s) detected, no further compilation attempted.");
       System.exit(100);
     }
