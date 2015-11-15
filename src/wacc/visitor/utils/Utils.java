@@ -83,10 +83,10 @@ public class Utils {
   }
 
   public static boolean isSameBaseType(Type type, BaseLiter baseLiter) {
-    if (!(type instanceof BaseType)) {
-      return false;
-    } else {
+    if (type instanceof BaseType) {
       return ((BaseType) type).isSameBaseType((BaseType) type, baseLiter);
+    } else {
+      return type.toString().equals(baseLiter.toString()); // TODO
     }
   }
 
