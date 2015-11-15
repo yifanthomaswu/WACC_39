@@ -4,7 +4,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
 import antlr.BasicParser.*;
-import org.antlr.v4.runtime.misc.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
 import wacc.visitor.utils.Utils;
