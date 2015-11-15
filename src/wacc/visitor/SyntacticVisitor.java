@@ -2,8 +2,6 @@ package wacc.visitor;
 
 import antlr.BasicParser;
 import antlr.BasicParserBaseVisitor;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.List;
 
@@ -54,15 +52,15 @@ public class SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
             List<BasicParser.StatContext> stats = ctx.stat();
             for (BasicParser.StatContext st : stats)
             {
-                if ((stat instanceof BasicParser.IfThenElseStatContext) ||
-                        (stat instanceof BasicParser.WhileStatContext) ||
-                        (stat instanceof BasicParser.ScopingStatContext) ||
-                        (stat instanceof BasicParser.CompStatContext) ||
-                        (stat instanceof BasicParser.ReturnStatContext) ||
-                        (stat instanceof BasicParser.ExitStatContext)
+                if ((st instanceof BasicParser.IfThenElseStatContext) ||
+                        (st instanceof BasicParser.WhileStatContext) ||
+                        (st instanceof BasicParser.ScopingStatContext) ||
+                        (st instanceof BasicParser.CompStatContext) ||
+                        (st instanceof BasicParser.ReturnStatContext) ||
+                        (st instanceof BasicParser.ExitStatContext)
                         )
                 {
-                    if (!hasReturn(stat))
+                    if (!hasReturn(st))
                         return false;
                 }
             }
