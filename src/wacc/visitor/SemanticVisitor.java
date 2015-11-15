@@ -5,8 +5,10 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import antlr.*;
 import antlr.BasicParser.LhsArrayElemContext;
 import antlr.BasicParser.*;
+import org.antlr.v4.runtime.misc.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
+import wacc.visitor.utils.Utils;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
@@ -33,9 +35,9 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     st = new SymbolTable(st);
     if (ctx.paramList() != null)
       visit(ctx.paramList());
-    visit(ctx.funcStat()); // TODO
+    //visit(ctx.funcStat()); // TODO
     st = st.getEncSymTable();
-    return null;
+    return visitChildren(ctx);
   }
 
   @Override
@@ -83,19 +85,19 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  // @Override
-  // public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
+//   @Override
+//   public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
+//   return visitChildren(ctx);
+//   }
+
   //
   // @Override
   // public Void visitParamList(BasicParser.ParamListContext ctx) {
   // return visitChildren(ctx);
   // }
   //
-  // @Override
-  // public Void visitParam(BasicParser.ParamContext ctx) {
+//   @Override
+//   public Void visitParam(BasicParser.ParamContext ctx) {
   // return visitChildren(ctx);
   // }
   //
@@ -155,15 +157,13 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     // Visit expr first to check it for semantic errors
     visit(ctx.expr());
     // Check return exp type matches func type
-    context = ((FuncContext) context).type();
-    if (context.equals(ctx.expr())) {
+    if (!(Utils.getType(ctx.expr(), st).equals(Utils.getType(((FuncContext) context).type())))) {
       String msg = "Incompatible type at " + ctx.expr().getText()
-          + " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName()
+          + " (expected: INT, actual: " + Utils.getType(ctx.expr(), st).toString()
           + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
-
   }
 
   @Override
@@ -172,7 +172,8 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     visit(ctx.expr());
     // Carry out check that return value of expr is an INT as required by EXIT
     // Stat
-    if (!(ctx.expr() instanceof IntExprContext)) {
+    if (!(Utils.getType(ctx.expr(), st).equals(new BaseType(new IntExprContext(new ExprContext()))))) {
+    //if (!(ctx.expr() instanceof IntExprContext)) {
       String msg = "Incompatible type at " + ctx.expr().getText()
           + " (expected: INT, actual: " + Utils.getType(ctx.expr(), st).toString()
           + ")";
@@ -336,10 +337,10 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  // @Override
-  // public Void visitUnOpExpr(BasicParser.UnOpExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
+   @Override
+   public Void visitUnOpExpr(BasicParser.UnOpExprContext ctx) {
+   return visitChildren(ctx);
+   }
   //
   // @Override
   // public Void visitBinOpExpr(BasicParser.BinOpExprContext ctx) {
@@ -351,10 +352,10 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  // @Override
-  // public Void visitUnaryOper(BasicParser.UnaryOperContext ctx) {
-  // return visitChildren(ctx);
-  // }
+   @Override
+   public Void visitUnaryOper(BasicParser.UnaryOperContext ctx) {
+   return visitChildren(ctx);
+   }
   //
   // @Override
   // public Void visitBinaryOper(BasicParser.BinaryOperContext ctx) {
