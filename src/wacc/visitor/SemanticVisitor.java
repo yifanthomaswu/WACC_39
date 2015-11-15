@@ -171,10 +171,20 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  // @Override
-  // public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
+   @Override
+   public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
+     visit(ctx.expr());
+     Type ifExpr = Utils.getType(ctx.expr(), st);
+     if (Utils.isSameBaseType(ifExpr, BaseLiter.BOOL)) {
+       st = new SymbolTable(st);
+       visit(ctx.stat(0));
+       st = st.getEncSymTable();
+       st = new SymbolTable(st);
+       visit(ctx.stat(1));
+       st = st.getEncSymTable();       
+     }
+     return visitChildren(ctx);
+   }
   //
   // @Override
   // public Void visitWhileStat(WhileStatContext ctx) {
