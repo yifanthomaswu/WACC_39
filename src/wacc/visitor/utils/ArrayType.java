@@ -23,7 +23,7 @@ public class ArrayType extends Type {
 
   public ArrayType(Type exprType) {
     base = exprType;
-    level = 0;
+    level = 1;
   }
 
   @Override
