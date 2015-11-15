@@ -89,7 +89,7 @@ public class Utils {
       String ident = ((RhsCallContext) ctx).ident().getText();
       ParserRuleContext context = st.lookupAll(ident);
       if (context == null || context instanceof TypeContext) {
-        String msg = "Function \"" + ident + "\" is not defined in this scope";
+        String msg = "Function \"" + ident + "\" is not defined in this scope";//TODO
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       }
       TypeContext typeContext = ((FuncContext) context).type();

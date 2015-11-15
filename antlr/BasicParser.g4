@@ -9,8 +9,6 @@ program: BEGIN (func)* stat END EOF ;
 
 func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
 
-//funcStat: (stat SEMICOLON)* (ret | EXIT expr | IF expr THEN funcStat ELSE funcStat FI) ;
-
 paramList: param (COMMA param)* ;
 
 param: type ident ;

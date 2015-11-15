@@ -55,8 +55,8 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
     String ident = ctx.ident().getText();
-    ParserRuleContext c = st.lookup(ident);
-    if (c != null && !(c instanceof FuncContext)) {
+    ParserRuleContext context = st.lookup(ident);
+    if (context != null && !(context instanceof FuncContext)) {
       String msg = "\"" + ident + "\" is already defined in this scope";
       throw new SemanticErrorException(ctx.getStart(), msg);
     } else {
@@ -88,10 +88,43 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitReadStat(ReadStatContext ctx) {
+    Type exprType = Utils.getType(ctx.assignLhs(), st);
+    if (!(Utils.isSameBaseType(exprType, BaseLiter.INT) || Utils
+        .isSameBaseType(exprType, BaseLiter.CHAR))) {
+      String msg = "Expected type INT or CHAR. Actual type " + exprType;
+      throw new SemanticErrorException(ctx.start, msg);
+    }
+    return visitChildren(ctx);
+  }
+
+  @Override
   public Void visitFreeStat(FreeStatContext ctx) {
     Type exprType = Utils.getType(ctx.expr(), st);
     if (!(exprType instanceof PairType || exprType instanceof ArrayType)) {
       String msg = "Incompatible type " + exprType.toString();
+      throw new SemanticErrorException(ctx.getStart(), msg);
+    }
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitReturnStat(ReturnStatContext ctx) {
+    // Check if in global scope
+    ParserRuleContext context = ctx.getParent();
+    while (!(context instanceof FuncContext)) {
+      if (context instanceof ProgramContext) {
+        String msg = "Cannot return from the global scope.";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      }
+      context = context.getParent();
+    }
+    // Check return exp type matches func type
+    Type exprType = Utils.getType(ctx.expr(), st);
+    Type funcType = Utils.getType(((FuncContext) context).type());
+    if (!exprType.equals(funcType)) {
+      String msg = "Incompatible type at " + ctx.expr().getText()
+          + " (expected: " + funcType + ", actual: " + exprType + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
@@ -166,47 +199,17 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitReadStat(ReadStatContext ctx) {
-
-    Type targetType = Utils.getType(ctx.assignLhs(), st);
-    if (!(Utils.isSameBaseType(targetType, BaseLiter.INT) | Utils
-        .isSameBaseType(targetType, BaseLiter.CHAR))) {
-      String msg = "Expected type INT or CHAR. Actual type " + targetType;
-      throw new SemanticErrorException(ctx.start, msg);
-    }
-    return visitChildren(ctx);
-  }
-
-  @Override
-  public Void visitReturnStat(ReturnStatContext ctx) {
-    // Check if in global scope
-    ParserRuleContext context = ctx.getParent();
-    while (!(context instanceof FuncContext)) {
-      if (context instanceof ProgramContext) {
-        String msg = "Cannot return from the global scope. ";
-        throw new SemanticErrorException(ctx.getStart(), msg);
-      }
-      context = context.getParent();
-    }
-    // Visit expr first to check it for semantic errors
-    visit(ctx.expr());
-    // Check return exp type matches func type
-    if (!(Utils.getType(ctx.expr(), st).equals(Utils
-        .getType(((FuncContext) context).type())))) {
-      String msg = "Incompatible type at " + ctx.expr().getText()
-          + " (expected: INT, actual: "
-          + Utils.getType(ctx.expr(), st).toString() + ")";
-      throw new SemanticErrorException(ctx.getStart(), msg);
-    }
-    return visitChildren(ctx);
-  }
-
-  @Override
   public Void visitRhsCall(RhsCallContext ctx) {
     String ident = ctx.ident().getText();
     FuncContext func = (FuncContext) st.lookupAll(ident);
-    int paramSize = func.paramList().param().size();
-    int argSize = ctx.argList().expr().size();
+    int paramSize = 0;
+    if (func.paramList() != null) {
+      paramSize = func.paramList().param().size();
+    }
+    int argSize = 0;
+    if (ctx.argList() != null) {
+      argSize = ctx.argList().expr().size();
+    }
     if (paramSize != argSize) {
       String msg = "Incorrect number of parameters for \"" + ident
           + "\" (expected: " + paramSize + ", actual: " + argSize + ")";
@@ -226,156 +229,104 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitUnaryOper(BasicParser.UnaryOperContext ctx) {
-    if (ctx.MINUS() != null) {
-      if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof IntExprContext)) {
-        String msg = "Incompatible type at "
-            + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + " (expected: INT, actual: "
-            + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
-            .expr().getStart(), msg);
-      }
-    } else if (ctx.UNARY_OPER().toString() == "!") {
-      Type type = Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st);
-      if (type.toString() != "BOOL") {
-        String msg = "Incompatible type at "
-            + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + " (expected: BOOL, actual: "
-            + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
-            .expr().getStart(), msg);
-      }
-    } else if (ctx.UNARY_OPER().toString().equals("len")) {
-      Type type = Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st);
-      if (!(type instanceof ArrayType)) {
-        String msg = "Incompatible type at "
-            + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + " (expected: ARRAY, actual: "
-            + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
-            .expr().getStart(), msg);
-      }
-    } else if (ctx.UNARY_OPER().toString().equals("ord")) {
-      if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof CharExprContext)) {
-        String msg = "Incompatible type at "
-            + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + " (expected: CHAR, actual: "
-            + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
-            .expr().getStart(), msg);
-      }
-    } else if (ctx.UNARY_OPER().toString().equals("chr")) {
-      if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof IntExprContext)) {
-        String msg = "Incompatible type at "
-            + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + " (expected: INT, actual: "
-            + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
-            .expr().getStart(), msg);
-      }
-    }
-    return visitChildren(ctx);
-  }
-
-  @Override
-  public Void visitBinaryOper(BasicParser.BinaryOperContext ctx) {
-    String binOp = "*/%+";
-    Type type1 = Utils
-        .getType(((BinOpExprContext) ctx.getParent()).expr(0), st);
-    Type type2 = Utils
-        .getType(((BinOpExprContext) ctx.getParent()).expr(1), st);
-    if (ctx.MINUS() != null || (binOp.contains(ctx.BINARY_OPER().toString()))) {
-      if (type2.toString() != "INT") {
-        String msg = "Incompatible type at "
-            + ((BinOpExprContext) ctx.getParent()).expr(1).getText()
-            + " (expected: INT, actual: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
-            .expr(1).getStart(), msg);
-      } else if (type1.toString() != "INT") {
-        String msg = "Incompatible type at "
-            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
-            + " (expected: INT, actual: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
-            .expr(0).getStart(), msg);
-      }
-    } else if (ctx.BINARY_OPER().toString().equals(">=")
-        || ctx.BINARY_OPER().toString().equals(">")
-        || ctx.BINARY_OPER().toString().equals("<=")
-        || ctx.BINARY_OPER().toString().equals("<")) {
-      if (type2.toString() != "INT" && type2.toString() != "CHAR") {
-        String msg = "Incompatible type "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
-                .toString();
-        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
-            .expr(1).getStart(), msg);
-      } else if (type1.toString() != type2.toString()) {
-        String msg = "Incompatible type at "
-            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
-            + " (expected: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
-                .toString()
-            + ", actual: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
-            .expr(0).getStart(), msg);
-      }
-    } else if (ctx.BINARY_OPER().toString().equals("==")
-        || ctx.BINARY_OPER().toString().equals("!=")) {
-      if (type2.toString() != type1.toString()) {
-        String msg = "Incompatible type at "
-            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
-            + " (expected: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
-                .toString()
-            + ", actual: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
-            .expr(0).getStart(), msg);
-      }
-    } else if (ctx.BINARY_OPER().toString().equals("&&")
-        || ctx.BINARY_OPER().toString().equals("||")) {
-      if (type2.toString() != "BOOL") {
-        String msg = "Incompatible type at "
-            + ((BinOpExprContext) ctx.getParent()).expr(1).getText()
-            + " (expected: BOOL, actual: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
-            .expr(1).getStart(), msg);
-      } else if (type1.toString() != "BOOL") {
-        String msg = "Incompatible type at "
-            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
-            + " (expected: BOOL, actual: "
-            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
-            .expr(0).getStart(), msg);
-      }
-    }
-    return visitChildren(ctx);
-  }
-
-  @Override
   public Void visitUnOpExpr(UnOpExprContext ctx) {
-    visitUnaryOper(ctx.unaryOper());
+    String oper;
+    if (ctx.unaryOper().MINUS() == null) {
+      oper = ctx.unaryOper().UNARY_OPER().getText();
+    } else {
+      oper = ctx.unaryOper().MINUS().getText();
+    }
+    Type exprType = Utils.getType(ctx.expr(), st);
+    BaseLiter expectedType = null;
+    switch (oper) {
+      case "!":
+        expectedType = BaseLiter.BOOL;
+        break;
+      case "-":
+      case "!chr":
+        expectedType = BaseLiter.INT;
+        break;
+      case "ord":
+        expectedType = BaseLiter.CHAR;
+        break;
+    }
+    String expr = ctx.expr().getText();
+    if (expectedType == null) {
+      if (!(exprType instanceof ArrayType)) {
+        String msg = "Incompatible type at \"" + expr
+            + "\" (expected: T[], actual: " + exprType + ")";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      }
+    } else {
+      if (!Utils.isSameBaseType(exprType, expectedType)) {
+        String msg = "Incompatible type at \"" + expr + "\" (expected: "
+            + expectedType + ", actual: " + exprType + ")";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      }
+    }
     return visitChildren(ctx);
   }
 
   @Override
   public Void visitBinOpExpr(BinOpExprContext ctx) {
-    visitBinaryOper(ctx.binaryOper());
+    String oper;
+    if (ctx.binaryOper().MINUS() == null) {
+      oper = ctx.binaryOper().BINARY_OPER().getText();
+    } else {
+      oper = ctx.binaryOper().MINUS().getText();
+    }
+    Type[] exprTypes = new Type[2];
+    for (int i = 0; i < exprTypes.length; i++) {
+      exprTypes[i] = Utils.getType(ctx.expr(i), st);
+    }
+    BaseLiter expectedType = null;
+    BaseLiter altExpectedType = null;
+    switch (oper) {
+      case "*":
+      case "/":
+      case "%":
+      case "+":
+      case "-":
+        expectedType = BaseLiter.INT;
+        break;
+      case ">":
+      case ">=":
+      case "<":
+      case "<=":
+        expectedType = BaseLiter.INT;
+        altExpectedType = BaseLiter.CHAR;
+        break;
+      case "&&":
+      case "||":
+        expectedType = BaseLiter.BOOL;
+        break;
+    }
+    String expr = ctx.getText();
+    if (expectedType == null && altExpectedType == null) {
+      if (!exprTypes[0].equals(exprTypes[1])) {
+        String msg = "Incompatible type at \"" + expr + "\" (expected: "
+            + exprTypes[0] + ", actual: " + exprTypes[1] + ")";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      }
+    } else if (altExpectedType == null) {
+      for (int i = 0; i < exprTypes.length; i++) {
+        if (!Utils.isSameBaseType(exprTypes[i], expectedType)) {
+          String msg = "Incompatible type at \"" + expr + "\" (expected: "
+              + expectedType + ", actual: " + exprTypes[i] + ")";
+          throw new SemanticErrorException(ctx.getStart(), msg);
+        }
+      }
+    } else {
+      for (int i = 0; i < exprTypes.length; i++) {
+        if (!Utils.isSameBaseType(exprTypes[i], expectedType)
+            && !Utils.isSameBaseType(exprTypes[i], altExpectedType)) {
+          String msg = "Incompatible type at \"" + expr + "\" (expected: "
+              + expectedType + " or " + altExpectedType + ", actual: "
+              + exprTypes[i] + ")";
+          throw new SemanticErrorException(ctx.getStart(), msg);
+        }
+      }
+    }
     return visitChildren(ctx);
   }
 
