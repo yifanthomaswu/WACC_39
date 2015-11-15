@@ -243,7 +243,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
         expectedType = BaseLiter.BOOL;
         break;
       case "-":
-      case "!chr":
+      case "chr":
         expectedType = BaseLiter.INT;
         break;
       case "ord":
