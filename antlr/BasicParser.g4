@@ -39,7 +39,7 @@ assignRhs: expr                                                  # RhsExpr
 | arrayLiter                                                     # RhsArrayLiter
 | NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES    # RhsNewPair
 | pairElem                                                       # RhsPairElem
-| CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES       # RhsFunctionCall
+| CALL ident OPEN_PARENTHESES (argList)? CLOSE_PARENTHESES       # RhsCall
 ;
 
 argList: expr (COMMA expr)* ;
