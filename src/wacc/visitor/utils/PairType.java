@@ -24,6 +24,17 @@ public class PairType extends Type {
     base = null;
   }
 
+  public PairType(Type[] elemTypes) {
+    base = new Type[2];
+    for (int i = 0; i < base.length; i++) {
+      base[i] = elemTypes[i];
+    }
+  }
+
+  Type getElem(int i) {
+    return base[i];
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof PairType)) {
@@ -66,8 +77,8 @@ public class PairType extends Type {
     if (base == null) {
       return "NULL";
     } else {
-      return "PAIR(" + (base[0] == null ? "PAIR" : base.toString()) + "," +
-          (base[1] == null ? "PAIR" : base.toString()) + ")";
+      return "PAIR(" + (base[0] == null ? "PAIR" : base[0].toString()) + "," +
+          (base[1] == null ? "PAIR" : base[1].toString()) + ")";
     }
   }
 }

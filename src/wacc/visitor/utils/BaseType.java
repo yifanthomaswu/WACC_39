@@ -4,53 +4,53 @@ import antlr.BasicParser.*;
 
 public class BaseType extends Type {
 
-  private enum Base {
-    INT, BOOL, CHAR, STRING;
-  }
-
-  private final Base base;
+  private final BaseLiter baseLiter;
   private static final String BINARY_OPER_RETURN_INT = "*/%+-";
 
   public BaseType(BaseTypeContext ctx) {
-    base = Base.valueOf(ctx.BASE_TYPE().toString().toUpperCase());
+    baseLiter = BaseLiter.valueOf(ctx.BASE_TYPE().toString().toUpperCase());
   }
 
   public BaseType(ExprContext ctx) {
     if (ctx instanceof IntExprContext) {
-      base = Base.INT;
+      baseLiter = BaseLiter.INT;
     } else if (ctx instanceof BoolExprContext) {
-      base = Base.BOOL;
+      baseLiter = BaseLiter.BOOL;
     } else if (ctx instanceof CharExprContext) {
-      base = Base.CHAR;
+      baseLiter = BaseLiter.CHAR;
     } else if (ctx instanceof StringExprContext) {
-      base = Base.STRING;
+      baseLiter = BaseLiter.STRING;
     } else if (ctx instanceof UnOpExprContext) {
       UnaryOperContext unaryOper = ((UnOpExprContext) ctx).unaryOper();
       if (unaryOper.MINUS() != null) {
-        base = Base.INT;
+        baseLiter = BaseLiter.INT;
       } else {
         String oper = unaryOper.UNARY_OPER().toString();
         if (oper.equals("!")) {
-          base = Base.BOOL;
+          baseLiter = BaseLiter.BOOL;
         } else if (oper.equals("chr")) {
-          base = Base.CHAR;
+          baseLiter = BaseLiter.CHAR;
         } else {
-          base = Base.INT;
+          baseLiter = BaseLiter.INT;
         }
       }
     } else {
       BinaryOperContext binaryOper = ((BinOpExprContext) ctx).binaryOper();
       if (binaryOper.MINUS() != null) {
-        base = Base.INT;
+        baseLiter = BaseLiter.INT;
       } else {
         String oper = binaryOper.BINARY_OPER().toString();
         if (BINARY_OPER_RETURN_INT.contains(oper)) {
-          base = Base.INT;
+          baseLiter = BaseLiter.INT;
         } else {
-          base = Base.BOOL;
+          baseLiter = BaseLiter.BOOL;
         }
       }
     }
+  }
+
+  boolean isSameBaseType(BaseType type, BaseLiter baseLiter) {
+    return baseLiter.equals(type.baseLiter);
   }
 
   @Override
@@ -58,17 +58,17 @@ public class BaseType extends Type {
     if (!(obj instanceof BaseType)) {
       return false;
     }
-    return base == ((BaseType) obj).base;
+    return baseLiter.equals(((BaseType) obj).baseLiter);
   }
 
   @Override
   public int hashCode() {
-    return base.hashCode();
+    return baseLiter.hashCode();
   }
 
   @Override
   public String toString() {
-    return base.toString();
+    return baseLiter.toString();
   }
 
 }
