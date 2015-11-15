@@ -53,7 +53,7 @@ public class Utils {
 
   private static Type getType(PairElemContext ctx, SymbolTable st) {
     PairType pair = (PairType) getType(ctx.expr(), st);
-    if (ctx.FST() == null) {
+    if (ctx.FST() != null) {
       return pair.getElem(0);
     } else {
       return pair.getElem(1);
