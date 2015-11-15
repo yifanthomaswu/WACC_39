@@ -6,6 +6,7 @@ import antlr.*;
 import antlr.BasicParser.LhsArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
+import wacc.visitor.utils.*;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
@@ -173,7 +174,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     // Stat
     if (!(ctx.expr() instanceof IntExprContext)) {
       String msg = "Incompatible type at " + ctx.expr().getText()
-          + " (expected: INT, actual: " + ctx.expr().getClass().getSimpleName()
+          + " (expected: INT, actual: " + Utils.getType(ctx.expr(), st).toString()
           + ")";
       throw new SemanticErrorException(ctx.expr().getStart(), msg);
     }
@@ -370,15 +371,22 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  // @Override
-  // public Void visitIntLiter(BasicParser.IntLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
+  
+  
+  
+//   @Override
+//   public Void visitIntLiter(BasicParser.IntLiterContext ctx) {
+//   return visitChildren(ctx);
+//   }
   //
   // @Override
   // public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
   // return visitChildren(ctx);
   // }
+  
+  
+  
+  
   //
   // @Override
   // public Void visitCharLiter(BasicParser.CharLiterContext ctx) {

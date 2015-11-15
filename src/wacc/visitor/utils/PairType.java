@@ -61,4 +61,9 @@ public class PairType extends Type {
     }
   }
 
+  
+  @Override
+  public String toString() {
+	  return "(" + base[0].toString() + base[1].toString() + ")";
+  }
 }
