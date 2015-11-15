@@ -3,7 +3,6 @@ package wacc.visitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
-import antlr.BasicParser.LhsArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
@@ -371,9 +370,9 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  
-  
-  
+
+
+
 //   @Override
 //   public Void visitIntLiter(BasicParser.IntLiterContext ctx) {
 //   return visitChildren(ctx);
@@ -383,10 +382,10 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
   // return visitChildren(ctx);
   // }
-  
-  
-  
-  
+
+
+
+
   //
   // @Override
   // public Void visitCharLiter(BasicParser.CharLiterContext ctx) {

@@ -44,8 +44,8 @@ assignRhs: expr                                                  # RhsExpr
 
 argList: expr (COMMA expr)* ;
 
-pairElem: FST expr                                               # FstPairElem
-| SND expr                                                       # SndPairElem
+pairElem: FST expr                                               //# FstPairElem
+| SND expr                                                       //# SndPairElem
 ;
 
 type: baseType

@@ -21,6 +21,11 @@ public class ArrayType extends Type {
     level = identType.level - ctx.expr().size();
   }
 
+  public ArrayType(Type exprType) {
+    base = exprType;
+    level = 0;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof ArrayType)) {
@@ -28,7 +33,7 @@ public class ArrayType extends Type {
     }
 
     ArrayType that = (ArrayType) obj;
-    if (level != that.level) {
+    if (level != that.level && level != 0) {
       return false;
     }
     return base.equals(that.base);
