@@ -77,8 +77,8 @@ public class PairType extends Type {
     if (base == null) {
       return "NULL";
     } else {
-      return "PAIR(" + (base[0] == null ? "PAIR" : base.toString()) + "," +
-          (base[1] == null ? "PAIR" : base.toString()) + ")";
+      return "PAIR(" + (base[0] == null ? "PAIR" : base[0].toString()) + "," +
+          (base[1] == null ? "PAIR" : base[1].toString()) + ")";
     }
   }
 }

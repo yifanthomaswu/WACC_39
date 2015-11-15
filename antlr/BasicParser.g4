@@ -55,7 +55,7 @@ type: baseType
 
 baseType: BASE_TYPE ;
 
-arrayType: (baseType | pairType) (ARRAY_SQUARE_BRS)* ;
+arrayType: (baseType | pairType) (ARRAY_SQUARE_BRS)+ ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 

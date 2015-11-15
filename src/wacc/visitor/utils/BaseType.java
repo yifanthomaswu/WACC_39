@@ -58,7 +58,7 @@ public class BaseType extends Type {
     if (!(obj instanceof BaseType)) {
       return false;
     }
-    return base == ((BaseType) obj).base;
+    return base.equals(((BaseType) obj).base);
   }
 
   @Override
