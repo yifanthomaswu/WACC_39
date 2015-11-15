@@ -6,7 +6,6 @@ import antlr.*;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
-import wacc.visitor.utils.Utils;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
@@ -22,7 +21,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
         String msg = "\"" + ident + "\" is already defined in this scope";
         throw new SemanticErrorException(ctx.getStart(), msg);
       } else {
-        st.add(ident, func.type());
+        st.add(ident, func);
       }
     }
     return visitChildren(ctx);
@@ -31,15 +30,16 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitFunc(FuncContext ctx) {
     st = new SymbolTable(st);
-    if (ctx.paramList() != null)
+    if (ctx.paramList() != null) {
       visit(ctx.paramList());
-    //visit(ctx.funcStat()); // TODO
+    }
+    visit(ctx.stat());
     st = st.getEncSymTable();
-    return visitChildren(ctx);
+    return null;
   }
 
   @Override
-  public Void visitParamList(BasicParser.ParamListContext ctx) {
+  public Void visitParamList(ParamListContext ctx) {
     for (ParamContext param : ctx.param()) {
       String ident = param.ident().getText();
       if (st.lookup(ident) != null) {
@@ -53,7 +53,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+  public Void visitVarDeclStat(VarDeclStatContext ctx) {
     String ident = ctx.ident().getText();
     ParserRuleContext c = st.lookup(ident);
     if (c != null && !(c instanceof FuncContext)) {
@@ -74,7 +74,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
+  public Void visitAssignStat(AssignStatContext ctx) {
     Type assignLhsType = Utils.getType(ctx.assignLhs(), st);
     Type assignRhsType = Utils.getType(ctx.assignRhs(), st);
     if (!assignLhsType.equals(assignRhsType)) {
@@ -88,7 +88,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitFreeStat(BasicParser.FreeStatContext ctx) {
+  public Void visitFreeStat(FreeStatContext ctx) {
     Type exprType = Utils.getType(ctx.expr(), st);
     if (!(exprType instanceof PairType || exprType instanceof ArrayType)) {
       String msg = "Incompatible type " + exprType.toString();
@@ -98,7 +98,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitExitStat(BasicParser.ExitStatContext ctx) {
+  public Void visitExitStat(ExitStatContext ctx) {
     Type exprType = Utils.getType(ctx.expr(), st);
     if (!Utils.isSameBaseType(exprType, BaseLiter.INT)) {
       String expr = ctx.expr().getText();
@@ -110,8 +110,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitWhileStat(BasicParser.WhileStatContext ctx) {
-    visit(ctx.expr());
+  public Void visitWhileStat(WhileStatContext ctx) {
     Type exprType = Utils.getType(ctx.expr(), st);
     if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
       String expr = ctx.expr().getText();
@@ -119,6 +118,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
           + BaseLiter.BOOL + ", actual: " + exprType.toString() + ")";
       throw new SemanticErrorException(ctx.expr().getStart(), msg);
     }
+    visit(ctx.expr());
     st = new SymbolTable(st);
     visit(ctx.stat());
     st = st.getEncSymTable();
@@ -126,14 +126,15 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitScopingStat(BasicParser.ScopingStatContext ctx) {
+  public Void visitScopingStat(ScopingStatContext ctx) {
     st = new SymbolTable(st);
     visit(ctx.stat());
     st = st.getEncSymTable();
     return null;
   }
+
   @Override
-  public Void visitIdent(BasicParser.IdentContext ctx) {
+  public Void visitIdent(IdentContext ctx) {
     String ident = ctx.getText();
     if (st.lookupAll(ident) == null) {
       String msg = "Variable \"" + ident + "\" is not defined in this scope";
@@ -142,45 +143,12 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     return visitChildren(ctx);
   }
 
-  // @Override
-  // public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  //
-  // @Override
-  // public Void visitParamList(BasicParser.ParamListContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-//   @Override
-//   public Void visitParam(BasicParser.ParamContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitSkipStat(BasicParser.SkipStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitAssignVarStat(BasicParser.AssignVarStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitAssignLhsToRhsStat(BasicParser.AssignLhsToRhsStatContext
-  // ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-
   @Override
   public Void visitReadStat(ReadStatContext ctx) {
 
     Type targetType = Utils.getType(ctx.assignLhs(), st);
-    if (!(Utils.isSameBaseType(targetType, BaseLiter.INT)
-        | Utils.isSameBaseType(targetType, BaseLiter.CHAR))) {
+    if (!(Utils.isSameBaseType(targetType, BaseLiter.INT) | Utils
+        .isSameBaseType(targetType, BaseLiter.CHAR))) {
       String msg = "Expected type INT or CHAR. Actual type " + targetType;
       throw new SemanticErrorException(ctx.start, msg);
     }
@@ -201,186 +169,52 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     // Visit expr first to check it for semantic errors
     visit(ctx.expr());
     // Check return exp type matches func type
-    if (!(Utils.getType(ctx.expr(), st).equals(Utils.getType(((FuncContext) context).type())))) {
+    if (!(Utils.getType(ctx.expr(), st).equals(Utils
+        .getType(((FuncContext) context).type())))) {
       String msg = "Incompatible type at " + ctx.expr().getText()
-          + " (expected: INT, actual: " + Utils.getType(ctx.expr(), st).toString()
-          + ")";
+          + " (expected: INT, actual: "
+          + Utils.getType(ctx.expr(), st).toString() + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
   }
-   @Override
-   public Void visitPrintStat(PrintStatContext ctx) {
-     // no semantic checks needed
-     return visitChildren(ctx);
-   }
-  
-   @Override
-   public Void visitPrintlnStat(PrintlnStatContext ctx) {
-     // no semantic checks needed
-     return visitChildren(ctx);
-   }
 
-   @Override
-   public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
-     visit(ctx.expr());
-     Type ifExpr = Utils.getType(ctx.expr(), st);
-     if (Utils.isSameBaseType(ifExpr, BaseLiter.BOOL)) {
-       st = new SymbolTable(st);
-       visit(ctx.stat(0));
-       st = st.getEncSymTable();
-       st = new SymbolTable(st);
-       visit(ctx.stat(1));
-       st = st.getEncSymTable();       
-     }
-     return visitChildren(ctx);
-   }
-
-  //
-  // @Override
-  // public Void visitBeginStat(BeginStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitStatList(StatListContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitLhsIdent(LhsIdentContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitLhsArrayElem(LhsArrayElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitLhsPairElem(LhsPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsExpr(RhsExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsArrayLiter(RhsArrayLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsNewPair(RhsNewPairContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsPairElem(RhsPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsFunctionCall(RhsFunctionCallContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArgList(ArgListContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitFstPairElem(FstPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitSndPairElem(SndPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
   @Override
-  public Void visitType(TypeContext ctx) {
-    return visitChildren(ctx);
+  public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
+    visit(ctx.expr());
+    Type ifExpr = Utils.getType(ctx.expr(), st);
+    if (Utils.isSameBaseType(ifExpr, BaseLiter.BOOL)) {
+      st = new SymbolTable(st);
+      visit(ctx.stat(0));
+      st = st.getEncSymTable();
+      st = new SymbolTable(st);
+      visit(ctx.stat(1));
+      st = st.getEncSymTable();
+    }
+    return null;
   }
 
-  //
-  // @Override
-  // public Void visitBaseType(BaseTypeContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayType(ArrayTypeContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairType(PairTypeContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairElemBase(PairElemBaseContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairElemArray(PairElemArrayContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairPairElem(PairPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIntExpr(IntExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitBoolExpr(BoolExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitCharExpr(CharExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitStringExpr(StringExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairExpr(PairExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIdentExpr(IdentExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayElemExpr(ArrayElemExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  //
-  // @Override
-  // public Void visitBinOpExpr(BinOpExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
   @Override
-  public Void visitParensExpr(BasicParser.ParensExprContext ctx) {
+  public Void visitRhsCall(RhsCallContext ctx) {
+    String ident = ctx.ident().getText();
+    FuncContext func = (FuncContext) st.lookupAll(ident);
+    int paramSize = func.paramList().param().size();
+    int argSize = ctx.argList().expr().size();
+    if (paramSize != argSize) {
+      String msg = "Incorrect number of parameters for \"" + ident
+          + "\" (expected: " + paramSize + ", actual: " + argSize + ")";
+      throw new SemanticErrorException(ctx.getStart(), msg);
+    }
+
+    for (int i = 0; i < paramSize; i++) {
+      Type paramType = Utils.getType(func.paramList().param(i).type());
+      Type argType = Utils.getType(ctx.argList().expr(i), st);
+      if (!paramType.equals(argType)) {
+        String msg = "Incompatible type at " + ctx.argList().expr(i).getText()
+            + " (expected: " + paramType + ", actual: " + argType + ")";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      }
+    }
     return visitChildren(ctx);
   }
 
@@ -388,49 +222,51 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitUnaryOper(BasicParser.UnaryOperContext ctx) {
     if (ctx.MINUS() != null) {
       if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof IntExprContext)) {
-        String msg = "Incompatible type at"
+        String msg = "Incompatible type at "
             + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + "(expected: INT, actual: "
+            + " (expected: INT, actual: "
             + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
                 .toString() + ")";
         throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
             .expr().getStart(), msg);
       }
     } else if (ctx.UNARY_OPER().toString() == "!") {
-      if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof BoolExprContext)) {
-        String msg = "Incompatible type at"
+      Type type = Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st);
+      if (type.toString() != "BOOL") {
+        String msg = "Incompatible type at "
             + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + "(expected: BOOL, actual: "
+            + " (expected: BOOL, actual: "
             + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
                 .toString() + ")";
         throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
             .expr().getStart(), msg);
       }
-    } else if (ctx.UNARY_OPER().toString() == "len") {
-      if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof ArrayElemExprContext)) {
-        String msg = "Incompatible type at"
+    } else if (ctx.UNARY_OPER().toString().equals("len")) {
+      Type type = Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st);
+      if (!(type instanceof ArrayType)) {
+        String msg = "Incompatible type at "
             + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + "(expected: ARRAY, actual: "
+            + " (expected: ARRAY, actual: "
             + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
                 .toString() + ")";
         throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
             .expr().getStart(), msg);
       }
-    } else if (ctx.UNARY_OPER().toString() == "ord") {
+    } else if (ctx.UNARY_OPER().toString().equals("ord")) {
       if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof CharExprContext)) {
-        String msg = "Incompatible type at"
+        String msg = "Incompatible type at "
             + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + "(expected: CHAR, actual: "
+            + " (expected: CHAR, actual: "
             + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
                 .toString() + ")";
         throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
             .expr().getStart(), msg);
       }
-    } else if (ctx.UNARY_OPER().toString() == "chr") {
+    } else if (ctx.UNARY_OPER().toString().equals("chr")) {
       if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof IntExprContext)) {
-        String msg = "Incompatible type at"
+        String msg = "Incompatible type at "
             + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + "(expected: INT, actual: "
+            + " (expected: INT, actual: "
             + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
                 .toString() + ")";
         throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
@@ -439,49 +275,101 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     }
     return visitChildren(ctx);
   }
-  // @Override
-  // public Void visitBinaryOper(BinaryOperContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIdent(IdentContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayElem(ArrayElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIntLiter(IntLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitBoolLiter(BoolLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitCharLiter(CharLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitStringLiter(StringLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayLiter(ArrayLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairLiter(PairLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
+
+  @Override
+  public Void visitBinaryOper(BasicParser.BinaryOperContext ctx) {
+    String binOp = "*/%+";
+    Type type1 = Utils
+        .getType(((BinOpExprContext) ctx.getParent()).expr(0), st);
+    Type type2 = Utils
+        .getType(((BinOpExprContext) ctx.getParent()).expr(1), st);
+    if (ctx.MINUS() != null || (binOp.contains(ctx.BINARY_OPER().toString()))) {
+      if (type2.toString() != "INT") {
+        String msg = "Incompatible type at "
+            + ((BinOpExprContext) ctx.getParent()).expr(1).getText()
+            + " (expected: INT, actual: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
+                .toString() + ")";
+        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
+            .expr(1).getStart(), msg);
+      } else if (type1.toString() != "INT") {
+        String msg = "Incompatible type at "
+            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
+            + " (expected: INT, actual: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
+                .toString() + ")";
+        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
+            .expr(0).getStart(), msg);
+      }
+    } else if (ctx.BINARY_OPER().toString().equals(">=")
+        || ctx.BINARY_OPER().toString().equals(">")
+        || ctx.BINARY_OPER().toString().equals("<=")
+        || ctx.BINARY_OPER().toString().equals("<")) {
+      if (type2.toString() != "INT" && type2.toString() != "CHAR") {
+        String msg = "Incompatible type "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
+                .toString();
+        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
+            .expr(1).getStart(), msg);
+      } else if (type1.toString() != type2.toString()) {
+        String msg = "Incompatible type at "
+            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
+            + " (expected: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
+                .toString()
+            + ", actual: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
+                .toString() + ")";
+        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
+            .expr(0).getStart(), msg);
+      }
+    } else if (ctx.BINARY_OPER().toString().equals("==")
+        || ctx.BINARY_OPER().toString().equals("!=")) {
+      if (type2.toString() != type1.toString()) {
+        String msg = "Incompatible type at "
+            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
+            + " (expected: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
+                .toString()
+            + ", actual: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
+                .toString() + ")";
+        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
+            .expr(0).getStart(), msg);
+      }
+    } else if (ctx.BINARY_OPER().toString().equals("&&")
+        || ctx.BINARY_OPER().toString().equals("||")) {
+      if (type2.toString() != "BOOL") {
+        String msg = "Incompatible type at "
+            + ((BinOpExprContext) ctx.getParent()).expr(1).getText()
+            + " (expected: BOOL, actual: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(1), st)
+                .toString() + ")";
+        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
+            .expr(1).getStart(), msg);
+      } else if (type1.toString() != "BOOL") {
+        String msg = "Incompatible type at "
+            + ((BinOpExprContext) ctx.getParent()).expr(0).getText()
+            + " (expected: BOOL, actual: "
+            + Utils.getType(((BinOpExprContext) ctx.getParent()).expr(0), st)
+                .toString() + ")";
+        throw new SemanticErrorException(((BinOpExprContext) ctx.getParent())
+            .expr(0).getStart(), msg);
+      }
+    }
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitUnOpExpr(UnOpExprContext ctx) {
+    visitUnaryOper(ctx.unaryOper());
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitBinOpExpr(BinOpExprContext ctx) {
+    visitBinaryOper(ctx.binaryOper());
+    return visitChildren(ctx);
+  }
 
 }
