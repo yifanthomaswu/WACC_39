@@ -1,12 +1,12 @@
 package wacc.visitor;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
-import wacc.visitor.utils.Utils;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
@@ -33,7 +33,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     st = new SymbolTable(st);
     if (ctx.paramList() != null)
       visit(ctx.paramList());
-    //visit(ctx.funcStat()); // TODO
+    // visit(ctx.funcStat()); // TODO
     st = st.getEncSymTable();
     return visitChildren(ctx);
   }
@@ -132,6 +132,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     st = st.getEncSymTable();
     return null;
   }
+
   @Override
   public Void visitIdent(BasicParser.IdentContext ctx) {
     String ident = ctx.getText();
@@ -141,39 +142,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     }
     return visitChildren(ctx);
   }
-
-  // @Override
-  // public Void visitFuncStat(BasicParser.FuncStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  //
-  // @Override
-  // public Void visitParamList(BasicParser.ParamListContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-//   @Override
-//   public Void visitParam(BasicParser.ParamContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitSkipStat(BasicParser.SkipStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitAssignVarStat(BasicParser.AssignVarStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitAssignLhsToRhsStat(BasicParser.AssignLhsToRhsStatContext
-  // ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
 
   @Override
   public Void visitReadStat(ReadStatContext ctx) {
@@ -201,184 +169,48 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     // Visit expr first to check it for semantic errors
     visit(ctx.expr());
     // Check return exp type matches func type
-    if (!(Utils.getType(ctx.expr(), st).equals(Utils.getType(((FuncContext) context).type())))) {
+    if (!(Utils.getType(ctx.expr(), st).equals(Utils
+        .getType(((FuncContext) context).type())))) {
       String msg = "Incompatible type at " + ctx.expr().getText()
-          + " (expected: INT, actual: " + Utils.getType(ctx.expr(), st).toString()
-          + ")";
+          + " (expected: INT, actual: "
+          + Utils.getType(ctx.expr(), st).toString() + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
   }
-   @Override
-   public Void visitPrintStat(PrintStatContext ctx) {
-     // no semantic checks needed
-     return visitChildren(ctx);
-   }
-  
-   @Override
-   public Void visitPrintlnStat(PrintlnStatContext ctx) {
-     // no semantic checks needed
-     return visitChildren(ctx);
-   }
 
-   @Override
-   public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
-     visit(ctx.expr());
-     Type ifExpr = Utils.getType(ctx.expr(), st);
-     if (Utils.isSameBaseType(ifExpr, BaseLiter.BOOL)) {
-       st = new SymbolTable(st);
-       visit(ctx.stat(0));
-       st = st.getEncSymTable();
-       st = new SymbolTable(st);
-       visit(ctx.stat(1));
-       st = st.getEncSymTable();       
-     }
-     return visitChildren(ctx);
-   }
+  @Override
+  public Void visitPrintStat(PrintStatContext ctx) {
+    // no semantic checks needed
+    return visitChildren(ctx);
+  }
 
-  //
-  // @Override
-  // public Void visitBeginStat(BeginStatContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitStatList(StatListContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitLhsIdent(LhsIdentContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitLhsArrayElem(LhsArrayElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitLhsPairElem(LhsPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsExpr(RhsExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsArrayLiter(RhsArrayLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsNewPair(RhsNewPairContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsPairElem(RhsPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsFunctionCall(RhsFunctionCallContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArgList(ArgListContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitFstPairElem(FstPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitSndPairElem(SndPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
+  @Override
+  public Void visitPrintlnStat(PrintlnStatContext ctx) {
+    // no semantic checks needed
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitIfThenElseStat(IfThenElseStatContext ctx) {
+    visit(ctx.expr());
+    Type ifExpr = Utils.getType(ctx.expr(), st);
+    if (Utils.isSameBaseType(ifExpr, BaseLiter.BOOL)) {
+      st = new SymbolTable(st);
+      visit(ctx.stat(0));
+      st = st.getEncSymTable();
+      st = new SymbolTable(st);
+      visit(ctx.stat(1));
+      st = st.getEncSymTable();
+    }
+    return visitChildren(ctx);
+  }
+
   @Override
   public Void visitType(TypeContext ctx) {
     return visitChildren(ctx);
   }
 
-  //
-  // @Override
-  // public Void visitBaseType(BaseTypeContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayType(ArrayTypeContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairType(PairTypeContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairElemBase(PairElemBaseContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairElemArray(PairElemArrayContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairPairElem(PairPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIntExpr(IntExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitBoolExpr(BoolExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitCharExpr(CharExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitStringExpr(StringExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairExpr(PairExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIdentExpr(IdentExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayElemExpr(ArrayElemExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  //
-  // @Override
-  // public Void visitBinOpExpr(BinOpExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
   @Override
   public Void visitParensExpr(BasicParser.ParensExprContext ctx) {
     return visitChildren(ctx);
@@ -439,49 +271,175 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     }
     return visitChildren(ctx);
   }
-  // @Override
-  // public Void visitBinaryOper(BinaryOperContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIdent(IdentContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayElem(ArrayElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitIntLiter(IntLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitBoolLiter(BoolLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitCharLiter(CharLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitStringLiter(StringLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitArrayLiter(ArrayLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitPairLiter(PairLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
+
+  @Override
+  public Void visitArgList(ArgListContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitArrayType(ArrayTypeContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitRhsNewPair(RhsNewPairContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitBinOpExpr(BinOpExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitLhsPairElem(LhsPairElemContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitPairLiter(PairLiterContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitArrayElemExpr(ArrayElemExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitBoolExpr(BoolExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitPairElemType(PairElemTypeContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitIntLiter(IntLiterContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitPairElem(PairElemContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitArrayElem(ArrayElemContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitUnOpExpr(UnOpExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitRhsArrayLiter(RhsArrayLiterContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitIdentExpr(IdentExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitCompStat(CompStatContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitPairType(PairTypeContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitArrayLiter(ArrayLiterContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitParam(ParamContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitSkipStat(SkipStatContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitBoolLiter(BoolLiterContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitLhsArrayElem(LhsArrayElemContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitBaseType(BaseTypeContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitPairExpr(PairExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitCharLiter(CharLiterContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitRhsFunctionCall(RhsFunctionCallContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitBinaryOper(BinaryOperContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitRhsExpr(RhsExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitCharExpr(CharExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitLhsIdent(LhsIdentContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitRhsPairElem(RhsPairElemContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitIntExpr(IntExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitStringExpr(StringExprContext ctx) {
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitStringLiter(StringLiterContext ctx) {
+    return visitChildren(ctx);
+  }
 
 }
