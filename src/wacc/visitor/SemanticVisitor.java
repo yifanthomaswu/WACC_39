@@ -260,23 +260,25 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
             .expr().getStart(), msg);
       }
     } else if (ctx.UNARY_OPER().toString().equals("ord")) {
-      if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof CharExprContext)) {
-        String msg = "Incompatible type at "
-            + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + " (expected: CHAR, actual: "
-            + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
+    	Type type = Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st);
+    	if (type.toString() != "CHAR") {
+    		String msg = "Incompatible type at "
+    				+ ((UnOpExprContext) ctx.getParent()).expr().getText()
+    				+ " (expected: CHAR, actual: "
+    				+ Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
+    				.toString() + ")";
+    		throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
             .expr().getStart(), msg);
       }
     } else if (ctx.UNARY_OPER().toString().equals("chr")) {
-      if (!(((UnOpExprContext) ctx.getParent()).expr() instanceof IntExprContext)) {
-        String msg = "Incompatible type at "
-            + ((UnOpExprContext) ctx.getParent()).expr().getText()
-            + " (expected: INT, actual: "
-            + Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
-                .toString() + ")";
-        throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
+    	Type type = Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st);
+    	if (type.toString() != "INT") {
+    		String msg = "Incompatible type at "
+    				+ ((UnOpExprContext) ctx.getParent()).expr().getText()
+    				+ " (expected: INT, actual: "
+    				+ Utils.getType(((UnOpExprContext) ctx.getParent()).expr(), st)
+    				.toString() + ")";
+    		throw new SemanticErrorException(((UnOpExprContext) ctx.getParent())
             .expr().getStart(), msg);
       }
     }
