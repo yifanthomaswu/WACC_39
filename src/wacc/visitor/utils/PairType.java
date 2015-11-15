@@ -31,7 +31,7 @@ public class PairType extends Type {
     }
   }
 
-  public Type getElem(int i) {
+  Type getElem(int i) {
     return base[i];
   }
 

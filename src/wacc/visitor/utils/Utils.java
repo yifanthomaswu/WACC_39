@@ -81,4 +81,13 @@ public class Utils {
       return getType(((RhsFunctionCallContext) ctx).ident(), st);
     }
   }
+
+  public static boolean isSameBaseType(Type type, BaseLiter baseLiter) {
+    if (!(type instanceof BaseType)) {
+      return false;
+    } else {
+      return ((BaseType) type).isSameBaseType((BaseType) type, baseLiter);
+    }
+  }
+
 }
