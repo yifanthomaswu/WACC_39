@@ -12,7 +12,7 @@ public class BaseType extends Type {
   private static final String BINARY_OPER_RETURN_INT = "*/%+-";
 
   public BaseType(BaseTypeContext ctx) {
-    base = Base.valueOf(ctx.BASE_TYPE().toString());
+    base = Base.valueOf(ctx.BASE_TYPE().toString().toUpperCase());
   }
 
   public BaseType(ExprContext ctx) {
