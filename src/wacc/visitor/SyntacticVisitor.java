@@ -2,8 +2,6 @@ package wacc.visitor;
 
 import antlr.BasicParser;
 import antlr.BasicParserBaseVisitor;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.List;
 

@@ -17,5 +17,4 @@ public class SyntacticErrorListener extends BaseErrorListener {
           + " -- " + msg);
     }
   }
-
 }
