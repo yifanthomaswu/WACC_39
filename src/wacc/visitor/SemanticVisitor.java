@@ -4,7 +4,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
 import antlr.BasicParser.*;
-import org.antlr.v4.runtime.misc.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
 import wacc.visitor.utils.Utils;
@@ -32,8 +31,9 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitFunc(FuncContext ctx) {
     st = new SymbolTable(st);
-    if (ctx.paramList() != null)
+    if (ctx.paramList() != null) {
       visit(ctx.paramList());
+    }
     //visit(ctx.funcStat()); // TODO
     st = st.getEncSymTable();
     return visitChildren(ctx);
@@ -55,6 +55,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+    visit(ctx.assignRhs());
     String ident = ctx.ident().getText();
     ParserRuleContext c = st.lookup(ident);
     if (c != null && !(c instanceof FuncContext)) {
@@ -112,7 +113,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitWhileStat(BasicParser.WhileStatContext ctx) {
-    visit(ctx.expr());
     Type exprType = Utils.getType(ctx.expr(), st);
     if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
       String expr = ctx.expr().getText();
@@ -120,6 +120,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
           + BaseLiter.BOOL + ", actual: " + exprType.toString() + ")";
       throw new SemanticErrorException(ctx.expr().getStart(), msg);
     }
+    visit(ctx.expr());
     st = new SymbolTable(st);
     visit(ctx.stat());
     st = st.getEncSymTable();
@@ -215,7 +216,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
      // no semantic checks needed
      return visitChildren(ctx);
    }
-  
+
    @Override
    public Void visitPrintlnStat(PrintlnStatContext ctx) {
      // no semantic checks needed
@@ -232,10 +233,15 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
        st = st.getEncSymTable();
        st = new SymbolTable(st);
        visit(ctx.stat(1));
-       st = st.getEncSymTable();       
+       st = st.getEncSymTable();
      }
      return visitChildren(ctx);
    }
+
+  @Override
+  public Void visitRhsFunctionCall(RhsFunctionCallContext ctx) {
+    return visitChildren(ctx);
+  }
 
   //
   // @Override
@@ -263,30 +269,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   // return visitChildren(ctx);
   // }
   //
-  // @Override
-  // public Void visitRhsExpr(RhsExprContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsArrayLiter(RhsArrayLiterContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsNewPair(RhsNewPairContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsPairElem(RhsPairElemContext ctx) {
-  // return visitChildren(ctx);
-  // }
-  //
-  // @Override
-  // public Void visitRhsFunctionCall(RhsFunctionCallContext ctx) {
-  // return visitChildren(ctx);
-  // }
+
   //
   // @Override
   // public Void visitArgList(ArgListContext ctx) {

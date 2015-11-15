@@ -30,10 +30,6 @@ stat: SKIP                                                       # SkipStat
 | stat SEMICOLON stat                                            # CompStat
 ;
 
-//ret : RETURN expr  #ReturnStat ;
-
-
-
 assignLhs: ident                                                 # LhsIdent
 | arrayElem                                                      # LhsArrayElem
 | pairElem                                                       # LhsPairElem
