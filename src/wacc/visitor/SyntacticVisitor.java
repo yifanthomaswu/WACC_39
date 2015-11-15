@@ -8,7 +8,8 @@ import java.util.List;
 /**
  * Created by md3414 on 15/11/15.
  */
-public class SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
+public class
+SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
 
     @Override
     public Boolean visitFunc(BasicParser.FuncContext ctx) {
@@ -50,21 +51,38 @@ public class SyntacticVisitor extends BasicParserBaseVisitor<Boolean> {
         {
             BasicParser.CompStatContext ctx = (BasicParser.CompStatContext)stat;
             List<BasicParser.StatContext> stats = ctx.stat();
-            for (BasicParser.StatContext st : stats)
-            {
-                if ((st instanceof BasicParser.IfThenElseStatContext) ||
-                        (st instanceof BasicParser.WhileStatContext) ||
-                        (st instanceof BasicParser.ScopingStatContext) ||
-                        (st instanceof BasicParser.CompStatContext) ||
-                        (st instanceof BasicParser.ReturnStatContext) ||
-                        (st instanceof BasicParser.ExitStatContext)
-                        )
-                {
-                    if (!hasReturn(st))
-                        return false;
-                }
+            return checkBlock(stats);
+        }
+        return false;
+    }
+
+    private boolean checkBlock(List<BasicParser.StatContext> stats) {
+        for (BasicParser.StatContext st : stats)
+        {
+            if (st instanceof BasicParser.ReturnStatContext || st instanceof BasicParser.ExitStatContext)
+                return true;
+        }
+        for (int i = 0; i < stats.size(); i++)
+        {
+            BasicParser.StatContext stat = stats.get(i);
+            if (stat instanceof BasicParser.ScopingStatContext) {
+                stats.add(stat);
+                return checkBlock(stats);
             }
-            return true;
+            else if (stat instanceof BasicParser.CompStatContext)
+            {
+                for (BasicParser.StatContext st : ((BasicParser.CompStatContext)stat).stat())
+                {
+                    stats.add(st);
+                }
+                return checkBlock(stats);
+            }
+            else if (stat instanceof BasicParser.IfThenElseStatContext)
+            {
+                BasicParser.IfThenElseStatContext ifStat = (BasicParser.IfThenElseStatContext)stat;
+                if (hasReturn(ifStat.stat(0)) && hasReturn(ifStat.stat(1)))
+                    return true;
+            }
         }
         return false;
     }
