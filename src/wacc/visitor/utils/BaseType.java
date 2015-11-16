@@ -5,7 +5,6 @@ import antlr.BasicParser.*;
 public class BaseType extends Type {
 
   private final BaseLiter baseLiter;
-//  private static final String BINARY_OPER_RETURN_INT = "*/%+-";
 
   public BaseType(BaseTypeContext ctx) {
     baseLiter = BaseLiter.valueOf(ctx.BASE_TYPE().toString().toUpperCase());
@@ -41,18 +40,6 @@ public class BaseType extends Type {
       } else {
         baseLiter = BaseLiter.BOOL;
       }
-      
-//      BinaryOperContext binaryOper = ((BinOpExprContext) ctx).binaryOper();
-//      if (binaryOper.MINUS() != null) {
-//        baseLiter = BaseLiter.INT;
-//      } else {
-//        String oper = binaryOper.BINARY_OPER().toString();
-//        if (BINARY_OPER_RETURN_INT.contains(oper)) {
-//          baseLiter = BaseLiter.INT;
-//        } else {
-//          baseLiter = BaseLiter.BOOL;
-//        }
- //     }
     }
   }
 
