@@ -97,6 +97,14 @@ public class Utils {
       } else {
         exprType = getType(context.expr(0), st);
       }
+      for (ExprContext c : context.expr()) {
+        Type cType = getType(c, st);
+        if (!exprType.equals(cType)) {
+          String msg = "Incompatible type at \"" + c.getText() + "\" (expected: "
+              + exprType + ", actual: " + cType + ")";
+          throw new SemanticErrorException(c.getStart(), msg);
+        }
+      }
       return new ArrayType(exprType);
     } else if (ctx instanceof RhsNewPairContext) {
       Type[] elemTypes = new Type[2];
