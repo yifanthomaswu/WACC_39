@@ -1,6 +1,7 @@
 package wacc.visitor;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+
 import antlr.*;
 import antlr.BasicParser.*;
 import wacc.symboltable.SymbolTable;
@@ -267,16 +268,16 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) { 
+  public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
     Type[] exprs = new Type[2];
     for (int i = 0; i < exprs.length; i++) {
       exprs[i] = Utils.getType(ctx.expr(i), st);
       if (!Utils.isSameBaseType(exprs[i], BaseLiter.INT)) {
-        String msg = "Incompatible type at \"" + ctx.expr(i).getText() + 
-            "\" (expected: INT, actual: " + exprs[i] + ")";
+        String msg = "Incompatible type at \"" + ctx.expr(i).getText()
+            + "\" (expected: INT, actual: " + exprs[i] + ")";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
-    } 
+    }
     return visitChildren(ctx);
   }
 
@@ -286,11 +287,11 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     for (int i = 0; i < exprs.length; i++) {
       exprs[i] = Utils.getType(ctx.expr(i), st);
       if (!Utils.isSameBaseType(exprs[i], BaseLiter.INT)) {
-        String msg = "Incompatible type at \"" + ctx.expr(i).getText() + 
-            "\" (expected: INT, actual: " + exprs[i] + ")";
+        String msg = "Incompatible type at \"" + ctx.expr(i).getText()
+            + "\" (expected: INT, actual: " + exprs[i] + ")";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
-    } 
+    }
     return visitChildren(ctx);
   }
 
@@ -300,19 +301,19 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
     for (int i = 0; i < exprs.length; i++) {
       exprs[i] = Utils.getType(ctx.expr(i), st);
-      if (!(Utils.isSameBaseType(exprs[i], BaseLiter.INT)
-          | Utils.isSameBaseType(exprs[i], BaseLiter.CHAR))) {
-        String msg = "Incompatible type at \"" + ctx.expr(i).getText() + 
-            "\" (expected: BOOL, actual: " + exprs[i] + ")";
+      if (!(Utils.isSameBaseType(exprs[i], BaseLiter.INT) | Utils
+          .isSameBaseType(exprs[i], BaseLiter.CHAR))) {
+        String msg = "Incompatible type at \"" + ctx.expr(i).getText()
+            + "\" (expected: BOOL, actual: " + exprs[i] + ")";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
-    }   
-    
+    }
+
     if (!exprs[0].equals(exprs[1])) {
-      String msg = "Incompatible type at \"" + ctx.expr(1).getText() + 
-          "\" (expected: " + exprs[0] + ", actual: " + exprs[1] + ")";
+      String msg = "Incompatible type at \"" + ctx.expr(1).getText()
+          + "\" (expected: " + exprs[0] + ", actual: " + exprs[1] + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
-    }    
+    }
     return visitChildren(ctx);
   }
 
@@ -321,14 +322,14 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     Type[] exprs = new Type[2];
     for (int i = 0; i < exprs.length; i++) {
       exprs[i] = Utils.getType(ctx.expr(i), st);
-    }  
-    
+    }
+
     if (!exprs[0].equals(exprs[1])) {
-      String msg = "Incompatible type at \"" + ctx.expr(1).getText() + 
-          "\" (expected: " + exprs[0] + ", actual: " + exprs[1] + ")";
+      String msg = "Incompatible type at \"" + ctx.expr(1).getText()
+          + "\" (expected: " + exprs[0] + ", actual: " + exprs[1] + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
-    }  
-    
+    }
+
     return visitChildren(ctx);
   }
 
@@ -338,25 +339,25 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     for (int i = 0; i < exprs.length; i++) {
       exprs[i] = Utils.getType(ctx.expr(i), st);
       if (!Utils.isSameBaseType(exprs[i], BaseLiter.BOOL)) {
-        String msg = "Incompatible type at \"" + ctx.expr(i).getText() + 
-            "\" (expected: BOOL, actual: " + exprs[i] + ")";
+        String msg = "Incompatible type at \"" + ctx.expr(i).getText()
+            + "\" (expected: BOOL, actual: " + exprs[i] + ")";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
-    }  
+    }
     return visitChildren(ctx);
   }
-  
+
   @Override
   public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) {
     Type[] exprs = new Type[2];
     for (int i = 0; i < exprs.length; i++) {
       exprs[i] = Utils.getType(ctx.expr(i), st);
       if (!Utils.isSameBaseType(exprs[i], BaseLiter.BOOL)) {
-        String msg = "Incompatible type at \"" + ctx.expr(i).getText() + 
-            "\" (expected: BOOL, actual: " + exprs[i] + ")";
+        String msg = "Incompatible type at \"" + ctx.expr(i).getText()
+            + "\" (expected: BOOL, actual: " + exprs[i] + ")";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
-    }  
+    }
     return visitChildren(ctx);
   }
 
