@@ -28,18 +28,17 @@ public class ArrayType extends Type {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof ArrayType)) {
-      return obj.toString().equals(toString());
+    if (obj instanceof ArrayType) {
+      ArrayType that = (ArrayType) obj;
+      if (level != that.level) {
+        return false;
+      }
+      if (base == null || that.base == null) {
+        return true;
+      }
+      return base.equals(that.base);
     }
-
-    ArrayType that = (ArrayType) obj;
-    if (level != that.level) {
-      return false;
-    }
-    if (base == null || that.base == null) {
-      return true;
-    }
-    return base.equals(that.base);
+    return ((Type) obj).toString().equals(toString());
   }
 
   @Override

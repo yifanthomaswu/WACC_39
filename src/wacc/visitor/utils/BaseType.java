@@ -49,10 +49,10 @@ public class BaseType extends Type {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof BaseType)) {
-      return obj.toString().equals(toString());
+    if (obj instanceof BaseType) {
+      return baseLiter.equals(((BaseType) obj).baseLiter);
     }
-    return baseLiter.equals(((BaseType) obj).baseLiter);
+    return ((Type) obj).toString().equals(toString());
   }
 
   @Override

@@ -41,29 +41,28 @@ public class PairType extends Type {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof PairType)) {
-      return obj.toString().equals(toString());
-    }
-
-    Type[] thatBase = ((PairType) obj).base;
-    if (!(base == null && thatBase == null)) {
-      if (base != null && thatBase != null) {
-        for (int i = 0; i < base.length; i++) {
-          if (!(base[i] == null && thatBase[i] == null)) {
-            if (base[i] != null && thatBase[i] != null) {
-              if (!base[i].equals(thatBase[i])) {
+    if (obj instanceof PairType) {
+      Type[] thatBase = ((PairType) obj).base;
+      if (!(base == null && thatBase == null)) {
+        if (base != null && thatBase != null) {
+          for (int i = 0; i < base.length; i++) {
+            if (!(base[i] == null && thatBase[i] == null)) {
+              if (base[i] != null && thatBase[i] != null) {
+                if (!base[i].equals(thatBase[i])) {
+                  return false;
+                }
+              } else {
                 return false;
               }
-            } else {
-              return false;
             }
           }
+        } else {
+          return false;
         }
-      } else {
-        return false;
       }
+      return true;
     }
-    return true;
+    return ((Type) obj).toString().equals(toString());
   }
 
   @Override
