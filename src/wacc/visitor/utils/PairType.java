@@ -27,7 +27,11 @@ public class PairType extends Type {
   public PairType(Type[] elemTypes) {
     base = new Type[2];
     for (int i = 0; i < base.length; i++) {
-      base[i] = elemTypes[i];
+      if (elemTypes[i] instanceof PairType) {
+        base[i] = null;
+      } else {
+        base[i] = elemTypes[i];
+      }
     }
   }
 
