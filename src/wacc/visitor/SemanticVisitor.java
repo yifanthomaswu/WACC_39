@@ -191,7 +191,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitIdent(IdentContext ctx) {
     String ident = ctx.getText();
-    if (st.lookupAllT(ident) == null) {
+    if (st.lookupAllT(ident) == null && st.lookupAllF(ident) == null) {
       String msg = "Variable \"" + ident + "\" is not defined in this scope";
       throw new SemanticErrorException(ctx.getParent().getStart(), msg);
     }

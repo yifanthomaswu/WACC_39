@@ -23,7 +23,7 @@ public class Utils {
   public static Type getType(IdentContext ctx, SymbolTable st) {
     String ident = ctx.getText();
     ParserRuleContext context = st.lookupAllT(ident);
-    if (context == null || context instanceof FuncContext) {
+    if (context == null) {
       String msg = "Variable \"" + ident + "\" is not defined in this scope";
       throw new SemanticErrorException(ctx.getParent().getStart(), msg);
     } else {
