@@ -93,13 +93,12 @@ public class Utils {
       return getType(((RhsPairElemContext) ctx).pairElem(), st);
     } else {
       String ident = ((RhsCallContext) ctx).ident().getText();
-      ParserRuleContext contextT = st.lookupAllT(ident);
-      ParserRuleContext contextF = st.lookupAllF(ident);
-      if (contextF == null || contextT != null) {
+      ParserRuleContext context = st.lookupAllF(ident);
+      if (context == null) {
         String msg = "Function \"" + ident + "\" is not defined in this scope";// TODO
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       }
-      TypeContext typeContext = ((FuncContext) contextF).type();
+      TypeContext typeContext = ((FuncContext) context).type();
       return getType(typeContext);
     }
   }
