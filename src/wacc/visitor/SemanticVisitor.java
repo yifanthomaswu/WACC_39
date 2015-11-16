@@ -1,7 +1,6 @@
 package wacc.visitor;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
@@ -231,29 +230,36 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     return visitChildren(ctx);
   }
 
-  @Override
-  public Void visitArrayElem(ArrayElemContext ctx) {
-    for (ExprContext c : ctx.expr()) {
-      Type exprType = Utils.getType(c, st);
-      if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
-        String expr = c.getText();
-        String msg = "Incompatible type at \"" + expr + "\" (expected: "
-            + BaseLiter.INT + ", actual: " + exprType.toString() + ")";
-        throw new SemanticErrorException(c.getStart(), msg);
-      }
-    }
-    ArrayType exprType = (ArrayType) Utils.getType(ctx, st);
-    if (exprType.getLevel() < ctx.expr().size()) {
-      String expected = "T";
-      for (int i = 0; i < ctx.expr().size(); i++) {
-        expected += "[]";
-      }
-      String msg = "Incompatible type at " + ctx.getText()
-          + " (expected: " + expected + ", actual: " + exprType + ")";
-      throw new SemanticErrorException(ctx.getStart(), msg);
-    }
-    return visitChildren(ctx);
-  }
+//  @Override
+//  public Void visitArrayElem(ArrayElemContext ctx) {
+//    for (ExprContext c : ctx.expr()) {
+//      Type exprType = Utils.getType(c, st);
+//      if (!Utils.isSameBaseType(exprType, BaseLiter.INT)) {
+//        String expr = c.getText();
+//        String msg = "Incompatible type at \"" + expr + "\" (expected: "
+//            + BaseLiter.INT + ", actual: " + exprType.toString() + ")";
+//        throw new SemanticErrorException(c.getStart(), msg);
+//      }
+//    }
+//    Type type = Utils.getType(ctx, st);
+//    if (type instanceof ArrayType) {
+//      ArrayType exprType = (ArrayType) type;
+//      int level = exprType.getLevel();
+//      if (Utils.isSameBaseType(exprType.getBase(), BaseLiter.STRING)) {
+//        level++;
+//      }
+//      if (level < ctx.expr().size()) {
+//        String expected = "T";
+//        for (int i = 0; i < ctx.expr().size(); i++) {
+//          expected += "[]";
+//        }
+//        String msg = "Incompatible type at " + ctx.getText() + " (expected: "
+//            + expected + ", actual: " + exprType + ")";
+//        throw new SemanticErrorException(ctx.getStart(), msg);
+//      }
+//    }
+//    return visitChildren(ctx);
+//  }
 
   @Override
   public Void visitUnOpExpr(UnOpExprContext ctx) {
@@ -388,31 +394,33 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     return visitChildren(ctx);
   }
 
-  @Override
-  public Void visitArrayElemExpr(BasicParser.ArrayElemExprContext ctx) {
-    Type identType = Utils.getType(ctx.arrayElem().ident(), st);
-    if (!(Utils.isSameBaseType(identType, BaseLiter.STRING)) && !(identType instanceof ArrayType)) {
-      String brackets = "";
-      for (ExprContext e : ctx.arrayElem().expr())
-      {
-        brackets += "[]";
-      }
-      String msg = "Incompatible type at \"" + ctx.arrayElem().ident().getText()
-              + "\" (expected: Any" + brackets + ", actual: " + identType.toString() + ")";
-      throw new SemanticErrorException(ctx.getStart(), msg);
-    }
-    visitChildren(ctx);
-    for (ExprContext e : ctx.arrayElem().expr()) {
-      Type expType = Utils.getType(e, st);
-      if (!(Utils.isSameBaseType(expType, BaseLiter.INT))) {
-        String msg = "Incompatible type at \"" + e.getText()
-                + "\" (expected: INT, actual: " + expType.toString() + ")";
-        throw new SemanticErrorException(ctx.getStart(), msg);
-      }
-    }
-
-
-    return null;
-  }
+  // @Override
+  // public Void visitArrayElemExpr(BasicParser.ArrayElemExprContext ctx) {
+  // Type identType = Utils.getType(ctx.arrayElem().ident(), st);
+  // if (!(Utils.isSameBaseType(identType, BaseLiter.STRING)) && !(identType
+  // instanceof ArrayType)) {
+  // String brackets = "";
+  // for (ExprContext e : ctx.arrayElem().expr())
+  // {
+  // brackets += "[]";
+  // }
+  // String msg = "Incompatible type at \"" + ctx.arrayElem().ident().getText()
+  // + "\" (expected: Any" + brackets + ", actual: " + identType.toString() +
+  // ")";
+  // throw new SemanticErrorException(ctx.getStart(), msg);
+  // }
+  // visitChildren(ctx);
+  // for (ExprContext e : ctx.arrayElem().expr()) {
+  // Type expType = Utils.getType(e, st);
+  // if (!(Utils.isSameBaseType(expType, BaseLiter.INT))) {
+  // String msg = "Incompatible type at \"" + e.getText()
+  // + "\" (expected: INT, actual: " + expType.toString() + ")";
+  // throw new SemanticErrorException(ctx.getStart(), msg);
+  // }
+  // }
+  //
+  //
+  // return null;
+  // }
 
 }

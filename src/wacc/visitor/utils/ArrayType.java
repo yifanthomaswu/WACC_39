@@ -26,6 +26,10 @@ public class ArrayType extends Type {
     level = 1;
   }
 
+  public Type getBase() {
+    return base;
+  }
+
   public int getLevel() {
     return level;
   }

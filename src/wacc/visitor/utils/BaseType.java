@@ -17,8 +17,6 @@ public class BaseType extends Type {
       baseLiter = BaseLiter.BOOL;
     } else if (ctx instanceof CharExprContext) {
       baseLiter = BaseLiter.CHAR;
-    } else if (ctx instanceof StringExprContext) {
-      baseLiter = BaseLiter.STRING;
     } else if (ctx instanceof UnOpExprContext) {
       UnaryOperContext unaryOper = ((UnOpExprContext) ctx).unaryOper();
       if (unaryOper.MINUS() != null) {
@@ -34,8 +32,8 @@ public class BaseType extends Type {
         }
       }
     } else {
-      if (ctx instanceof BinOpPrec1ExprContext ||
-          ctx instanceof BinOpPrec2ExprContext) {
+      if (ctx instanceof BinOpPrec1ExprContext
+          || ctx instanceof BinOpPrec2ExprContext) {
         baseLiter = BaseLiter.INT;
       } else {
         baseLiter = BaseLiter.BOOL;

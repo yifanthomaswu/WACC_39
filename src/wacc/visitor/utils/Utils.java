@@ -11,6 +11,9 @@ public class Utils {
   public static Type getType(TypeContext ctx) {
     Type type;
     if (ctx.baseType() != null) {
+      if (ctx.baseType().BASE_TYPE().toString().equals("string")) {
+        type = new ArrayType(new BaseType());
+      }
       type = new BaseType(ctx.baseType());
     } else if (ctx.arrayType() != null) {
       type = new ArrayType(ctx.arrayType());
@@ -31,16 +34,19 @@ public class Utils {
     }
   }
 
-  public static Type getType(ArrayElemContext ctx, SymbolTable st) {
+  private static Type getType(ArrayElemContext ctx, SymbolTable st) {
     Type identType = getType(ctx.ident(), st);
-    if (identType instanceof ArrayType) {
-      return new ArrayType(ctx, (ArrayType) identType);
-    } else {
-      return new ArrayType(ctx, new ArrayType(identType));
+    if (!(identType instanceof ArrayType)
+        || ((ArrayType) identType).getLevel() < ctx.expr().size()) {
+      String expected = "T";
+      for (int i = 0; i < ctx.expr().size(); i++) {
+        expected += "[]";
+      }
+      String msg = "Incompatible type at " + ctx.getText() + " (expected: "
+          + expected + ", actual: " + identType + ")";
+      throw new SemanticErrorException(ctx.getStart(), msg);
     }
-//    ArrayType identType = (ArrayType) getType(ctx.ident(), st);
-//    return new ArrayType(ctx, identType);
-//    return getType(ctx.ident(), st);
+    return new ArrayType(ctx, (ArrayType) identType);
   }
 
   public static Type getType(ExprContext ctx, SymbolTable st) {
@@ -53,6 +59,8 @@ public class Utils {
       return getType(arrayElem, st);
     } else if (ctx instanceof ParensExprContext) {
       return getType(((ParensExprContext) ctx).expr(), st);
+    } else if (ctx instanceof StringExprContext) {
+      return new ArrayType(new BaseType());
     } else {
       return new BaseType(ctx);
     }
