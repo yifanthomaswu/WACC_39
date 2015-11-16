@@ -37,9 +37,21 @@ BASE_TYPE: 'int' | 'bool' | 'char' | 'string' ;
 // operators
 UNARY_OPER: '!' | 'len' | 'ord' | 'chr' ;
 
-BINARY_OPER: '*' | '/' | '%' | '+' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||' ;
+// binary
+MULT: '*';
+DIV: '/';
+MOD: '%';
+PLUS: '+';
+MINUS: '-';
+GRT: '>';
+GRT_EQUAL: '>=';
+LESS: '<';
+LESS_EQUAL: '<=';
+EQUAL: '==';
+NOT_EQUAL: '!=';
+AND: '&&';
+OR: '||';
 
-MINUS: '-' ;
 
 // brackets
 OPEN_PARENTHESES : '(' ;
