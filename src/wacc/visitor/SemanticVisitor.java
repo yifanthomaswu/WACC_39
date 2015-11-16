@@ -16,7 +16,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     st = globalTable;
     for (FuncContext func : ctx.func()) {
       String ident = func.ident().getText();
-      if (st.lookup(ident) != null) {
+      if (st.lookupF(ident) != null) {
         String msg = "\"" + ident + "\" is already defined in this scope";
         throw new SemanticErrorException(ctx.getStart(), msg);
       } else {
@@ -41,7 +41,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitParamList(ParamListContext ctx) {
     for (ParamContext param : ctx.param()) {
       String ident = param.ident().getText();
-      if (st.lookup(ident) != null) {
+      if (st.lookupT(ident) != null) {
         String msg = "\"" + ident + "\" is already defined in this scope";
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       } else {
@@ -54,7 +54,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
     String ident = ctx.ident().getText();
-    ParserRuleContext context = st.lookup(ident);
+    ParserRuleContext context = st.lookupT(ident);
     if (context != null && !(context instanceof FuncContext)) {
       String msg = "\"" + ident + "\" is already defined in this scope";
       throw new SemanticErrorException(ctx.getStart(), msg);
@@ -190,7 +190,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitIdent(IdentContext ctx) {
     String ident = ctx.getText();
-    if (st.lookupAll(ident) == null) {
+    if (st.lookupAllT(ident) == null) {
       String msg = "Variable \"" + ident + "\" is not defined in this scope";
       throw new SemanticErrorException(ctx.getParent().getStart(), msg);
     }
@@ -200,7 +200,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
     String ident = ctx.ident().getText();
-    FuncContext func = (FuncContext) st.lookupAll(ident);
+    FuncContext func = (FuncContext) st.lookupAllF(ident);
     int paramSize = 0;
     if (func.paramList() != null) {
       paramSize = func.paramList().param().size();

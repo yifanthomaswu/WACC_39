@@ -22,7 +22,7 @@ public class Utils {
 
   public static Type getType(IdentContext ctx, SymbolTable st) {
     String ident = ctx.getText();
-    ParserRuleContext context = st.lookupAll(ident);
+    ParserRuleContext context = st.lookupAllT(ident);
     if (context == null || context instanceof FuncContext) {
       String msg = "Variable \"" + ident + "\" is not defined in this scope";
       throw new SemanticErrorException(ctx.getParent().getStart(), msg);
@@ -93,12 +93,13 @@ public class Utils {
       return getType(((RhsPairElemContext) ctx).pairElem(), st);
     } else {
       String ident = ((RhsCallContext) ctx).ident().getText();
-      ParserRuleContext context = st.lookupAll(ident);
-      if (context == null || context instanceof TypeContext) {
+      ParserRuleContext contextT = st.lookupAllT(ident);
+      ParserRuleContext contextF = st.lookupAllF(ident);
+      if (contextF == null || contextT != null) {
         String msg = "Function \"" + ident + "\" is not defined in this scope";// TODO
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       }
-      TypeContext typeContext = ((FuncContext) context).type();
+      TypeContext typeContext = ((FuncContext) contextF).type();
       return getType(typeContext);
     }
   }
