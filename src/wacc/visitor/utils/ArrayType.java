@@ -29,6 +29,9 @@ public class ArrayType extends Type {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof ArrayType) {
+      if (((Type) obj).toString().equals(toString())) {
+        return true;
+      }
       ArrayType that = (ArrayType) obj;
       if (level != that.level) {
         return false;
