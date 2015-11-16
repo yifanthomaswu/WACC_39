@@ -35,8 +35,16 @@ public class PairType extends Type {
     }
   }
 
+ private PairType() {
+  base = null;
+}
+
   Type getElem(int i) {
-    return base[i];
+    if (base[i] == null) {
+      return new PairType();
+    } else {
+      return base[i];
+    }
   }
 
   @Override
