@@ -26,6 +26,10 @@ public class ArrayType extends Type {
     level = 1;
   }
 
+  public int getLevel() {
+    return level;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof ArrayType) {

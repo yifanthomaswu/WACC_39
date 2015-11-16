@@ -31,12 +31,12 @@ public class Utils {
     }
   }
 
-  private static Type getType(ArrayElemContext ctx, SymbolTable st) {
+  public static Type getType(ArrayElemContext ctx, SymbolTable st) {
     Type identType = getType(ctx.ident(), st);
-    if (isSameBaseType(identType, BaseLiter.STRING)) {
-      return new ArrayType(ctx, new ArrayType(new BaseType()));
-    } else {
+    if (identType instanceof ArrayType) {
       return new ArrayType(ctx, (ArrayType) identType);
+    } else {
+      return new ArrayType(ctx, new ArrayType(identType));
     }
 //    ArrayType identType = (ArrayType) getType(ctx.ident(), st);
 //    return new ArrayType(ctx, identType);

@@ -1,6 +1,7 @@
 package wacc.visitor;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
@@ -224,6 +225,30 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
             + " (expected: " + paramType + ", actual: " + argType + ")";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
+    }
+    return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitArrayElem(ArrayElemContext ctx) {
+    for (ExprContext c : ctx.expr()) {
+      Type exprType = Utils.getType(c, st);
+      if (!Utils.isSameBaseType(exprType, BaseLiter.BOOL)) {
+        String expr = c.getText();
+        String msg = "Incompatible type at \"" + expr + "\" (expected: "
+            + BaseLiter.INT + ", actual: " + exprType.toString() + ")";
+        throw new SemanticErrorException(c.getStart(), msg);
+      }
+    }
+    ArrayType exprType = (ArrayType) Utils.getType(ctx, st);
+    if (exprType.getLevel() < ctx.expr().size()) {
+      String expected = "T";
+      for (int i = 0; i < ctx.expr().size(); i++) {
+        expected += "[]";
+      }
+      String msg = "Incompatible type at " + ctx.getText()
+          + " (expected: " + expected + ", actual: " + exprType + ")";
+      throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
   }
