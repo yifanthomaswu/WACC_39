@@ -37,6 +37,8 @@ public class SymbolTable {
 
   public ParserRuleContext lookupT(String name) {
     List<ParserRuleContext> entries = dict.get(name);
+    if (entries == null)
+      return null;
     for (ParserRuleContext entry : entries) {
       if (entry instanceof BasicParser.TypeContext)
         return entry;
@@ -46,6 +48,8 @@ public class SymbolTable {
 
   public ParserRuleContext lookupF(String name) {
     List<ParserRuleContext> entries = dict.get(name);
+    if (entries == null)
+      return null;
     for (ParserRuleContext entry : entries) {
       if (entry instanceof BasicParser.FuncContext)
         return entry;
