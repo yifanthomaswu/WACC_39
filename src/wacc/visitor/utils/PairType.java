@@ -42,7 +42,7 @@ public class PairType extends Type {
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof PairType)) {
-      return false;
+      return obj.toString().equals(toString());
     }
 
     Type[] thatBase = ((PairType) obj).base;
