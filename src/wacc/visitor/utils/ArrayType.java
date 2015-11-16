@@ -29,7 +29,7 @@ public class ArrayType extends Type {
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof ArrayType)) {
-      return false;
+      return obj.toString().equals(toString());
     }
 
     ArrayType that = (ArrayType) obj;

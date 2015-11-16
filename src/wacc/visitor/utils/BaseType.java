@@ -29,7 +29,7 @@ public class BaseType extends Type {
           baseLiter = BaseLiter.BOOL;
         } else if (oper.equals("chr")) {
           baseLiter = BaseLiter.CHAR;
-        } else { // in the cases of 'len' and 'ord' 
+        } else { // in the cases of 'len' and 'ord'
           baseLiter = BaseLiter.INT;
         }
       }
@@ -50,7 +50,7 @@ public class BaseType extends Type {
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof BaseType)) {
-      return false;
+      return obj.toString().equals(toString());
     }
     return baseLiter.equals(((BaseType) obj).baseLiter);
   }
