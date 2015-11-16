@@ -1,6 +1,7 @@
 package wacc.visitor;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
@@ -266,7 +267,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     }
     return visitChildren(ctx);
   }
-
+/*
   @Override
   public Void visitBinOpExpr(BinOpExprContext ctx) {
     String oper;
@@ -329,5 +330,17 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     }
     return visitChildren(ctx);
   }
+*/
+  
+  @Override public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) { return visitChildren(ctx); }
+  
+  @Override public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) { return visitChildren(ctx); }
 
+  @Override public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) { return visitChildren(ctx); }
+  
+  @Override public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) { return visitChildren(ctx); }
+  
+  @Override public Void visitBinOpPrec5Expr(BinOpPrec5ExprContext ctx) { return visitChildren(ctx); }
+  
+  @Override public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) { return visitChildren(ctx); }
 }
