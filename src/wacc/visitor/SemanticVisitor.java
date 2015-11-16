@@ -4,9 +4,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
 import antlr.BasicParser.*;
-import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
-import wacc.visitor.utils.Utils;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
@@ -329,13 +327,12 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
     Type[] exprs = new Type[2];
-
     for (int i = 0; i < exprs.length; i++) {
       exprs[i] = Utils.getType(ctx.expr(i), st);
-      if (!(Utils.isSameBaseType(exprs[i], BaseLiter.INT) | Utils
+      if (!(Utils.isSameBaseType(exprs[i], BaseLiter.INT) || Utils
           .isSameBaseType(exprs[i], BaseLiter.CHAR))) {
         String msg = "Incompatible type at \"" + ctx.expr(i).getText()
-            + "\" (expected: BOOL, actual: " + exprs[i] + ")";
+            + "\" (expected: INT or CHAR, actual: " + exprs[i] + ")";
         throw new SemanticErrorException(ctx.getStart(), msg);
       }
     }
@@ -360,7 +357,6 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
           + "\" (expected: " + exprs[0] + ", actual: " + exprs[1] + ")";
       throw new SemanticErrorException(ctx.getStart(), msg);
     }
-
     return visitChildren(ctx);
   }
 

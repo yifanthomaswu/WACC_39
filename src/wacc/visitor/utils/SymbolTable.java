@@ -1,17 +1,16 @@
-package wacc.symboltable;
+package wacc.visitor.utils;
 
 import java.util.List;
 
-import antlr.BasicParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.MultiMap;
 
+import antlr.BasicParser;
 
 public class SymbolTable {
 
   private final SymbolTable encSymTable;
   private final MultiMap<String, ParserRuleContext> dict = new MultiMap<>();
- // private final Dictionary<String, ParserRuleContext> dict = new Hashtable<>();
 
   public SymbolTable(SymbolTable st) {
     encSymTable = st;
@@ -24,16 +23,6 @@ public class SymbolTable {
   public SymbolTable getEncSymTable() {
     return encSymTable;
   }
-
-  /*
-  public ParserRuleContext lookup(String name) {
-    if (dict.get(name) != null)
-      return dict.get(name).get(0);
-    else
-      return null;
-   // return dict.get(name);
-  }
-  */
 
   public ParserRuleContext lookupT(String name) {
     List<ParserRuleContext> entries = dict.get(name);
@@ -57,10 +46,10 @@ public class SymbolTable {
     return null;
   }
 
-  public ParserRuleContext lookupAllF(String name) {
+  public ParserRuleContext lookupAllT(String name) {
     SymbolTable s = this;
     do {
-      ParserRuleContext object = s.lookupF(name);
+      ParserRuleContext object = s.lookupT(name);
       if (object != null) {
         return object;
       }
@@ -69,10 +58,10 @@ public class SymbolTable {
     return null;
   }
 
-  public ParserRuleContext lookupAllT(String name) {
+  public ParserRuleContext lookupAllF(String name) {
     SymbolTable s = this;
     do {
-      ParserRuleContext object = s.lookupT(name);
+      ParserRuleContext object = s.lookupF(name);
       if (object != null) {
         return object;
       }

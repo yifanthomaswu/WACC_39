@@ -9,7 +9,11 @@ public class ArrayType extends Type {
 
   public ArrayType(ArrayTypeContext ctx) {
     if (ctx.baseType() != null) {
-      base = new BaseType(ctx.baseType());
+      if (ctx.baseType().BASE_TYPE().getText().equals("string")) {
+        base = new ArrayType(new BaseType());
+      } else {
+        base = new BaseType(ctx.baseType());
+      }
     } else {
       base = new PairType(ctx.pairType());
     }

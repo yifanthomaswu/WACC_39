@@ -3,7 +3,6 @@ package wacc.visitor.utils;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.BasicParser.*;
-import wacc.symboltable.SymbolTable;
 import wacc.visitor.SemanticErrorException;
 
 public class Utils {
