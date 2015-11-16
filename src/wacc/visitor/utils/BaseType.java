@@ -45,8 +45,8 @@ public class BaseType extends Type {
     baseLiter = BaseLiter.CHAR;
   }
 
-  boolean isSameBaseType(BaseType type, BaseLiter baseLiter) {
-    return baseLiter.equals(type.baseLiter);
+  boolean isSameBaseType(BaseLiter baseLiter) {
+    return this.baseLiter == baseLiter;
   }
 
   @Override

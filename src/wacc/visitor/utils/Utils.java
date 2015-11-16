@@ -11,10 +11,11 @@ public class Utils {
   public static Type getType(TypeContext ctx) {
     Type type;
     if (ctx.baseType() != null) {
-      if (ctx.baseType().BASE_TYPE().toString().equals("string")) {
+      if (ctx.baseType().BASE_TYPE().getText().equals("string")) {
         type = new ArrayType(new BaseType());
+      } else {
+        type = new BaseType(ctx.baseType());
       }
-      type = new BaseType(ctx.baseType());
     } else if (ctx.arrayType() != null) {
       type = new ArrayType(ctx.arrayType());
     } else {
@@ -110,7 +111,7 @@ public class Utils {
       String ident = ((RhsCallContext) ctx).ident().getText();
       ParserRuleContext context = st.lookupAllF(ident);
       if (context == null) {
-        String msg = "Function \"" + ident + "\" is not defined in this scope";// TODO
+        String msg = "Function \"" + ident + "\" is not defined in this scope";
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       }
       TypeContext typeContext = ((FuncContext) context).type();
@@ -120,9 +121,9 @@ public class Utils {
 
   public static boolean isSameBaseType(Type type, BaseLiter baseLiter) {
     if (type instanceof BaseType) {
-      return ((BaseType) type).isSameBaseType((BaseType) type, baseLiter);
+      return ((BaseType) type).isSameBaseType(baseLiter);
     } else {
-      return type.toString().equals(baseLiter.toString()); // TODO
+      return type.toString().equals(baseLiter.toString());
     }
   }
 
