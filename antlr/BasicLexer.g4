@@ -34,10 +34,10 @@ NULL: 'null' ;
 // type
 BASE_TYPE: 'int' | 'bool' | 'char' | 'string' ;
 
-// operators
+// unary operators
 UNARY_OPER: '!' | 'len' | 'ord' | 'chr' ;
 
-// binary
+// binary operators
 MULT: '*';
 DIV: '/';
 MOD: '%';

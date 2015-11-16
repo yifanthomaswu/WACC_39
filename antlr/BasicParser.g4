@@ -76,13 +76,10 @@ expr: intLiter                                                   # IntExpr
 | expr (EQUAL | NOT_EQUAL) expr                                  # BinOpPrec4Expr
 | expr AND expr                                                  # BinOpPrec5Expr
 | expr OR expr                                                   # BinOpPrec6Expr
-//| expr binaryOper expr                                           # BinOpExpr
 | OPEN_PARENTHESES expr CLOSE_PARENTHESES                        # ParensExpr
 ;
 
 unaryOper: UNARY_OPER | MINUS ;
-
-//binaryOper: MULT | DIV | MOD | PLUS | MINUS | GRT | GRT_EQUAL | LESS | LESS_EQUAL | EQUAL | NOT_EQUAL | AND | OR;
 
 ident: IDENT ;
 
