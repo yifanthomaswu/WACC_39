@@ -32,8 +32,15 @@ public class Utils {
   }
 
   private static Type getType(ArrayElemContext ctx, SymbolTable st) {
-    ArrayType identType = (ArrayType) getType(ctx.ident(), st);
-    return new ArrayType(ctx, identType);
+    Type identType = getType(ctx.ident(), st);
+    if (isSameBaseType(identType, BaseLiter.STRING)) {
+      return new ArrayType(ctx, new ArrayType(new BaseType()));
+    } else {
+      return new ArrayType(ctx, (ArrayType) identType);
+    }
+//    ArrayType identType = (ArrayType) getType(ctx.ident(), st);
+//    return new ArrayType(ctx, identType);
+//    return getType(ctx.ident(), st);
   }
 
   public static Type getType(ExprContext ctx, SymbolTable st) {
