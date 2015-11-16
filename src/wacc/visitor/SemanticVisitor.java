@@ -5,8 +5,10 @@ import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
+import org.antlr.v4.runtime.misc.*;
 import wacc.symboltable.SymbolTable;
 import wacc.visitor.utils.*;
+import wacc.visitor.utils.Utils;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
@@ -384,6 +386,33 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
       }
     }
     return visitChildren(ctx);
+  }
+
+  @Override
+  public Void visitArrayElemExpr(BasicParser.ArrayElemExprContext ctx) {
+    Type identType = Utils.getType(ctx.arrayElem().ident(), st);
+    if (!(Utils.isSameBaseType(identType, BaseLiter.STRING)) && !(identType instanceof ArrayType)) {
+      String brackets = "";
+      for (ExprContext e : ctx.arrayElem().expr())
+      {
+        brackets += "[]";
+      }
+      String msg = "Incompatible type at \"" + ctx.arrayElem().ident().getText()
+              + "\" (expected: Any" + brackets + ", actual: " + identType.toString() + ")";
+      throw new SemanticErrorException(ctx.getStart(), msg);
+    }
+    visitChildren(ctx);
+    for (ExprContext e : ctx.arrayElem().expr()) {
+      Type expType = Utils.getType(e, st);
+      if (!(Utils.isSameBaseType(expType, BaseLiter.INT))) {
+        String msg = "Incompatible type at \"" + e.getText()
+                + "\" (expected: INT, actual: " + expType.toString() + ")";
+        throw new SemanticErrorException(ctx.getStart(), msg);
+      }
+    }
+
+
+    return null;
   }
 
 }
