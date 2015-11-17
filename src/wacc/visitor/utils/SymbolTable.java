@@ -2,6 +2,7 @@ package wacc.visitor.utils;
 
 import java.util.List;
 
+import antlr.BasicParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.MultiMap;
 
@@ -24,50 +25,44 @@ public class SymbolTable {
     return encSymTable;
   }
 
-  public TypeContext lookupT(String name) {
+  private ParserRuleContext lookup(String name, Class context) {
     List<ParserRuleContext> entries = dict.get(name);
     if (entries == null)
       return null;
     for (ParserRuleContext entry : entries) {
-      if (entry instanceof TypeContext)
-        return (TypeContext) entry;
+      if (context.isInstance(entry))
+        return entry;
     }
     return null;
   }
 
+  public TypeContext lookupT(String name) {
+    return (TypeContext) lookup(name, TypeContext.class);
+  }
+
   public FuncContext lookupF(String name) {
-    List<ParserRuleContext> entries = dict.get(name);
-    if (entries == null)
-      return null;
-    for (ParserRuleContext entry : entries) {
-      if (entry instanceof FuncContext)
-        return (FuncContext) entry;
-    }
+    return (FuncContext) lookup(name, FuncContext.class);
+  }
+
+  public ParserRuleContext lookupAll(String name, Class context) {
+    SymbolTable s = this;
+    do {
+      ParserRuleContext object = s.lookup(name, context);
+      if (object != null) {
+        return object;
+      }
+      s = s.encSymTable;
+    } while (s != null);
     return null;
   }
 
   public TypeContext lookupAllT(String name) {
-    SymbolTable s = this;
-    do {
-      ParserRuleContext object = s.lookupT(name);
-      if (object != null) {
-        return (TypeContext) object;
-      }
-      s = s.encSymTable;
-    } while (s != null);
-    return null;
+    return (TypeContext)lookupAll(name, TypeContext.class);
   }
 
   public FuncContext lookupAllF(String name) {
-    SymbolTable s = this;
-    do {
-      ParserRuleContext object = s.lookupF(name);
-      if (object != null) {
-        return (FuncContext) object;
-      }
-      s = s.encSymTable;
-    } while (s != null);
-    return null;
+    return (FuncContext)lookupAll(name, FuncContext.class);
+
   }
 
 }
