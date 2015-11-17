@@ -5,7 +5,7 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.MultiMap;
 
-import antlr.BasicParser;
+import antlr.BasicParser.*;
 
 public class SymbolTable {
 
@@ -24,46 +24,46 @@ public class SymbolTable {
     return encSymTable;
   }
 
-  public ParserRuleContext lookupT(String name) {
+  public TypeContext lookupT(String name) {
     List<ParserRuleContext> entries = dict.get(name);
     if (entries == null)
       return null;
     for (ParserRuleContext entry : entries) {
-      if (entry instanceof BasicParser.TypeContext)
-        return entry;
+      if (entry instanceof TypeContext)
+        return (TypeContext) entry;
     }
     return null;
   }
 
-  public ParserRuleContext lookupF(String name) {
+  public FuncContext lookupF(String name) {
     List<ParserRuleContext> entries = dict.get(name);
     if (entries == null)
       return null;
     for (ParserRuleContext entry : entries) {
-      if (entry instanceof BasicParser.FuncContext)
-        return entry;
+      if (entry instanceof FuncContext)
+        return (FuncContext) entry;
     }
     return null;
   }
 
-  public ParserRuleContext lookupAllT(String name) {
+  public TypeContext lookupAllT(String name) {
     SymbolTable s = this;
     do {
       ParserRuleContext object = s.lookupT(name);
       if (object != null) {
-        return object;
+        return (TypeContext) object;
       }
       s = s.encSymTable;
     } while (s != null);
     return null;
   }
 
-  public ParserRuleContext lookupAllF(String name) {
+  public FuncContext lookupAllF(String name) {
     SymbolTable s = this;
     do {
       ParserRuleContext object = s.lookupF(name);
       if (object != null) {
-        return object;
+        return (FuncContext) object;
       }
       s = s.encSymTable;
     } while (s != null);

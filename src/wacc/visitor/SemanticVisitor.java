@@ -54,8 +54,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
     String ident = ctx.ident().getText();
-    ParserRuleContext context = st.lookupT(ident);
-    if (context != null && !(context instanceof FuncContext)) {
+    if (st.lookupT(ident) != null) {
       String msg = "\"" + ident + "\" is already defined in this scope";
       throw new SemanticErrorException(ctx.getStart(), msg);
     } else {
@@ -187,20 +186,20 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  @Override
-  public Void visitIdent(IdentContext ctx) {
-    String ident = ctx.getText();
-    if (st.lookupAllT(ident) == null && st.lookupAllF(ident) == null) {
-      String msg = "Variable \"" + ident + "\" is not defined in this scope";
-      throw new SemanticErrorException(ctx.getParent().getStart(), msg);
-    }
-    return visitChildren(ctx);
-  }
+//  @Override
+//  public Void visitIdent(IdentContext ctx) {
+//    String ident = ctx.getText();
+//    if (st.lookupAllT(ident) == null && st.lookupAllF(ident) == null) {
+//      String msg = "Variable \"" + ident + "\" is not defined in this scope";
+//      throw new SemanticErrorException(ctx.getParent().getStart(), msg);
+//    }
+//    return visitChildren(ctx);
+//  }
 
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
     String ident = ctx.ident().getText();
-    FuncContext func = (FuncContext) st.lookupAllF(ident);
+    FuncContext func = st.lookupAllF(ident);
     int paramSize = 0;
     if (func.paramList() != null) {
       paramSize = func.paramList().param().size();
