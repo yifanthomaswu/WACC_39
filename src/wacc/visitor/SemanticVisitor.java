@@ -186,15 +186,15 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-//  @Override
-//  public Void visitIdent(IdentContext ctx) {
-//    String ident = ctx.getText();
-//    if (st.lookupAllT(ident) == null && st.lookupAllF(ident) == null) {
-//      String msg = "Variable \"" + ident + "\" is not defined in this scope";
-//      throw new SemanticErrorException(ctx.getParent().getStart(), msg);
-//    }
-//    return visitChildren(ctx);
-//  }
+  @Override
+  public Void visitIdent(IdentContext ctx) {
+    String ident = ctx.getText();
+    if (st.lookupAllT(ident) == null) {
+      String msg = "Variable \"" + ident + "\" is not defined in this scope";
+      throw new SemanticErrorException(ctx.getParent().getStart(), msg);
+    }
+    return visitChildren(ctx);
+  }
 
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
