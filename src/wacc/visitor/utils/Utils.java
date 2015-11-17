@@ -119,8 +119,7 @@ public class Utils {
         String msg = "Function \"" + ident + "\" is not defined in this scope";
         throw new SemanticErrorException(ctx.getParent().getStart(), msg);
       }
-      TypeContext typeContext = context.type();
-      return getType(typeContext);
+      return getType(context.type());
     }
   }
 
