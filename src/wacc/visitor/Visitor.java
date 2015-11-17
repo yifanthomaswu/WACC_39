@@ -29,27 +29,28 @@ public class Visitor {
     // begin parsing at program rule
     ParseTree tree = parser.program();
 
-    int numberOfSyntaxErrorsErrors = parser.getNumberOfSyntaxErrors();
+    int numberOfSyntaxErrors = parser.getNumberOfSyntaxErrors();
 
+    // build and run SyntacticVisitor, check functions ended with return or exit
     try {
       SyntacticVisitor syntacticVisitor = new SyntacticVisitor();
       syntacticVisitor.visit(tree);
     } catch (SyntacticErrorException e) {
       System.out.println(e.getMessage());
-      numberOfSyntaxErrorsErrors++;
+      numberOfSyntaxErrors++;
     }
 
     // exit with code 100 if syntactic error exits
-    if (numberOfSyntaxErrorsErrors > 0) {
-      System.out.println(numberOfSyntaxErrorsErrors +
-          " parser error(s) detected, no further compilation attempted.");
+    if (numberOfSyntaxErrors > 0) {
+      System.out.println(numberOfSyntaxErrors
+          + " parser error(s) detected, no further compilation attempted.");
       System.exit(100);
     }
 
-    // build and run custom visitor for semantic checks
+    // build and run SemanticVisitor, exit with code 200 if semantic error exits
     try {
-      SemanticVisitor visitor = new SemanticVisitor();
-      visitor.visit(tree);
+      SemanticVisitor semanticVisitor = new SemanticVisitor();
+      semanticVisitor.visit(tree);
     } catch (SemanticErrorException e) {
       System.out.println(e.getMessage());
       System.exit(200);

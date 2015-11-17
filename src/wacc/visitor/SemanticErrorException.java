@@ -6,8 +6,8 @@ import org.antlr.v4.runtime.Token;
 public class SemanticErrorException extends RuntimeException {
 
   public SemanticErrorException(Token token, String msg) {
-    super("Semantic Error at " + token.getLine() + ":" +
-        token.getCharPositionInLine() + " -- " + msg);
+    super("Semantic Error at " + token.getLine() + ":"
+        + token.getCharPositionInLine() + " -- " + msg);
   }
 
 }
