@@ -10,7 +10,7 @@ public class ArrayType extends Type {
   public ArrayType(ArrayTypeContext ctx) {
     if (ctx.baseType() != null) {
       if (ctx.baseType().BASE_TYPE().getText().equals("string")) {
-        base = new ArrayType(new BaseType());
+        base = new ArrayType(new BaseType(BaseLiter.CHAR));
       } else {
         base = new BaseType(ctx.baseType());
       }

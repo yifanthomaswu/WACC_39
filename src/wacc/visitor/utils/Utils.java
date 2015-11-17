@@ -9,7 +9,7 @@ public class Utils {
     Type type;
     if (ctx.baseType() != null) {
       if (ctx.baseType().BASE_TYPE().getText().equals("string")) {
-        type = new ArrayType(new BaseType());
+        type = new ArrayType(new BaseType(BaseLiter.CHAR));
       } else {
         type = new BaseType(ctx.baseType());
       }
@@ -58,7 +58,7 @@ public class Utils {
     } else if (ctx instanceof ParensExprContext) {
       return getType(((ParensExprContext) ctx).expr(), st);
     } else if (ctx instanceof StringExprContext) {
-      return new ArrayType(new BaseType());
+      return new ArrayType(new BaseType(BaseLiter.CHAR));
     } else {
       return new BaseType(ctx);
     }
