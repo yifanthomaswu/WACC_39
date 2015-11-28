@@ -64,7 +64,7 @@ public class Visitor {
 
     //get name of output file
     File p = new File(args[0]);
-    String filename = (p.getName().split("\\.")[0]) + ".s";
+    String filename = ("outs/" + p.getName().split("\\.")[0]) + ".s";
     //create new file for writing
     PrintWriter file = new PrintWriter(filename, "UTF-8");
     //Start code generation
