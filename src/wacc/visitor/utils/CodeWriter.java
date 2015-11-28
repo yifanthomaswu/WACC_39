@@ -17,11 +17,15 @@ public class CodeWriter {
   }
 
   public void addLable(String lable) {
-    data.append("\t" + lable + ":\n");
+    text.append("\t" + lable + ":\n");
   }
 
   public void addInst(Inst inst, String args) {
-    data.append("\t\t" + inst + " " + args + "\n");
+    text.append("\t\t" + inst + " " + args + "\n");
+  }
+
+  public void addLtorg() {
+    text.append("\t\t.ltorg\n");
   }
 
   public void writeToFile() {

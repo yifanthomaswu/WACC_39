@@ -1,5 +1,13 @@
 package wacc.visitor.utils;
 
 public enum Inst {
-	SUB,MOV,STRB,ADD;
+  PUSH,
+  POP,
+  LDR,
+  B,
+  BL,
+  MOV,
+  SUB,
+  STRB,
+  ADD;
 }
