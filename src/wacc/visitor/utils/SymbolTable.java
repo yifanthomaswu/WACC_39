@@ -2,7 +2,6 @@ package wacc.visitor.utils;
 
 import java.util.List;
 
-import antlr.BasicParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.MultiMap;
 
