@@ -6,5 +6,8 @@ public enum Inst {
   LDR,
   B,
   BL,
-  MOV;
+  MOV,
+  SUB,
+  STRB,
+  ADD;
 }
