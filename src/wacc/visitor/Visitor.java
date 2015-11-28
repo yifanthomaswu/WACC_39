@@ -56,5 +56,9 @@ public class Visitor {
       System.exit(200);
     }
 
+    //Start code generation
+    CodeGeneratorVisitor codeGeneratorVisitor = new CodeGeneratorVisitor();
+    codeGeneratorVisitor.visit(tree);
+
   }
 }
