@@ -1,23 +1,19 @@
 package wacc.visitor;
 
-import antlr.BasicParser;
+import antlr.*;
 import antlr.BasicParserBaseVisitor;
+import wacc.visitor.utils.CodeWriter;
 
-import java.io.*;
-
-/**
- * Created by md3414 on 28/11/15.
- */
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
-    private PrintWriter file;
+  private final CodeWriter writer;
 
-    public CodeGeneratorVisitor(PrintWriter file) {
-        this.file = file;
-    }
-    
-    @Override
-    public Void visitProgram(BasicParser.ProgramContext ctx) {
-        return null;
-    }
+  public CodeGeneratorVisitor(CodeWriter writer) {
+    this.writer = writer;
+  }
+
+  @Override
+  public Void visitProgram(BasicParser.ProgramContext ctx) {
+    return null;
+  }
 }
