@@ -1,9 +1,7 @@
-package wacc.visitor;
+package wacc.visitor.code_generator;
 
 import antlr.*;
 import antlr.BasicParser.*;
-import wacc.visitor.utils.CodeWriter;
-import wacc.visitor.utils.Inst;
 
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
@@ -34,6 +32,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     visitChildren(ctx);
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
+    return null;
+  }
+
+  @Override
+  public Void visitReturnStat(ReturnStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.MOV, "r0, r4");
+    writer.addInst(Inst.POP, "{pc}");
     return null;
   }
 

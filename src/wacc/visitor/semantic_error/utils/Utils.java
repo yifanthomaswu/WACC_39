@@ -1,7 +1,7 @@
-package wacc.visitor.utils;
+package wacc.visitor.semantic_error.utils;
 
 import antlr.BasicParser.*;
-import wacc.visitor.SemanticErrorException;
+import wacc.visitor.semantic_error.SemanticErrorException;
 
 public class Utils {
 
