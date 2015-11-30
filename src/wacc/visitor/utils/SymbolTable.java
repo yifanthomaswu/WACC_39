@@ -24,7 +24,7 @@ public class SymbolTable {
     return encSymTable;
   }
 
-  private ParserRuleContext lookup(String name, Class context) {
+  private ParserRuleContext lookup(String name, Class<?> context) {
     List<ParserRuleContext> entries = dict.get(name);
     if (entries == null)
       return null;
@@ -43,7 +43,7 @@ public class SymbolTable {
     return (FuncContext) lookup(name, FuncContext.class);
   }
 
-  public ParserRuleContext lookupAll(String name, Class context) {
+  public ParserRuleContext lookupAll(String name, Class<?> context) {
     SymbolTable s = this;
     do {
       ParserRuleContext object = s.lookup(name, context);
@@ -56,11 +56,11 @@ public class SymbolTable {
   }
 
   public TypeContext lookupAllT(String name) {
-    return (TypeContext)lookupAll(name, TypeContext.class);
+    return (TypeContext) lookupAll(name, TypeContext.class);
   }
 
   public FuncContext lookupAllF(String name) {
-    return (FuncContext)lookupAll(name, FuncContext.class);
+    return (FuncContext) lookupAll(name, FuncContext.class);
 
   }
 

@@ -4,13 +4,13 @@ package wacc.visitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
+import wacc.visitor.utils.CodeWriter;
+
 // import antlr package (your code)
 import antlr.*;
 
 import java.io.File;
 import java.io.PrintWriter;
-
-
 
 public class Visitor {
   public static void main(String[] args) throws Exception {
@@ -23,7 +23,6 @@ public class Visitor {
 
     // create a buffer of tokens pulled from the lexer
     CommonTokenStream tokens = new CommonTokenStream(lexer);
-
 
     // create a parser that feeds off the tokens buffer
     BasicParser parser = new BasicParser(tokens);
@@ -62,15 +61,14 @@ public class Visitor {
       System.exit(200);
     }
 
-    //get name of output file
-    File p = new File(args[0]);
-    String filename = ("outs/" + p.getName().split("\\.")[0]) + ".s";
-    //create new file for writing
+    // create new file for writing
     PrintWriter file = new PrintWriter(filename, "UTF-8");
-    //Start code generation
-    CodeGeneratorVisitor codeGeneratorVisitor = new CodeGeneratorVisitor(file);
+    // Start code generation
+    CodeWriter writer = new CodeWriter(file);
+    CodeGeneratorVisitor codeGeneratorVisitor = new CodeGeneratorVisitor(writer);
     codeGeneratorVisitor.visit(tree);
-    //close file
+    writer.writeToFile();
+    // close file
     file.close();
 
   }
