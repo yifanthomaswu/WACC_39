@@ -16,7 +16,7 @@ then
   echo "$message"
 else
   echo "-- Finished"
- `gedit outs/$filename.s`
+ `gedit $filename.s && rm $filename.s`
 fi
 
 exit $ecode

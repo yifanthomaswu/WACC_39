@@ -9,5 +9,8 @@ public enum Inst {
   MOV,
   SUB,
   STRB,
+  STR,
+  ADDS,
+  SUBS,
   ADD;
 }
