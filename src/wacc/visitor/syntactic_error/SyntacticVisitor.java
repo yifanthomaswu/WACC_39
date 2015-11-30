@@ -1,4 +1,4 @@
-package wacc.visitor;
+package wacc.visitor.syntactic_error;
 
 import antlr.*;
 import antlr.BasicParser.*;

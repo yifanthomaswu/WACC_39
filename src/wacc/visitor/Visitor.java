@@ -4,10 +4,11 @@ package wacc.visitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
-import wacc.visitor.utils.CodeWriter;
-
 // import antlr package (your code)
 import antlr.*;
+import wacc.visitor.code_generator.*;
+import wacc.visitor.semantic_error.*;
+import wacc.visitor.syntactic_error.*;
 
 import java.io.File;
 import java.io.PrintWriter;
