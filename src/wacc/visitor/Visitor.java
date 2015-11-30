@@ -62,6 +62,8 @@ public class Visitor {
       System.exit(200);
     }
 
+    // get name of output file
+    String filename  = new File(args[0]).getName().replaceFirst(".wacc", ".s");
     // create new file for writing
     PrintWriter file = new PrintWriter(filename, "UTF-8");
     // Start code generation
