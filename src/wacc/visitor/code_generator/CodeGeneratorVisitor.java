@@ -12,12 +12,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
   private final Map<String, Object> st;
-  private String currentReg; //turn to enum later, exploit ++ operator
+  private Regs currentReg; //turn to enum later, exploit ++ operator
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
     this.st = new HashMap<String, Object>();
-    currentReg = "r4";
+    currentReg = Regs.r4;
   }
   
   @Override
@@ -37,9 +37,17 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
     st.put(ctx.ident().getText(), st.size());
+    int sizeOfVars = 0;
+    if (ctx.getParent() instanceof BasicParser.CompStatContext)
+    {
+      if (((CompStatContext) ctx.getParent()).stat(1) instanceof BasicParser.VarDeclStatContext)
+      {
+
+      }
+    }
     writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
     visit(ctx.assignRhs());
-    currentReg = "r4";
+    currentReg = Regs.r4;
     if (Utils.isSameBaseType(Utils.getType(ctx.type()), BaseLiter.INT)
             || false) // THis need to check if string
       writer.addInst(Inst.STR, "r4, [sp]");
@@ -52,9 +60,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
     if(ctx.getText().equals("true"))
-      writer.addInst(Inst.MOV, "r4, #1");
+      writer.addInst(Inst.MOV, currentReg + ", #1");
     else
-      writer.addInst(Inst.MOV, "r4, #0");
+      writer.addInst(Inst.MOV, currentReg + ", #0");
+    currentReg = Regs.r5;
     return null;
   }
   
@@ -87,7 +96,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitIntExpr(BasicParser.IntExprContext ctx) {
     writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
-    currentReg = "r5";
+    currentReg = Regs.r5;
     return null;
   }
 
@@ -104,6 +113,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.ADDS, "r4, r4, r5");
     else
       writer.addInst(Inst.SUBS, "r4, r4, r5");
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec5Expr(BasicParser.BinOpPrec5ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.AND, "r4, r4, r5");
     return null;
   }
 

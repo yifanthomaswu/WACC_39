@@ -12,5 +12,6 @@ public enum Inst {
   STR,
   ADDS,
   SUBS,
-  ADD;
+  ADD, AND;
 }
+
