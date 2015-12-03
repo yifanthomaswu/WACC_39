@@ -123,13 +123,25 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  // @Override
-  // public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
-  // if (ctx.MULT() != null) {
-  // writer.
-  // }
-  // return null;
-  // }
+  @Override
+  public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
+    visitChildren(ctx);
+    if (ctx.MULT() != null) {
+      writer.addInst(Inst.SMULL, "r4, r5, r4, r5");
+      writer.addInst(Inst.CMP, "r5, r4, ASR #31");
+      writer.addInst(Inst.BLNE, writer.p_throw_overflow_error());
+    } else {
+      writer.addInst(Inst.MOV, "r0, r4");
+      writer.addInst(Inst.MOV, "r1, r5");
+      writer.addInst(Inst.BL, writer.p_check_divide_by_zero());
+      if (ctx.DIV() != null) {
+        writer.addInst(Inst.BL, "__aeabi_idiv");
+      } else {
+        writer.addInst(Inst.BL, "__aeabi_idivmod");
+      }
+    }
+    return null;
+  }
 
   @Override
   public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
@@ -138,6 +150,41 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.ADDS, "r4, r4, r5");
     } else {
       writer.addInst(Inst.SUBS, "r4, r4, r5");
+    }
+    writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.CMP, "r4, r5");
+    if (ctx.GRT() != null) {
+      writer.addInst(Inst.MOVGT, "r4, #1");
+      writer.addInst(Inst.MOVLE, "r4, #0");
+    } else if (ctx.GRT_EQUAL() != null) {
+      writer.addInst(Inst.MOVGE, "r4, #1");
+      writer.addInst(Inst.MOVLT, "r4, #0");
+    } else if (ctx.LESS() != null) {
+      writer.addInst(Inst.MOVLT, "r4, #1");
+      writer.addInst(Inst.MOVGE, "r4, #0");
+    } else {
+      writer.addInst(Inst.MOVLE, "r4, #1");
+      writer.addInst(Inst.MOVGT, "r4, #0");
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.CMP, "r4, r5");
+    if (ctx.EQUAL() != null) {
+      writer.addInst(Inst.MOVEQ, "r4, #1");
+      writer.addInst(Inst.MOVNE, "r4, #0");
+    } else {
+      writer.addInst(Inst.MOVNE, "r4, #1");
+      writer.addInst(Inst.MOVEQ, "r4, #0");
     }
     return null;
   }
@@ -152,7 +199,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) {
     visitChildren(ctx);
-    writer.addInst(Inst.OR, "r4, r4, r5");
+    writer.addInst(Inst.ORR, "r4, r4, r5");
     return null;
   }
 

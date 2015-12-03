@@ -1,23 +1,34 @@
 package wacc.visitor.code_generator;
 
 public enum Inst {
+  MOV,
+  MOVGT,
+  MOVLE,
+  MOVGE,
+  MOVLT,
+  MOVEQ,
+  MOVNE,
   PUSH,
   POP,
   LDR,
   LDREQ,
+  LDRNE,
+  LDRSB,
   STR,
   STRB,
   B,
   BEQ,
   BL,
   BLEQ,
-  MOV,
+  BLVS,
+  BLNE,
   ADD,
-  SUB,
   ADDS,
+  SUB,
   SUBS,
+  SMULL,
+  CMP,
   AND,
-  OR,
-  CMP;
+  ORR;
 }
 
