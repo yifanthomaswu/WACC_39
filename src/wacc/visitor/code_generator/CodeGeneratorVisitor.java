@@ -21,7 +21,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
-
     writer.addInst(Inst.SUB, "sp, sp, #num");
     visit(ctx.stat());
     writer.addInst(Inst.ADD, "sp, sp, #num");
