@@ -1,4 +1,4 @@
-package wacc.visitor.utils;
+package wacc.visitor.code_generator;
 
 public enum Inst {
   PUSH,
@@ -9,5 +9,9 @@ public enum Inst {
   MOV,
   SUB,
   STRB,
-  ADD;
+  STR,
+  ADDS,
+  SUBS,
+  ADD, AND;
 }
+

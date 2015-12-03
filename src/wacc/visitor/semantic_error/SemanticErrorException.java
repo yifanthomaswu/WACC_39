@@ -1,4 +1,4 @@
-package wacc.visitor;
+package wacc.visitor.semantic_error;
 
 import org.antlr.v4.runtime.Token;
 

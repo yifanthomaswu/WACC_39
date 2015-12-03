@@ -1,4 +1,4 @@
-package wacc.visitor.utils;
+package wacc.visitor.semantic_error.utils;
 
 import java.util.List;
 

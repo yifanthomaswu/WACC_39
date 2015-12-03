@@ -1,4 +1,4 @@
-package wacc.visitor.utils;
+package wacc.visitor.code_generator;
 
 import java.io.PrintWriter;
 
@@ -12,7 +12,7 @@ public class CodeWriter {
 
   public CodeWriter(PrintWriter file) {
     this.file = file;
-    this.data = new StringBuilder();
+    this.data = new StringBuilder(DATA_HEADER);
     this.text = new StringBuilder(TEXT_HEADER);
   }
 
@@ -29,8 +29,7 @@ public class CodeWriter {
   }
 
   public void writeToFile() {
-    if (data.length() > 0) {
-      file.write(DATA_HEADER);
+    if (data.length() > DATA_HEADER.length()) {
       file.write(data.toString());
       file.write("\n");
     }

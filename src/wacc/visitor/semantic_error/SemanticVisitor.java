@@ -1,10 +1,10 @@
-package wacc.visitor;
+package wacc.visitor.semantic_error;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
 import antlr.BasicParser.*;
-import wacc.visitor.utils.*;
+import wacc.visitor.semantic_error.utils.*;
 
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 

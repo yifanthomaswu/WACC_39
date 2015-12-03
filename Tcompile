@@ -1,0 +1,22 @@
+#!/bin/bash
+# Ruby front-end for your compiler.
+# You are free to change the language used for this script,
+# but do *not* change its name.
+
+echo "-- Compiling..."
+message=`java -cp bin:lib/antlr-4.4-complete.jar wacc.visitor.Visitor $1 < $1`
+
+ecode=$?
+filename=$(basename "$1")
+filename="${filename%.*}"
+
+if [ $ecode != 0 ]
+then
+  echo "Errors detected during compilation! Exit code $ecode returned."
+  echo "$message"
+else
+  echo "-- Finished"
+ `gedit $filename.s && rm $filename.s`
+fi
+
+exit $ecode
