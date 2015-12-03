@@ -1,8 +1,5 @@
 package wacc.visitor.code_generator;
 
-import wacc.visitor.semantic_error.utils.BaseLiter;
-import wacc.visitor.semantic_error.utils.BaseType;
-import wacc.visitor.semantic_error.utils.Utils;
 import antlr.*;
 import antlr.BasicParser.*;
 
@@ -25,9 +22,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.SUB, "sp, sp, #" + size);
+    if(size > 0) {
+    	 writer.addInst(Inst.SUB, "sp, sp, #" + size);
+    }
     visit(ctx.stat());
-    writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    if(size > 0) {
+    	 writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    }
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
@@ -139,7 +140,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-
   public Void visitIntExpr(BasicParser.IntExprContext ctx) {
     writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
     return null;
@@ -164,7 +164,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitBinOpPrec5Expr(BinOpPrec5ExprContext ctx) {
     visitChildren(ctx);
-    writer.addInst(Inst.AND, "r4, r4, r5");
+    if(ctx.AND() != null) 
+    	writer.addInst(Inst.AND, "r4, r4, r5");
+    else
+    	writer.addInst(Inst.OR, "r4, r4, r5");
     return null;
   }
 

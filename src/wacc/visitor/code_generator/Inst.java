@@ -15,6 +15,7 @@ public enum Inst {
   ADDS,
   SUBS,
   AND,
-  CMP;
+  CMP, 
+  OR;
 }
 
