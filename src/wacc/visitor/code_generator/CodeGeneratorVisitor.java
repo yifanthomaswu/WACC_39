@@ -92,22 +92,29 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.BL, "exit");
     return null;
   }
+  
+  @Override
+  public Void visitSkipStat(SkipStatContext ctx) {
+	  writer.addInst(Inst.LDR, "r0, =0");
+	  writer.addInst(Inst.POP, "{pc}");
+	  return null;
+  }
 
   @Override
-  public Void visitIntExpr(BasicParser.IntExprContext ctx) {
+  public Void visitIntExpr(IntExprContext ctx) {
     writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
     currentReg = Regs.r5;
     return null;
   }
 
   @Override
-  public Void visitCharLiter(BasicParser.CharLiterContext ctx) {
+  public Void visitCharLiter(CharLiterContext ctx) {
     writer.addInst(Inst.MOV, "r4, #" + ctx.getText());
     return null;
   }
 
   @Override
-  public Void visitBinOpPrec2Expr(BasicParser.BinOpPrec2ExprContext ctx) {
+  public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
     visitChildren(ctx);
     if (ctx.PLUS() != null)
       writer.addInst(Inst.ADDS, "r4, r4, r5");
@@ -117,7 +124,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitBinOpPrec5Expr(BasicParser.BinOpPrec5ExprContext ctx) {
+  public Void visitBinOpPrec5Expr(BinOpPrec5ExprContext ctx) {
     visitChildren(ctx);
     writer.addInst(Inst.AND, "r4, r4, r5");
     return null;
