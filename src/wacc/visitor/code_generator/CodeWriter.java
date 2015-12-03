@@ -92,21 +92,85 @@ public class CodeWriter {
     return "L" + lCount;
   }
 
-  public String checkDivideByZero() {
+  public String p_check_divide_by_zero() {
     String label = "p_check_divide_by_zero";
     addLabelP(label);
+
     addInstP(Inst.PUSH, "{lr}");
     addInstP(Inst.CMP, "r1, #0");
     String msg = addMsg("DivideByZeroError: divide or modulo by zero\n");
-    addInstP(Inst.LDREQ, "=" + msg);
-    addInstP(Inst.BLEQ, throwRuntimeError());
+    addInstP(Inst.LDREQ, "r0, =" + msg);
+    addInstP(Inst.BLEQ, p_throw_runtime_error());
     addInstP(Inst.POP, "{pc}");
     return label;
   }
 
-  private String throwRuntimeError() {
+  public String p_throw_overflow_error() {
+    String label = "p_throw_overflow_error";
+    addLabelP(label);
+
+    String msg = addMsg("OverflowError: the result is too small/large to "
+        + "store in a 4-byte signed-integer.\n");
+    addInstP(Inst.LDR, "r0, =" + msg);
+    addInstP(Inst.BL, p_throw_runtime_error());
+    return label;
+  }
+
+  public String p_throw_runtime_error() {
     String label = "p_throw_runtime_error";
     addLabelP(label);
+
+    addInstP(Inst.BL, p_print_string());
+    addInstP(Inst.MOV, "r0, #-1");
+    addInstP(Inst.BL, "exit");
+    return label;
+  }
+
+  public String p_print_string() {
+    String label = "p_print_string";
+    addLabelP(label);
+
+    addInstP(Inst.PUSH, "{lr}");
+    addInstP(Inst.LDR, "{r0}");
+    addInstP(Inst.ADD, "r2, r0, #4");
+    String msg = addMsg("%.*s");
+    addInstP(Inst.LDR, "r0, =" + msg);
+    addInstP(Inst.ADD, "r0, r0, #4");
+    addInstP(Inst.BL, "printf");
+    addInstP(Inst.MOV, "r0, #0");
+    addInstP(Inst.BL, "fflush");
+    addInstP(Inst.POP, "{pc}");
+    return label;
+  }
+
+  public String p_print_ln() {
+    String label = "p_print_ln";
+    addLabelP(label);
+
+    addInstP(Inst.PUSH, "{lr}");
+    String msg = addMsg("");
+    addInstP(Inst.LDR, "r0, =" + msg);
+    addInstP(Inst.ADD, "r0, r0, #4");
+    addInstP(Inst.BL, "puts");
+    addInstP(Inst.MOV, "r0, #0");
+    addInstP(Inst.BL, "fflush");
+    addInstP(Inst.POP, "{pc}");
+    return label;
+  }
+
+  public String p_print_int() {
+    String label = "p_print_int";
+    addLabelP(label);
+
+    addInstP(Inst.PUSH, "{lr}");
+    addInstP(Inst.MOV, "r1, r0");
+    String msg = addMsg("%d");
+    addInstP(Inst.LDR, "r0, =" + msg);
+    addInstP(Inst.ADD, "r0, r0, #4");
+    addInstP(Inst.BL, "printf");
+    addInstP(Inst.MOV, "r0, #0");
+    addInstP(Inst.BL, "fflush");
+    addInstP(Inst.POP, "{pc}");
     return label;
   }
 

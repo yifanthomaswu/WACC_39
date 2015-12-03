@@ -156,50 +156,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  private void p_print_string(String msg) {
-    writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.LDR, "{r0}");
-    writer.addInst(Inst.ADD, "r2, r0, #4");
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.ADD, "r0, r0, #4");
-    writer.addInst(Inst.BL, "printf");
-    writer.addInst(Inst.MOV, "r0, #0");
-    writer.addInst(Inst.BL, "fflush");
-    writer.addInst(Inst.POP, "{pc}");
-  }
-
-  private void p_print_ln(String msg) {
-    writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.ADD, "r0, r0, #4");
-    writer.addInst(Inst.BL, "puts");
-    writer.addInst(Inst.MOV, "r0, #0");
-    writer.addInst(Inst.BL, "fflush");
-    writer.addInst(Inst.POP, "{pc}");
-  }
-
-  private void p_throw_overflow_error(String msg) {
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.BL, "p_throw_runtime_error");
-  }
-
-  private void p_throw_runtime_error(String msg) {
-    writer.addInst(Inst.BL, "p_print_string");
-    writer.addInst(Inst.MOV, "r0, #-1");
-    writer.addInst(Inst.BL, "exit");
-  }
-
-  private void p_print_int(String msg) {
-    writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.MOV, "r1, r0");
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.ADD, "r0, r0, #4");
-    writer.addInst(Inst.BL, "printf");
-    writer.addInst(Inst.MOV, "r0, #0");
-    writer.addInst(Inst.BL, "fflush");
-    writer.addInst(Inst.POP, "{pc}");
-  }
-
   // @Override
   // public Void visitCompStat(BasicParser.CompStatContext ctx) {
   // int count = 0;
