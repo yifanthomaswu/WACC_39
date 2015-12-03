@@ -36,6 +36,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
 	  st.put(ctx.ident().getText(), st.size());
 	  writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
+	  visitParent
 	  return visitChildren(ctx);
   }
   
@@ -43,10 +44,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
 	  if(ctx.getText() == "true") {
 		  writer.addInst(Inst.MOV, "r4, #1");
+	  } else {
+		  writer.addInst(Inst.MOV, "r4, #0");
 	  }
-	  writer.addInst(Inst.MOV, "r4, #0");
-	  writer.addInst(Inst.STRB, "r4, [sp]");
-	  writer.addInst(Inst.ADD, "sp, sp, #1");
+	  if(st.size() < 1) {
+		  writer.addInst(Inst.STRB, "r4, [sp]");
+	  } else {
+		  writer.addInst(Inst.STRB, "r4, [sp, #" + (st.size()-1) + "]");
+	  }
+	  writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
 	  return null;
   }
   
