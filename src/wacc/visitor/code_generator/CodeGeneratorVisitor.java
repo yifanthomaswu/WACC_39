@@ -1,8 +1,5 @@
 package wacc.visitor.code_generator;
 
-import wacc.visitor.semantic_error.utils.BaseLiter;
-import wacc.visitor.semantic_error.utils.BaseType;
-import wacc.visitor.semantic_error.utils.Utils;
 import antlr.*;
 import antlr.BasicParser.*;
 
@@ -31,6 +28,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
+    p_print_string("msg_1");
     return null;
   }
 
@@ -169,6 +167,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   private void p_print_string(String msg) {
+    writer.addLabel("p_print_string");
     writer.addInst(Inst.PUSH, "{lr}");
     writer.addInst(Inst.LDR, "{r0}");
     writer.addInst(Inst.ADD, "r2, r0, #4");
@@ -181,6 +180,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   private void p_print_ln(String msg) {
+    writer.addLabel("p_print_ln");
     writer.addInst(Inst.PUSH, "{lr}");
     writer.addInst(Inst.LDR, "r0, =" + msg);
     writer.addInst(Inst.ADD, "r0, r0, #4");
@@ -191,17 +191,20 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   private void p_throw_overflow_error(String msg) {
+    writer.addLabel("p_throw_overflow_error");
     writer.addInst(Inst.LDR, "r0, =" + msg);
     writer.addInst(Inst.BL, "p_throw_runtime_error");
   }
 
   private void p_throw_runtime_error(String msg) {
+    writer.addLabel("p_throw_runtime_error");
     writer.addInst(Inst.BL, "p_print_string");
     writer.addInst(Inst.MOV, "r0, #-1");
     writer.addInst(Inst.BL, "exit");
   }
 
   private void p_print_int(String msg) {
+    writer.addLabel("p_print_int");
     writer.addInst(Inst.PUSH, "{lr}");
     writer.addInst(Inst.MOV, "r1, r0");
     writer.addInst(Inst.LDR, "r0, =" + msg);
