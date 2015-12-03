@@ -12,6 +12,10 @@ public class SymbolTable {
     encSymTable = st;
   }
 
+  public SymbolTable getEncSymTable() {
+    return encSymTable;
+  }
+
   public void add(String name, Integer obj) {
     dict.put(name, obj);
   }

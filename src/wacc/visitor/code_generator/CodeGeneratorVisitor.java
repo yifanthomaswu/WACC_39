@@ -1,28 +1,21 @@
 package wacc.visitor.code_generator;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import antlr.*;
 import antlr.BasicParser.*;
-import wacc.visitor.semantic_error.utils.BaseLiter;
-import wacc.visitor.semantic_error.utils.Utils;
 
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
-  private final Map<String, Object> st;
-  private Regs currentReg; //turn to enum later, exploit ++ operator
   private int currentStackPointer = 0;
+  private SymbolTable st;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
-    this.st = new HashMap<String, Object>();
-    currentReg = Regs.r4;
   }
-  
+
   @Override
   public Void visitProgram(ProgramContext ctx) {
+    st = new SymbolTable(null);
     for (FuncContext c : ctx.func()) {
       visit(c);
     }
@@ -33,7 +26,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
     return null;
-  }  
+  }
+
 
 //  @Override
 //  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
@@ -59,6 +53,54 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 //  }
   
   
+  @Override
+  public Void visitIfStat(IfStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.CMP, "r4, #0");
+    String[] pair = writer.getLabelLPair();
+    writer.addInst(Inst.BEQ, pair[0]);
+
+    st = new SymbolTable(st);
+    visit(ctx.stat(0));
+    st = st.getEncSymTable();
+
+    writer.addInst(Inst.B, pair[1]);
+    writer.addLabel(pair[0]);
+
+    st = new SymbolTable(st);
+    visit(ctx.stat(1));
+    st = st.getEncSymTable();
+
+    writer.addLabel(pair[1]);
+    return null;
+  }
+
+  @Override
+  public Void visitWhileStat(WhileStatContext ctx) {
+    String[] pair = writer.getLabelLPair();
+    writer.addInst(Inst.B, pair[0]);
+    writer.addLabel(pair[1]);
+
+    st = new SymbolTable(st);
+    visit(ctx.stat());
+    st = st.getEncSymTable();
+
+    writer.addLabel(pair[0]);
+    visit(ctx.expr());
+    writer.addInst(Inst.CMP, "r4, #1");
+    writer.addInst(Inst.BEQ, pair[1]);
+    return null;
+  }
+
+  @Override
+  public Void visitScopingStat(ScopingStatContext ctx) {
+    st = new SymbolTable(st);
+    visit(ctx.stat());
+    st = st.getEncSymTable();
+    return null;
+  }
+
+
   @Override
   public Void visitFunc(FuncContext ctx) {
     writer.addLabel("f_" + ctx.ident().getText());
@@ -87,8 +129,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntExpr(BasicParser.IntExprContext ctx) {
-    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
-    currentReg = Regs.r5;
+    writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
     return null;
   }
 
@@ -136,33 +177,24 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 		currentStackPointer += 4;
 		break;
 	}
-	st.put(ctx.ident().getText(), currentStackPointer);
+	st.add(ctx.ident().getText(), currentStackPointer);
 	return visitChildren(ctx);
 }
 
 @Override
 public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
 	  if(ctx.getText().equals("true")) {
-		  writer.addInst(Inst.MOV, currentReg + ", #1");
+		  writer.addInst(Inst.MOV, "r4, #1");
 	  } else {
-		  writer.addInst(Inst.MOV, currentReg + ", #0");
+		  writer.addInst(Inst.MOV, "r4, #0");
 	  }
-	  if(st.size() < 1) {
-		  writer.addInst(Inst.STRB, currentReg + ", [sp]");
+	  if(currentStackPointer <= 1) {
+		  writer.addInst(Inst.STRB, "r4, [sp]");
 	  } else {
-		  writer.addInst(Inst.STRB, currentReg + ", [sp, #" + (st.size()-1) + "]");
+		  writer.addInst(Inst.STRB, "r4, [sp, #" + (currentStackPointer-1) + "]");
 	  }
 	  
 	  return null;
  }
 
-//@Override
-//public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
-//  if(ctx.getText().equals("true"))
-//    writer.addInst(Inst.MOV, currentReg + ", #1");
-//  else
-//    writer.addInst(Inst.MOV, currentReg + ", #0");
-//  currentReg = Regs.r5;
-//  return null;
-//}
 }
