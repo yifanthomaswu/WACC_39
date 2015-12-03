@@ -1,5 +1,8 @@
 package wacc.visitor.code_generator;
 
+import wacc.visitor.semantic_error.utils.BaseLiter;
+import wacc.visitor.semantic_error.utils.BaseType;
+import wacc.visitor.semantic_error.utils.Utils;
 import antlr.*;
 import antlr.BasicParser.*;
 
@@ -16,12 +19,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitProgram(ProgramContext ctx) {
     st = new SymbolTable(null);
+    int size = sizeOfDecl(ctx.stat());
     for (FuncContext c : ctx.func()) {
       visit(c);
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
+    writer.addInst(Inst.SUB, "sp, sp, #" + size);
     visit(ctx.stat());
+    writer.addInst(Inst.ADD, "sp, sp, #" + size);
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
@@ -165,20 +171,56 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 //	  visit
 //}
 
+  private int sizeOfDecl(BasicParser.StatContext ctx) {
+	  if(ctx instanceof VarDeclStatContext) {
+		  int size = 0;
+		  if(((VarDeclStatContext) ctx).type().baseType() != null) {
+			  switch(((VarDeclStatContext) ctx).type().getText()) {
+				case "bool":
+				case "char":
+					size = 1;
+					currentStackPointer++;
+					break;
+				case "int":
+				case "string":
+					size = 4;
+					currentStackPointer += 4;
+					break;
+				}
+		  } else if(((VarDeclStatContext) ctx).type().arrayType() != null) {
+			  size = 4;
+			  currentStackPointer +=4;
+		  }
+		  st.add(((VarDeclStatContext) ctx).ident().getText(), currentStackPointer);
+		  return size; 
+	  } else if(ctx instanceof CompStatContext) {
+		  int result = 0;
+		  for(StatContext c : ((CompStatContext)ctx).stat()) {
+			  result += sizeOfDecl(c);
+		  }
+		  return result;
+	  } else {
+		  return 0;
+	  }
+  }	  
+  
   @Override
   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
-	switch(ctx.type().getText()) {
-	case("bool"):
-	case("char"):
-		currentStackPointer++;
-		break;
-	case("int"):
-	case("string"):
-		currentStackPointer += 4;
-		break;
+	visit(ctx.assignRhs());
+	int stackPointerOffset = currentStackPointer - st.lookup(ctx.ident().getText());
+	String msg = "[sp]";
+	if(stackPointerOffset > 0 ) {
+		msg = "[sp, #" + stackPointerOffset + "]";
 	}
-	st.add(ctx.ident().getText(), currentStackPointer);
-	return visitChildren(ctx);
+	if(ctx.type().getText().equals("int") || 
+			ctx.type().arrayType() != null || 
+			ctx.type().getText().equals("string") ) {
+		writer.addInst(Inst.STR, "r4, " + msg);
+	} else {
+		writer.addInst(Inst.STRB, "r4, " + msg);
+
+	}
+	return null;
 }
 
 @Override
@@ -187,13 +229,7 @@ public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
 		  writer.addInst(Inst.MOV, "r4, #1");
 	  } else {
 		  writer.addInst(Inst.MOV, "r4, #0");
-	  }
-	  if(currentStackPointer <= 1) {
-		  writer.addInst(Inst.STRB, "r4, [sp]");
-	  } else {
-		  writer.addInst(Inst.STRB, "r4, [sp, #" + (currentStackPointer-1) + "]");
-	  }
-	  
+	  }  
 	  return null;
  }
 
