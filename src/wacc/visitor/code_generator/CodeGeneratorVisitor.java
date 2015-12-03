@@ -57,7 +57,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitIfStat(IfStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.CMP, "r4, #0");
-    String[] pair = writer.getLableLPair();
+    String[] pair = writer.getLabelLPair();
     writer.addInst(Inst.BEQ, pair[0]);
 
     st = new SymbolTable(st);
@@ -65,27 +65,27 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     st = st.getEncSymTable();
 
     writer.addInst(Inst.B, pair[1]);
-    writer.addLable(pair[0]);
+    writer.addLabel(pair[0]);
 
     st = new SymbolTable(st);
     visit(ctx.stat(1));
     st = st.getEncSymTable();
 
-    writer.addLable(pair[1]);
+    writer.addLabel(pair[1]);
     return null;
   }
 
   @Override
   public Void visitWhileStat(WhileStatContext ctx) {
-    String[] pair = writer.getLableLPair();
+    String[] pair = writer.getLabelLPair();
     writer.addInst(Inst.B, pair[0]);
-    writer.addLable(pair[1]);
+    writer.addLabel(pair[1]);
 
     st = new SymbolTable(st);
     visit(ctx.stat());
     st = st.getEncSymTable();
 
-    writer.addLable(pair[0]);
+    writer.addLabel(pair[0]);
     visit(ctx.expr());
     writer.addInst(Inst.CMP, "r4, #1");
     writer.addInst(Inst.BEQ, pair[1]);
