@@ -275,6 +275,49 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.MOV, currentReg + ", #0");
     }
     return null;
+  } 
+  
+  @Override
+  public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
+	  visit(ctx.assignRhs());
+	  visit(ctx.assignLhs());
+	  return null;
+  }
+  
+  @Override
+  public Void visitLhsIdent(BasicParser.LhsIdentContext ctx) {
+	  String msg = "[sp]";
+	  int stackPointerOffset = currentStackPointer - 
+			  st.lookup(ctx.getText());
+	  if (stackPointerOffset > 0) {
+	    msg = "[sp, #" + stackPointerOffset + "]";
+	  }
+	  if (typeSt.lookupT(ctx.getText()).equals("int") || 
+			  typeSt.lookupT(ctx.getText()).arrayType() != null || 
+			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+		      writer.addInst(Inst.STR, "r4, " + msg);
+		    } else {
+		      writer.addInst(Inst.STRB, "r4, " + msg);
+		    }
+	  return null;
+  }
+  
+  @Override
+  public Void visitIdent(BasicParser.IdentContext ctx) {
+	  String msg = "[sp]";
+	  int stackPointerOffset = currentStackPointer - 
+			  st.lookup(ctx.getText());
+	  if (stackPointerOffset > 0) {
+	    msg = "[sp, #" + stackPointerOffset + "]";
+	  }
+	  if (typeSt.lookupT(ctx.getText()).getText().equals("int") || 
+			  typeSt.lookupT(ctx.getText()).arrayType() != null || 
+			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+		      writer.addInst(Inst.LDR, "r4, " + msg);
+		    } else {
+		      writer.addInst(Inst.LDRSB, "r4, " + msg);
+		    }
+	  return null;
   }
 
 	@Override

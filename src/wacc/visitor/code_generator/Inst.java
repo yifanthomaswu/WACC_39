@@ -29,5 +29,6 @@ public enum Inst {
   SMULL,
   CMP,
   AND,
+  OR, 
   ORR;
 }
