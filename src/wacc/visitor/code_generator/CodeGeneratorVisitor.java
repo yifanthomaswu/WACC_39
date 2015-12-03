@@ -5,11 +5,14 @@ import antlr.BasicParser.*;
 
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
+
   private final CodeWriter writer;
   private int currentStackPointer = 0;
   private SymbolTable st;
+  private wacc.visitor.semantic_error.utils.SymbolTable typeSt;
 
-  public CodeGeneratorVisitor(CodeWriter writer) {
+  public CodeGeneratorVisitor(CodeWriter writer, wacc.visitor.semantic_error.utils.SymbolTable st) {
+	this.typeSt = st;
     this.writer = writer;
   }
 
@@ -22,12 +25,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
-    if(size > 0) {
-    	 writer.addInst(Inst.SUB, "sp, sp, #" + size);
+    if (size > 0) {
+      writer.addInst(Inst.SUB, "sp, sp, #" + size);
     }
     visit(ctx.stat());
-    if(size > 0) {
-    	 writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    if (size > 0) {
+      writer.addInst(Inst.ADD, "sp, sp, #" + size);
     }
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
@@ -127,13 +130,25 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  // @Override
-  // public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
-  // if (ctx.MULT() != null) {
-  // writer.
-  // }
-  // return null;
-  // }
+  @Override
+  public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
+    visitChildren(ctx);
+    if (ctx.MULT() != null) {
+      writer.addInst(Inst.SMULL, "r4, r5, r4, r5");
+      writer.addInst(Inst.CMP, "r5, r4, ASR #31");
+      writer.addInst(Inst.BLNE, writer.p_throw_overflow_error());
+    } else {
+      writer.addInst(Inst.MOV, "r0, r4");
+      writer.addInst(Inst.MOV, "r1, r5");
+      writer.addInst(Inst.BL, writer.p_check_divide_by_zero());
+      if (ctx.DIV() != null) {
+        writer.addInst(Inst.BL, "__aeabi_idiv");
+      } else {
+        writer.addInst(Inst.BL, "__aeabi_idivmod");
+      }
+    }
+    return null;
+  }
 
   @Override
   public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
@@ -143,23 +158,55 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     } else {
       writer.addInst(Inst.SUBS, "r4, r4, r5");
     }
+    writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.CMP, "r4, r5");
+    if (ctx.GRT() != null) {
+      writer.addInst(Inst.MOVGT, "r4, #1");
+      writer.addInst(Inst.MOVLE, "r4, #0");
+    } else if (ctx.GRT_EQUAL() != null) {
+      writer.addInst(Inst.MOVGE, "r4, #1");
+      writer.addInst(Inst.MOVLT, "r4, #0");
+    } else if (ctx.LESS() != null) {
+      writer.addInst(Inst.MOVLT, "r4, #1");
+      writer.addInst(Inst.MOVGE, "r4, #0");
+    } else {
+      writer.addInst(Inst.MOVLE, "r4, #1");
+      writer.addInst(Inst.MOVGT, "r4, #0");
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.CMP, "r4, r5");
+    if (ctx.EQUAL() != null) {
+      writer.addInst(Inst.MOVEQ, "r4, #1");
+      writer.addInst(Inst.MOVNE, "r4, #0");
+    } else {
+      writer.addInst(Inst.MOVNE, "r4, #1");
+      writer.addInst(Inst.MOVEQ, "r4, #0");
+    }
     return null;
   }
 
   @Override
   public Void visitBinOpPrec5Expr(BinOpPrec5ExprContext ctx) {
     visitChildren(ctx);
-    if(ctx.AND() != null) 
-    	writer.addInst(Inst.AND, "r4, r4, r5");
-    else
-    	writer.addInst(Inst.OR, "r4, r4, r5");
+    writer.addInst(Inst.AND, "r4, r4, r5");
     return null;
   }
 
   @Override
   public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) {
     visitChildren(ctx);
-    writer.addInst(Inst.OR, "r4, r4, r5");
+    writer.addInst(Inst.ORR, "r4, r4, r5");
     return null;
   }
 
@@ -232,13 +279,26 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.MOV, "r4, #0");
     }
     return null;
+  } 
+  
+  @Override
+  public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
+	  visit(ctx.assignRhs());
+	  visit(ctx.assignLhs());
+	  return null;
   }
   
   @Override
-  public Void visitAssign(BasicParser.AssignStatContext ctx) {
-	  if (ctx.type().getText().equals("int") || 
-			  ctx.type().arrayType() != null|| 
-			  ctx.type().getText().equals("string")) {
+  public Void visitLhsIdent(BasicParser.LhsIdentContext ctx) {
+	  String msg = "[sp]";
+	  int stackPointerOffset = currentStackPointer - 
+			  st.lookup(ctx.getText());
+	  if (stackPointerOffset > 0) {
+	    msg = "[sp, #" + stackPointerOffset + "]";
+	  }
+	  if (typeSt.lookupT(ctx.getText()).equals("int") || 
+			  typeSt.lookupT(ctx.getText()).arrayType() != null || 
+			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
 		      writer.addInst(Inst.STR, "r4, " + msg);
 		    } else {
 		      writer.addInst(Inst.STRB, "r4, " + msg);
@@ -248,8 +308,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   
   @Override
   public Void visitIdent(BasicParser.IdentContext ctx) {
-	  if (ctx.   .getText().equals("int") || ctx.type().arrayType() != null
-		        || ctx.type().getText().equals("string")) {
+	  String msg = "[sp]";
+	  int stackPointerOffset = currentStackPointer - 
+			  st.lookup(ctx.getText());
+	  if (stackPointerOffset > 0) {
+	    msg = "[sp, #" + stackPointerOffset + "]";
+	  }
+	  if (typeSt.lookupT(ctx.getText()).getText().equals("int") || 
+			  typeSt.lookupT(ctx.getText()).arrayType() != null || 
+			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
 		      writer.addInst(Inst.LDR, "r4, " + msg);
 		    } else {
 		      writer.addInst(Inst.LDRSB, "r4, " + msg);
@@ -257,4 +324,51 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 	  return null;
   }
 
+@Override
+public Void visitIntLiter(IntLiterContext ctx) {
+	writer.addInst(Inst.LDR, "r5, =" + ctx.getText()); 
+	return null;
+}
+
+
+
+	@Override
+	public Void visitArrayLiter(ArrayLiterContext ctx) {
+		int typeSize;
+		int offset = 4;
+		Inst instruction;
+/*		
+		if (ctx.expr(0) instanceof IntExprContext
+				|| ctx.expr(0) instanceof StringExprContext) {
+			typeSize = 4;
+			instruction = Inst.STR;
+		} else if (ctx.expr(0) instanceof ArrayElemExprContext) {
+		} else if (ctx.expr(0) instanceof IdentExprContext) {
+			Type type = Utils.getType((IdentExprContext) ctx.expr(0), typeSt);
+			switch (type) {
+			case: 
+			}
+		} else {
+			typeSize = 1;
+			instruction = Inst.STRB;
+		}
+		
+		int spaceToSave = ctx.expr().size() * typeSize + 4;
+		writer.addInst(Inst.LDR, "r0, =" + spaceToSave);
+
+		writer.addInst(Inst.BL, "malloc");
+		writer.addInst(Inst.MOV, "r4, r0");
+		
+		for (ExprContext expr : ctx.expr()) {
+			visit(expr);
+			writer.addInst(instruction, "r5, [r4, #" + offset + "]");
+			offset += typeSize;
+		}
+		
+		writer.addInst(Inst.LDR, "r5, =" + ctx.expr().size());
+		writer.addInst(Inst.STR, "r5, [r4]");
+
+*/
+		return null;
+	}
 }

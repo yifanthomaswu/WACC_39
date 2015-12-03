@@ -92,19 +92,6 @@ public class CodeWriter {
     return "L" + lCount;
   }
 
-  public String p_check_divide_by_zero() {
-    String label = "p_check_divide_by_zero";
-    addLabelP(label);
-
-    addInstP(Inst.PUSH, "{lr}");
-    addInstP(Inst.CMP, "r1, #0");
-    String msg = addMsg("DivideByZeroError: divide or modulo by zero\n");
-    addInstP(Inst.LDREQ, "r0, =" + msg);
-    addInstP(Inst.BLEQ, p_throw_runtime_error());
-    addInstP(Inst.POP, "{pc}");
-    return label;
-  }
-
   public String p_throw_overflow_error() {
     String label = "p_throw_overflow_error";
     addLabelP(label);
@@ -126,19 +113,15 @@ public class CodeWriter {
     return label;
   }
 
-  public String p_print_string() {
-    String label = "p_print_string";
+  public String p_check_divide_by_zero() {
+    String label = "p_check_divide_by_zero";
     addLabelP(label);
 
     addInstP(Inst.PUSH, "{lr}");
-    addInstP(Inst.LDR, "{r0}");
-    addInstP(Inst.ADD, "r2, r0, #4");
-    String msg = addMsg("%.*s");
-    addInstP(Inst.LDR, "r0, =" + msg);
-    addInstP(Inst.ADD, "r0, r0, #4");
-    addInstP(Inst.BL, "printf");
-    addInstP(Inst.MOV, "r0, #0");
-    addInstP(Inst.BL, "fflush");
+    addInstP(Inst.CMP, "r1, #0");
+    String msg = addMsg("DivideByZeroError: divide or modulo by zero\n");
+    addInstP(Inst.LDREQ, "r0, =" + msg);
+    addInstP(Inst.BLEQ, p_throw_runtime_error());
     addInstP(Inst.POP, "{pc}");
     return label;
   }
@@ -165,6 +148,41 @@ public class CodeWriter {
     addInstP(Inst.PUSH, "{lr}");
     addInstP(Inst.MOV, "r1, r0");
     String msg = addMsg("%d");
+    addInstP(Inst.LDR, "r0, =" + msg);
+    addInstP(Inst.ADD, "r0, r0, #4");
+    addInstP(Inst.BL, "printf");
+    addInstP(Inst.MOV, "r0, #0");
+    addInstP(Inst.BL, "fflush");
+    addInstP(Inst.POP, "{pc}");
+    return label;
+  }
+
+  public String p_print_bool() {
+    String label = "p_print_bool";
+    addLabelP(label);
+
+    addInstP(Inst.PUSH, "{lr}");
+    addInstP(Inst.CMP, "r0, #0");
+    String msg0 = addMsg("true");
+    addInstP(Inst.LDRNE, "r0, =" + msg0);
+    String msg1 = addMsg("false");
+    addInstP(Inst.LDREQ, "r0, =" + msg1);
+    addInstP(Inst.ADD, "r0, r0, #4");
+    addInstP(Inst.BL, "printf");
+    addInstP(Inst.MOV, "r0, #0");
+    addInstP(Inst.BL, "fflush");
+    addInstP(Inst.POP, "{pc}");
+    return label;
+  }
+
+  public String p_print_string() {
+    String label = "p_print_string";
+    addLabelP(label);
+
+    addInstP(Inst.PUSH, "{lr}");
+    addInstP(Inst.LDR, "{r0}");
+    addInstP(Inst.ADD, "r2, r0, #4");
+    String msg = addMsg("%.*s");
     addInstP(Inst.LDR, "r0, =" + msg);
     addInstP(Inst.ADD, "r0, r0, #4");
     addInstP(Inst.BL, "printf");
