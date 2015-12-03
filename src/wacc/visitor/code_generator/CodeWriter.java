@@ -9,11 +9,13 @@ public class CodeWriter {
   private final StringBuilder text;
   private static final String DATA_HEADER = "\t.data\n\n";
   private static final String TEXT_HEADER = "\t.text\n\n\t.global main\n";
+  private int lableL;
 
   public CodeWriter(PrintWriter file) {
     this.file = file;
     this.data = new StringBuilder(DATA_HEADER);
     this.text = new StringBuilder(TEXT_HEADER);
+    this.lableL = -1;
   }
 
   public void addLable(String lable) {
@@ -26,6 +28,19 @@ public class CodeWriter {
 
   public void addLtorg() {
     text.append("\t\t.ltorg\n");
+  }
+
+  public String[] getLableLPair() {
+    String[] pair = new String[2];
+    for (int i = 0; i < pair.length; i++) {
+      pair[i] = getLableL();
+    }
+    return pair;
+  }
+
+  private String getLableL() {
+    lableL++;
+    return "L" + lableL;
   }
 
   public void writeToFile() {

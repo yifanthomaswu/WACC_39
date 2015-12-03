@@ -1,27 +1,22 @@
 package wacc.visitor.code_generator;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import antlr.*;
 import antlr.BasicParser.*;
-import wacc.visitor.semantic_error.utils.BaseLiter;
-import wacc.visitor.semantic_error.utils.Utils;
 
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
-  private final Map<String, Object> st;
-  private Regs currentReg; //turn to enum later, exploit ++ operator
+  private SymbolTable st;
+  private Regs currentReg; // turn to enum later, exploit ++ operator
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
-    this.st = new HashMap<String, Object>();
-    currentReg = Regs.r4;
+    this.currentReg = Regs.r4;
   }
-  
+
   @Override
   public Void visitProgram(ProgramContext ctx) {
+    st = new SymbolTable(null);
     for (FuncContext c : ctx.func()) {
       visit(c);
     }
@@ -32,41 +27,89 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
     return null;
-  }  
+  }
+
+  // @Override
+  // public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+  // st.put(ctx.ident().getText(), st.size());
+  // int sizeOfVars = 0;
+  // if (ctx.getParent() instanceof BasicParser.CompStatContext)
+  // {
+  // if (((CompStatContext) ctx.getParent()).stat(1) instanceof
+  // BasicParser.VarDeclStatContext)
+  // {
+  //
+  // }
+  // }
+  // writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
+  // visit(ctx.assignRhs());
+  // currentReg = Regs.r4;
+  // if (Utils.isSameBaseType(Utils.getType(ctx.type()), BaseLiter.INT)
+  // || false) // THis need to check if string
+  // writer.addInst(Inst.STR, "r4, [sp]");
+  // else
+  // writer.addInst(Inst.STRB, "r4, [sp]");
+  // writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
+  // return null;
+  // }
 
   @Override
-  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
-    st.put(ctx.ident().getText(), st.size());
-    int sizeOfVars = 0;
-    if (ctx.getParent() instanceof BasicParser.CompStatContext)
-    {
-      if (((CompStatContext) ctx.getParent()).stat(1) instanceof BasicParser.VarDeclStatContext)
-      {
+  public Void visitIfStat(IfStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.CMP, "r4, #0");
+    String[] pair = writer.getLableLPair();
+    writer.addInst(Inst.BEQ, pair[0]);
 
-      }
-    }
-    writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
-    visit(ctx.assignRhs());
-    currentReg = Regs.r4;
-    if (Utils.isSameBaseType(Utils.getType(ctx.type()), BaseLiter.INT)
-            || false) // THis need to check if string
-      writer.addInst(Inst.STR, "r4, [sp]");
-    else
-      writer.addInst(Inst.STRB, "r4, [sp]");
-    writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
+    st = new SymbolTable(st);
+    visit(ctx.stat(0));
+    st = st.getEncSymTable();
+
+    writer.addInst(Inst.B, pair[1]);
+    writer.addLable(pair[0]);
+
+    st = new SymbolTable(st);
+    visit(ctx.stat(1));
+    st = st.getEncSymTable();
+
+    writer.addLable(pair[1]);
     return null;
   }
-  
+
+  @Override
+  public Void visitWhileStat(WhileStatContext ctx) {
+    String[] pair = writer.getLableLPair();
+    writer.addInst(Inst.B, pair[0]);
+    writer.addLable(pair[1]);
+
+    st = new SymbolTable(st);
+    visit(ctx.stat());
+    st = st.getEncSymTable();
+
+    writer.addLable(pair[0]);
+    visit(ctx.expr());
+    writer.addInst(Inst.CMP, "r4, #1");
+    writer.addInst(Inst.BEQ, pair[1]);
+    return null;
+  }
+
+  @Override
+  public Void visitScopingStat(ScopingStatContext ctx) {
+    st = new SymbolTable(st);
+    visit(ctx.stat());
+    st = st.getEncSymTable();
+    return null;
+  }
+
   @Override
   public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
-    if(ctx.getText().equals("true"))
+    if (ctx.getText().equals("true"))
       writer.addInst(Inst.MOV, currentReg + ", #1");
     else
       writer.addInst(Inst.MOV, currentReg + ", #0");
     currentReg = Regs.r5;
     return null;
   }
-  
+
   @Override
   public Void visitFunc(FuncContext ctx) {
     writer.addLable("f_" + ctx.ident().getText());
