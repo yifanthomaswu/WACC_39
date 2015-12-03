@@ -20,7 +20,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     for (FuncContext c : ctx.func()) {
       visit(c);
     }
-    writer.addLable("main");
+    writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
     visit(ctx.stat());
     writer.addInst(Inst.LDR, "r0, =0");
@@ -112,7 +112,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitFunc(FuncContext ctx) {
-    writer.addLable("f_" + ctx.ident().getText());
+    writer.addLabel("f_" + ctx.ident().getText());
     writer.addInst(Inst.PUSH, "{lr}");
     visitChildren(ctx);
     writer.addInst(Inst.POP, "{pc}");

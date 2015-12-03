@@ -18,8 +18,8 @@ public class CodeWriter {
     this.lableL = -1;
   }
 
-  public void addLable(String lable) {
-    text.append("\t" + lable + ":\n");
+  public void addLabel(String label) {
+    text.append("\t" + label + ":\n");
   }
 
   public void addInst(Inst inst, String args) {
