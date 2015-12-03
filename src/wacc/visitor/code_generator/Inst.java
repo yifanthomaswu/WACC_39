@@ -18,6 +18,7 @@ public enum Inst {
   SUBS,
   AND,
   CMP, 
-  OR;
+  OR, 
+  LDRSB;
 }
 

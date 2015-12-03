@@ -233,5 +233,28 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     return null;
   }
+  
+  @Override
+  public Void visitAssign(BasicParser.AssignStatContext ctx) {
+	  if (ctx.type().getText().equals("int") || 
+			  ctx.type().arrayType() != null|| 
+			  ctx.type().getText().equals("string")) {
+		      writer.addInst(Inst.STR, "r4, " + msg);
+		    } else {
+		      writer.addInst(Inst.STRB, "r4, " + msg);
+		    }
+	  return null;
+  }
+  
+  @Override
+  public Void visitIdent(BasicParser.IdentContext ctx) {
+	  if (ctx.   .getText().equals("int") || ctx.type().arrayType() != null
+		        || ctx.type().getText().equals("string")) {
+		      writer.addInst(Inst.LDR, "r4, " + msg);
+		    } else {
+		      writer.addInst(Inst.LDRSB, "r4, " + msg);
+		    }
+	  return null;
+  }
 
 }
