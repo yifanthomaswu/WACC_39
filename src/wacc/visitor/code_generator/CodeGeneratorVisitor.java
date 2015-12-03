@@ -1,5 +1,7 @@
 package wacc.visitor.code_generator;
 
+import wacc.visitor.semantic_error.utils.Type;
+import wacc.visitor.semantic_error.utils.Utils;
 import antlr.*;
 import antlr.BasicParser.*;
 
@@ -9,8 +11,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private final CodeWriter writer;
   private int currentStackPointer = 0;
   private SymbolTable st;
+  private wacc.visitor.semantic_error.utils.SymbolTable typeSt;
 
-  public CodeGeneratorVisitor(CodeWriter writer) {
+  public CodeGeneratorVisitor(CodeWriter writer, wacc.visitor.semantic_error.utils.SymbolTable st) {
+	this.typeSt = st;
     this.writer = writer;
   }
 
@@ -282,33 +286,49 @@ public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
 	  return null;
  }
 
+@Override
+public Void visitIntLiter(IntLiterContext ctx) {
+	writer.addInst(Inst.LDR, "r5, =" + ctx.getText()); 
+	return null;
+}
+
 	@Override
 	public Void visitArrayLiter(ArrayLiterContext ctx) {
-		int typeSize = 4; // need to determine size of type in elements somehow
-		int spaceToSave = (ctx.expr().size() + 1) * typeSize;
+		int typeSize;
+		int offset = 4;
+		Inst instruction;
+/*		
+		if (ctx.expr(0) instanceof IntExprContext
+				|| ctx.expr(0) instanceof StringExprContext) {
+			typeSize = 4;
+			instruction = Inst.STR;
+		} else if (ctx.expr(0) instanceof ArrayElemExprContext) {
+		} else if (ctx.expr(0) instanceof IdentExprContext) {
+			Type type = Utils.getType((IdentExprContext) ctx.expr(0), typeSt);
+			switch (type) {
+			case: 
+			}
+		} else {
+			typeSize = 1;
+			instruction = Inst.STRB;
+		}
+		
+		int spaceToSave = ctx.expr().size() * typeSize + 4;
 		writer.addInst(Inst.LDR, "r0, =" + spaceToSave);
 
 		writer.addInst(Inst.BL, "malloc");
 		writer.addInst(Inst.MOV, "r4, r0");
 		
-		if (ctx.expr(0) instanceof IntExprContext) {
-			int offset = 4;
-			for (ExprContext expr : ctx.expr()) {
-				writer.addInst(Inst.LDR, "r5, =" + expr.getText());
-				writer.addInst(Inst.STR, "r5, [r4, #" + offset);
-				offset += 4;
-			}
-		} else if (ctx.expr(0) instanceof BoolExprContext) {
-			String boolValue;
-			int offset = 4;
-			for (ExprContext expr : ctx.expr()) {
-				boolValue = expr.getText();
-				writer.addInst(Inst.LDR, "r5, #" + (boolValue.equals("true")? 1 : 0));
-				writer.addInst(Inst.STRB, "r5, [r4, #" + offset);
-				offset += 1;
-			}
+		for (ExprContext expr : ctx.expr()) {
+			visit(expr);
+			writer.addInst(instruction, "r5, [r4, #" + offset + "]");
+			offset += typeSize;
 		}
+		
+		writer.addInst(Inst.LDR, "r5, =" + ctx.expr().size());
+		writer.addInst(Inst.STR, "r5, [r4]");
 
-		return visitChildren(ctx);
+*/
+		return null;
 	}
 }

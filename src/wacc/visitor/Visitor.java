@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.tree.*;
 import antlr.*;
 import wacc.visitor.code_generator.*;
 import wacc.visitor.semantic_error.*;
+import wacc.visitor.semantic_error.utils.SymbolTable;
 import wacc.visitor.syntactic_error.*;
 
 import java.io.File;
@@ -37,6 +38,7 @@ public class Visitor {
 
     int numberOfSyntaxErrors = parser.getNumberOfSyntaxErrors();
 
+
     // build and run SyntacticVisitor, check functions ended with return or exit
     try {
       SyntacticVisitor syntacticVisitor = new SyntacticVisitor();
@@ -54,8 +56,9 @@ public class Visitor {
     }
 
     // build and run SemanticVisitor, exit with code 200 if semantic error exits
+    SymbolTable st = new SymbolTable(null);
     try {
-      SemanticVisitor semanticVisitor = new SemanticVisitor();
+      SemanticVisitor semanticVisitor = new SemanticVisitor(st);
       semanticVisitor.visit(tree);
     } catch (SemanticErrorException e) {
       System.out.println(e.getMessage());
@@ -68,11 +71,12 @@ public class Visitor {
     PrintWriter file = new PrintWriter(filename, "UTF-8");
     // Start code generation
     CodeWriter writer = new CodeWriter(file);
-    CodeGeneratorVisitor codeGeneratorVisitor = new CodeGeneratorVisitor(writer);
+    CodeGeneratorVisitor codeGeneratorVisitor = new CodeGeneratorVisitor(writer, st);
     codeGeneratorVisitor.visit(tree);
     writer.writeToFile();
     // close file
     file.close();
 
   }
+
 }
