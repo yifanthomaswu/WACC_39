@@ -10,9 +10,12 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   private SymbolTable st;
 
+  public SemanticVisitor(SymbolTable st) {
+    this.st = st;
+  }
+
   @Override
   public Void visitProgram(ProgramContext ctx) {
-    st = new SymbolTable(null);
     for (FuncContext func : ctx.func()) {
       String ident = func.ident().getText();
       if (st.lookupF(ident) != null) {

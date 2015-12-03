@@ -1,16 +1,24 @@
 package wacc.visitor.code_generator;
 
+import wacc.visitor.semantic_error.utils.BaseLiter;
+import wacc.visitor.semantic_error.utils.Type;
+import wacc.visitor.semantic_error.utils.Utils;
 import antlr.*;
 import antlr.BasicParser.*;
 
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
+
   private final CodeWriter writer;
   private int currentStackPointer = 0;
   private SymbolTable st;
+  private Regs currentReg;
+  private wacc.visitor.semantic_error.utils.SymbolTable typeSt;
 
-  public CodeGeneratorVisitor(CodeWriter writer) {
+  public CodeGeneratorVisitor(CodeWriter writer, wacc.visitor.semantic_error.utils.SymbolTable st) {
+	this.typeSt = st;
     this.writer = writer;
+    this.currentReg = Regs.r4;
   }
 
   @Override
@@ -109,7 +117,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitIntExpr(IntExprContext ctx) {
+  public Void visitIntLiter(IntLiterContext ctx) {
     writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
     return null;
   }
@@ -248,15 +256,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  // @Override
-  // public Void visitCompStat(CompStatContext ctx) {
-  // int count = 0;
-  // while(ctx.getChild(count) instanceof VarDeclStatContext) {
-  // count++;
-  // }
-  // visit
-  // }
-
   private int sizeOfDecl(StatContext ctx) {
     if (ctx instanceof VarDeclStatContext) {
       int size = 0;
@@ -308,5 +307,101 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     return null;
   }
+
+  @Override
+  public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
+	  visit(ctx.assignRhs());
+	  visit(ctx.assignLhs());
+	  return null;
+  }
+
+  @Override
+  public Void visitLhsIdent(BasicParser.LhsIdentContext ctx) {
+	  String msg = "[sp]";
+	  int stackPointerOffset = currentStackPointer -
+			  st.lookup(ctx.getText());
+	  if (stackPointerOffset > 0) {
+	    msg = "[sp, #" + stackPointerOffset + "]";
+	  }
+	  if (typeSt.lookupT(ctx.getText()).equals("int") ||
+			  typeSt.lookupT(ctx.getText()).arrayType() != null ||
+			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+		      writer.addInst(Inst.STR, "r4, " + msg);
+		    } else {
+		      writer.addInst(Inst.STRB, "r4, " + msg);
+		    }
+	  return null;
+  }
+
+  @Override
+  public Void visitIdent(BasicParser.IdentContext ctx) {
+	  String msg = "[sp]";
+	  int stackPointerOffset = currentStackPointer -
+			  st.lookup(ctx.getText());
+	  if (stackPointerOffset > 0) {
+	    msg = "[sp, #" + stackPointerOffset + "]";
+	  }
+	  if (typeSt.lookupT(ctx.getText()).getText().equals("int") ||
+			  typeSt.lookupT(ctx.getText()).arrayType() != null ||
+			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+		      writer.addInst(Inst.LDR, "r4, " + msg);
+		    } else {
+		      writer.addInst(Inst.LDRSB, "r4, " + msg);
+		    }
+	  return null;
+  }
+
+	@Override
+	public Void visitArrayLiter(ArrayLiterContext ctx) {
+		int typeSize;
+		int offset = 4;
+		Inst instruction;
+
+		if (ctx.expr(0) instanceof IntExprContext
+				|| ctx.expr(0) instanceof StringExprContext) {
+			typeSize = 4;
+			instruction = Inst.STR;
+		} else if (ctx.expr(0) instanceof ArrayElemExprContext
+				|| ctx.expr(0) instanceof IdentExprContext) {
+
+			Type type;
+			if (ctx.expr(0) instanceof ArrayElemExprContext) {
+				type = Utils.getType(((ArrayElemExprContext) ctx.expr(0)).arrayElem().ident(), typeSt);
+			} else {
+				type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), typeSt);
+			}
+
+			if (Utils.isSameBaseType(type, BaseLiter.INT) || type instanceof wacc.visitor.semantic_error.utils.ArrayType) {
+				typeSize = 4;
+				instruction = Inst.STR;
+			} else { // is a bool or char
+				typeSize = 1;
+				instruction = Inst.STRB;
+			}
+
+		} else { // is a bool or char
+			typeSize = 1;
+			instruction = Inst.STRB;
+		}
+
+		int spaceToSave = ctx.expr().size() * typeSize + 4;
+		writer.addInst(Inst.LDR, "r0, =" + spaceToSave);
+		writer.addInst(Inst.BL, "malloc");
+		writer.addInst(Inst.MOV, "r4, r0");
+
+		currentReg = Regs.values()[currentReg.ordinal() + 1];
+		for (ExprContext expr : ctx.expr()) {
+			visit(expr);
+			writer.addInst(instruction, "r5, [r4, #" + offset + "]");
+			offset += typeSize;
+		}
+		currentReg = Regs.values()[currentReg.ordinal() - 1];
+
+		writer.addInst(Inst.LDR, "r5, =" + ctx.expr().size());
+		writer.addInst(Inst.STR, "r5, [r4]");
+
+
+		return null;
+	}
 
 }
