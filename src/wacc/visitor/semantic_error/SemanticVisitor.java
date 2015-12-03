@@ -9,9 +9,9 @@ import wacc.visitor.semantic_error.utils.*;
 public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   private SymbolTable st;
-  
+
   public SemanticVisitor(SymbolTable st) {
-	  this.st = st;
+    this.st = st;
   }
 
   @Override
