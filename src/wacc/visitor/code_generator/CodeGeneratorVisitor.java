@@ -22,9 +22,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.SUB, "sp, sp, #" + size);
+    if (size > 0) {
+      writer.addInst(Inst.SUB, "sp, sp, #" + size);
+    }
     visit(ctx.stat());
-    writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    if (size > 0) {
+      writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    }
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
     ;

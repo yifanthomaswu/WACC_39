@@ -31,4 +31,3 @@ public enum Inst {
   AND,
   ORR;
 }
-
