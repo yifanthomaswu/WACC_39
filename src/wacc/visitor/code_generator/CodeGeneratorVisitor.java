@@ -25,18 +25,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     visit(ctx.stat());
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
+    ;
     writer.addLtorg();
     return null;
   }
 
   // @Override
-  // public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+  // public Void visitVarDeclStat(VarDeclStatContext ctx) {
   // st.put(ctx.ident().getText(), st.size());
   // int sizeOfVars = 0;
-  // if (ctx.getParent() instanceof BasicParser.CompStatContext)
+  // if (ctx.getParent() instanceof CompStatContext)
   // {
   // if (((CompStatContext) ctx.getParent()).stat(1) instanceof
-  // BasicParser.VarDeclStatContext)
+  // VarDeclStatContext)
   // {
   //
   // }
@@ -101,7 +102,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
+  public Void visitBoolLiter(BoolLiterContext ctx) {
     if (ctx.getText().equals("true"))
       writer.addInst(Inst.MOV, currentReg + ", #1");
     else
@@ -137,32 +138,48 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitIntExpr(BasicParser.IntExprContext ctx) {
+  public Void visitIntExpr(IntExprContext ctx) {
     writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
     currentReg = Regs.r5;
     return null;
   }
 
   @Override
-  public Void visitCharLiter(BasicParser.CharLiterContext ctx) {
+  public Void visitCharLiter(CharLiterContext ctx) {
     writer.addInst(Inst.MOV, "r4, #" + ctx.getText());
     return null;
   }
 
+//  @Override
+//  public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
+//    if (ctx.MULT() != null) {
+//      writer.
+//    }
+//    return null;
+//  }
+
   @Override
-  public Void visitBinOpPrec2Expr(BasicParser.BinOpPrec2ExprContext ctx) {
+  public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
     visitChildren(ctx);
-    if (ctx.PLUS() != null)
+    if (ctx.PLUS() != null) {
       writer.addInst(Inst.ADDS, "r4, r4, r5");
-    else
+    } else {
       writer.addInst(Inst.SUBS, "r4, r4, r5");
+    }
     return null;
   }
 
   @Override
-  public Void visitBinOpPrec5Expr(BasicParser.BinOpPrec5ExprContext ctx) {
+  public Void visitBinOpPrec5Expr(BinOpPrec5ExprContext ctx) {
     visitChildren(ctx);
     writer.addInst(Inst.AND, "r4, r4, r5");
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.OR, "r4, r4, r5");
     return null;
   }
 
