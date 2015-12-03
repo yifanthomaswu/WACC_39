@@ -27,7 +27,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLable("main");
     writer.addInst(Inst.PUSH, "{lr}");
+    writer.addInst(Inst.SUB, "sp, sp, #num");
     visit(ctx.stat());
+    writer.addInst(Inst.ADD, "sp, sp, #num");
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
@@ -37,15 +39,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
     st.put(ctx.ident().getText(), st.size());
-    int sizeOfVars = 0;
-    if (ctx.getParent() instanceof BasicParser.CompStatContext)
-    {
-      if (((CompStatContext) ctx.getParent()).stat(1) instanceof BasicParser.VarDeclStatContext)
-      {
-
-      }
-    }
-    writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
     visit(ctx.assignRhs());
     currentReg = Regs.r4;
     if (Utils.isSameBaseType(Utils.getType(ctx.type()), BaseLiter.INT)
@@ -53,7 +46,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.STR, "r4, [sp]");
     else
       writer.addInst(Inst.STRB, "r4, [sp]");
-    writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
     return null;
   }
   
@@ -95,8 +87,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntExpr(BasicParser.IntExprContext ctx) {
-    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
-    currentReg = Regs.r5;
+    writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
     return null;
   }
 
@@ -122,5 +113,54 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.AND, "r4, r4, r5");
     return null;
   }
+
+  private void p_print_string(String msg) {
+    writer.addInst(Inst.PUSH, "{lr}");
+    writer.addInst(Inst.LDR, "{r0}");
+    writer.addInst(Inst.ADD, "r2, r0, #4");
+    writer.addInst(Inst.LDR, "r0, =" + msg);
+    writer.addInst(Inst.ADD, "r0, r0, #4");
+    writer.addInst(Inst.BL, "printf");
+    writer.addInst(Inst.MOV, "r0, #0");
+    writer.addInst(Inst.BL, "fflush");
+    writer.addInst(Inst.POP, "{pc}");
+  }
+
+  private void p_print_ln(String msg) {
+    writer.addInst(Inst.PUSH, "{lr}");
+    writer.addInst(Inst.LDR, "r0, =" + msg);
+    writer.addInst(Inst.ADD, "r0, r0, #4");
+    writer.addInst(Inst.BL, "puts");
+    writer.addInst(Inst.MOV, "r0, #0");
+    writer.addInst(Inst.BL, "fflush");
+    writer.addInst(Inst.POP, "{pc}");
+  }
+
+  private void p_throw_overflow_error(String msg) {
+    writer.addInst(Inst.LDR, "r0, =" + msg);
+    writer.addInst(Inst.BL, "p_throw_runtime_error");
+  }
+
+  private void p_throw_runtime_error(String msg) {
+    writer.addInst(Inst.BL, "p_print_string");
+    writer.addInst(Inst.MOV, "r0, #-1");
+    writer.addInst(Inst.BL, "exit");
+  }
+
+  private void p_print_int(String msg) {
+    writer.addInst(Inst.PUSH, "{lr}");
+    writer.addInst(Inst.MOV, "r1, r0");
+    writer.addInst(Inst.LDR, "r0, =" + msg);
+    writer.addInst(Inst.ADD, "r0, r0, #4");
+    writer.addInst(Inst.BL, "printf");
+    writer.addInst(Inst.MOV, "r0, #0");
+    writer.addInst(Inst.BL, "fflush");
+    writer.addInst(Inst.POP, "{pc}");
+  }
+
+
+
+
+
 
 }
