@@ -1,7 +1,5 @@
 package wacc.visitor.code_generator;
 
-import wacc.visitor.semantic_error.utils.Type;
-import wacc.visitor.semantic_error.utils.Utils;
 import antlr.*;
 import antlr.BasicParser.*;
 
@@ -27,39 +25,20 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.SUB, "sp, sp, #" + size);
+    if (size > 0) {
+      writer.addInst(Inst.SUB, "sp, sp, #" + size);
+    }
     visit(ctx.stat());
-    writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    if (size > 0) {
+      writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    }
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
+    ;
     writer.addLtorg();
     return null;
   }
 
-
-//  @Override
-//  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
-//    st.put(ctx.ident().getText(), st.size());
-//    int sizeOfVars = 0;
-//    if (ctx.getParent() instanceof BasicParser.CompStatContext)
-//    {
-//      if (((CompStatContext) ctx.getParent()).stat(1) instanceof BasicParser.VarDeclStatContext)
-//      {
-//
-//      }
-//    }
-//    writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
-//    visit(ctx.assignRhs());
-//    currentReg = Regs.r4;
-//    if (Utils.isSameBaseType(Utils.getType(ctx.type()), BaseLiter.INT)
-//            || false) // THis need to check if string
-//      writer.addInst(Inst.STR, "r4, [sp]");
-//    else
-//      writer.addInst(Inst.STRB, "r4, [sp]");
-//    writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
-//    return null;
-//  }
-  
   public Void visitIfStat(IfStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.CMP, "r4, #0");
@@ -106,7 +85,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-
   @Override
   public Void visitFunc(FuncContext ctx) {
     writer.addLabel("f_" + ctx.ident().getText());
@@ -132,16 +110,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.BL, "exit");
     return null;
   }
-  
+
   @Override
   public Void visitSkipStat(SkipStatContext ctx) {
-	  writer.addInst(Inst.LDR, "r0, =0");
-	  writer.addInst(Inst.POP, "{pc}");
-	  return null;
+    writer.addInst(Inst.LDR, "r0, =0");
+    writer.addInst(Inst.POP, "{pc}");
+    return null;
   }
 
   @Override
-
   public Void visitIntExpr(BasicParser.IntExprContext ctx) {
     writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
     return null;
@@ -154,12 +131,68 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
+    visitChildren(ctx);
+    if (ctx.MULT() != null) {
+      writer.addInst(Inst.SMULL, "r4, r5, r4, r5");
+      writer.addInst(Inst.CMP, "r5, r4, ASR #31");
+      writer.addInst(Inst.BLNE, writer.p_throw_overflow_error());
+    } else {
+      writer.addInst(Inst.MOV, "r0, r4");
+      writer.addInst(Inst.MOV, "r1, r5");
+      writer.addInst(Inst.BL, writer.p_check_divide_by_zero());
+      if (ctx.DIV() != null) {
+        writer.addInst(Inst.BL, "__aeabi_idiv");
+      } else {
+        writer.addInst(Inst.BL, "__aeabi_idivmod");
+      }
+    }
+    return null;
+  }
+
+  @Override
   public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
     visitChildren(ctx);
-    if (ctx.PLUS() != null)
+    if (ctx.PLUS() != null) {
       writer.addInst(Inst.ADDS, "r4, r4, r5");
-    else
+    } else {
       writer.addInst(Inst.SUBS, "r4, r4, r5");
+    }
+    writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.CMP, "r4, r5");
+    if (ctx.GRT() != null) {
+      writer.addInst(Inst.MOVGT, "r4, #1");
+      writer.addInst(Inst.MOVLE, "r4, #0");
+    } else if (ctx.GRT_EQUAL() != null) {
+      writer.addInst(Inst.MOVGE, "r4, #1");
+      writer.addInst(Inst.MOVLT, "r4, #0");
+    } else if (ctx.LESS() != null) {
+      writer.addInst(Inst.MOVLT, "r4, #1");
+      writer.addInst(Inst.MOVGE, "r4, #0");
+    } else {
+      writer.addInst(Inst.MOVLE, "r4, #1");
+      writer.addInst(Inst.MOVGT, "r4, #0");
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.CMP, "r4, r5");
+    if (ctx.EQUAL() != null) {
+      writer.addInst(Inst.MOVEQ, "r4, #1");
+      writer.addInst(Inst.MOVNE, "r4, #0");
+    } else {
+      writer.addInst(Inst.MOVNE, "r4, #1");
+      writer.addInst(Inst.MOVEQ, "r4, #0");
+    }
     return null;
   }
 
@@ -170,121 +203,83 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  private void p_print_string(String msg) {
-    writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.LDR, "{r0}");
-    writer.addInst(Inst.ADD, "r2, r0, #4");
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.ADD, "r0, r0, #4");
-    writer.addInst(Inst.BL, "printf");
-    writer.addInst(Inst.MOV, "r0, #0");
-    writer.addInst(Inst.BL, "fflush");
-    writer.addInst(Inst.POP, "{pc}");
+  @Override
+  public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) {
+    visitChildren(ctx);
+    writer.addInst(Inst.ORR, "r4, r4, r5");
+    return null;
   }
 
-  private void p_print_ln(String msg) {
-    writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.ADD, "r0, r0, #4");
-    writer.addInst(Inst.BL, "puts");
-    writer.addInst(Inst.MOV, "r0, #0");
-    writer.addInst(Inst.BL, "fflush");
-    writer.addInst(Inst.POP, "{pc}");
-  }
-
-  private void p_throw_overflow_error(String msg) {
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.BL, "p_throw_runtime_error");
-  }
-
-  private void p_throw_runtime_error(String msg) {
-    writer.addInst(Inst.BL, "p_print_string");
-    writer.addInst(Inst.MOV, "r0, #-1");
-    writer.addInst(Inst.BL, "exit");
-  }
-
-  private void p_print_int(String msg) {
-    writer.addInst(Inst.PUSH, "{lr}");
-    writer.addInst(Inst.MOV, "r1, r0");
-    writer.addInst(Inst.LDR, "r0, =" + msg);
-    writer.addInst(Inst.ADD, "r0, r0, #4");
-    writer.addInst(Inst.BL, "printf");
-    writer.addInst(Inst.MOV, "r0, #0");
-    writer.addInst(Inst.BL, "fflush");
-    writer.addInst(Inst.POP, "{pc}");
-  }
-
-
-//@Override
-//public Void visitCompStat(BasicParser.CompStatContext ctx) {
-//	  int count = 0;
-//	  while(ctx.getChild(count) instanceof VarDeclStatContext) {
-//		  count++;
-//	  }
-//	  visit
-//}
+  // @Override
+  // public Void visitCompStat(BasicParser.CompStatContext ctx) {
+  // int count = 0;
+  // while(ctx.getChild(count) instanceof VarDeclStatContext) {
+  // count++;
+  // }
+  // visit
+  // }
 
   private int sizeOfDecl(BasicParser.StatContext ctx) {
-	  if(ctx instanceof VarDeclStatContext) {
-		  int size = 0;
-		  if(((VarDeclStatContext) ctx).type().baseType() != null) {
-			  switch(((VarDeclStatContext) ctx).type().getText()) {
-				case "bool":
-				case "char":
-					size = 1;
-					currentStackPointer++;
-					break;
-				case "int":
-				case "string":
-					size = 4;
-					currentStackPointer += 4;
-					break;
-				}
-		  } else if(((VarDeclStatContext) ctx).type().arrayType() != null) {
-			  size = 4;
-			  currentStackPointer +=4;
-		  }
-		  st.add(((VarDeclStatContext) ctx).ident().getText(), currentStackPointer);
-		  return size; 
-	  } else if(ctx instanceof CompStatContext) {
-		  int result = 0;
-		  for(StatContext c : ((CompStatContext)ctx).stat()) {
-			  result += sizeOfDecl(c);
-		  }
-		  return result;
-	  } else {
-		  return 0;
-	  }
-  }	  
-  
+    if (ctx instanceof VarDeclStatContext) {
+      int size = 0;
+      if (((VarDeclStatContext) ctx).type().baseType() != null) {
+        switch (((VarDeclStatContext) ctx).type().getText()) {
+          case "bool":
+          case "char":
+            size = 1;
+            currentStackPointer++;
+            break;
+          case "int":
+          case "string":
+            size = 4;
+            currentStackPointer += 4;
+            break;
+        }
+      } else if (((VarDeclStatContext) ctx).type().arrayType() != null) {
+        size = 4;
+        currentStackPointer += 4;
+      }
+      st.add(((VarDeclStatContext) ctx).ident().getText(), currentStackPointer);
+      return size;
+    } else if (ctx instanceof CompStatContext) {
+      int result = 0;
+      for (StatContext c : ((CompStatContext) ctx).stat()) {
+        result += sizeOfDecl(c);
+      }
+      return result;
+    } else {
+      return 0;
+    }
+  }
+
   @Override
   public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
-	visit(ctx.assignRhs());
-	int stackPointerOffset = currentStackPointer - st.lookup(ctx.ident().getText());
-	String msg = "[sp]";
-	if(stackPointerOffset > 0 ) {
-		msg = "[sp, #" + stackPointerOffset + "]";
-	}
-	if(ctx.type().getText().equals("int") || 
-			ctx.type().arrayType() != null || 
-			ctx.type().getText().equals("string") ) {
-		writer.addInst(Inst.STR, "r4, " + msg);
-	} else {
-		writer.addInst(Inst.STRB, "r4, " + msg);
+    visit(ctx.assignRhs());
+    int stackPointerOffset = currentStackPointer
+        - st.lookup(ctx.ident().getText());
+    String msg = "[sp]";
+    if (stackPointerOffset > 0) {
+      msg = "[sp, #" + stackPointerOffset + "]";
+    }
+    if (ctx.type().getText().equals("int") || ctx.type().arrayType() != null
+        || ctx.type().getText().equals("string")) {
+      writer.addInst(Inst.STR, "r4, " + msg);
+    } else {
+      writer.addInst(Inst.STRB, "r4, " + msg);
 
-	}
-	return null;
-}
+    }
+    return null;
+  }
 
-@Override
-public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
-	  if(ctx.getText().equals("true")) {
-		  writer.addInst(Inst.MOV, "r4, #1");
-	  } else {
-		  writer.addInst(Inst.MOV, "r4, #0");
-	  }  
-	  return null;
- }
+  @Override
+  public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
+    if (ctx.getText().equals("true")) {
+      writer.addInst(Inst.MOV, "r4, #1");
+    } else {
+      writer.addInst(Inst.MOV, "r4, #0");
+    }
+    return null;
+  }
 
 @Override
 public Void visitIntLiter(IntLiterContext ctx) {
