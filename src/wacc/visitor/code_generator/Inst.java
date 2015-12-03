@@ -4,14 +4,17 @@ public enum Inst {
   PUSH,
   POP,
   LDR,
+  STR,
+  STRB,
   B,
+  BEQ,
   BL,
   MOV,
+  ADD,
   SUB,
-  STRB,
-  STR,
   ADDS,
   SUBS,
-  ADD, AND;
+  AND,
+  CMP;
 }
 
