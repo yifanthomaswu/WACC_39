@@ -13,6 +13,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private final CodeWriter writer;
   private final Map<String, Object> st;
   private Regs currentReg; //turn to enum later, exploit ++ operator
+  private int currentStackPointer = 0;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
@@ -34,38 +35,29 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }  
 
-  @Override
-  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
-    st.put(ctx.ident().getText(), st.size());
-    int sizeOfVars = 0;
-    if (ctx.getParent() instanceof BasicParser.CompStatContext)
-    {
-      if (((CompStatContext) ctx.getParent()).stat(1) instanceof BasicParser.VarDeclStatContext)
-      {
-
-      }
-    }
-    writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
-    visit(ctx.assignRhs());
-    currentReg = Regs.r4;
-    if (Utils.isSameBaseType(Utils.getType(ctx.type()), BaseLiter.INT)
-            || false) // THis need to check if string
-      writer.addInst(Inst.STR, "r4, [sp]");
-    else
-      writer.addInst(Inst.STRB, "r4, [sp]");
-    writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
-    return null;
-  }
+//  @Override
+//  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+//    st.put(ctx.ident().getText(), st.size());
+//    int sizeOfVars = 0;
+//    if (ctx.getParent() instanceof BasicParser.CompStatContext)
+//    {
+//      if (((CompStatContext) ctx.getParent()).stat(1) instanceof BasicParser.VarDeclStatContext)
+//      {
+//
+//      }
+//    }
+//    writer.addInst(Inst.SUB, "sp, sp, #" + st.size());
+//    visit(ctx.assignRhs());
+//    currentReg = Regs.r4;
+//    if (Utils.isSameBaseType(Utils.getType(ctx.type()), BaseLiter.INT)
+//            || false) // THis need to check if string
+//      writer.addInst(Inst.STR, "r4, [sp]");
+//    else
+//      writer.addInst(Inst.STRB, "r4, [sp]");
+//    writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
+//    return null;
+//  }
   
-  @Override
-  public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
-    if(ctx.getText().equals("true"))
-      writer.addInst(Inst.MOV, currentReg + ", #1");
-    else
-      writer.addInst(Inst.MOV, currentReg + ", #0");
-    currentReg = Regs.r5;
-    return null;
-  }
   
   @Override
   public Void visitFunc(FuncContext ctx) {
@@ -132,25 +124,45 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 //	  visit
 //}
 
-@Override
-public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
-	  st.put(ctx.ident().getText(), )
-	  return visitChildren(ctx);
+  @Override
+  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+	switch(ctx.type().getText()) {
+	case("bool"):
+	case("char"):
+		currentStackPointer++;
+		break;
+	case("int"):
+	case("string"):
+		currentStackPointer += 4;
+		break;
+	}
+	st.put(ctx.ident().getText(), currentStackPointer);
+	return visitChildren(ctx);
 }
 
 @Override
 public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
-	  if(ctx.getText() == "true") {
-		  writer.addInst(Inst.MOV, "r4, #1");
+	  if(ctx.getText().equals("true")) {
+		  writer.addInst(Inst.MOV, currentReg + ", #1");
 	  } else {
-		  writer.addInst(Inst.MOV, "r4, #0");
+		  writer.addInst(Inst.MOV, currentReg + ", #0");
 	  }
 	  if(st.size() < 1) {
-		  writer.addInst(Inst.STRB, "r4, [sp]");
+		  writer.addInst(Inst.STRB, currentReg + ", [sp]");
 	  } else {
-		  writer.addInst(Inst.STRB, "r4, [sp, #" + (st.size()-1) + "]");
+		  writer.addInst(Inst.STRB, currentReg + ", [sp, #" + (st.size()-1) + "]");
 	  }
-	  writer.addInst(Inst.ADD, "sp, sp, #" + st.size());
+	  
 	  return null;
-}
+ }
+
+//@Override
+//public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
+//  if(ctx.getText().equals("true"))
+//    writer.addInst(Inst.MOV, currentReg + ", #1");
+//  else
+//    writer.addInst(Inst.MOV, currentReg + ", #0");
+//  currentReg = Regs.r5;
+//  return null;
+//}
 }
