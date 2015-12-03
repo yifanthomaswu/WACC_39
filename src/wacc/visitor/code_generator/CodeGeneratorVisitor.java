@@ -1,5 +1,7 @@
 package wacc.visitor.code_generator;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import antlr.*;
 import antlr.BasicParser.*;
 
@@ -87,12 +89,63 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitFunc(FuncContext ctx) {
+	int temp = currentStackPointer;
+	currentStackPointer = 0;
+	st = new SymbolTable(st);
     writer.addLabel("f_" + ctx.ident().getText());
     writer.addInst(Inst.PUSH, "{lr}");
     visitChildren(ctx);
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
+    currentStackPointer = temp;
     return null;
+  }
+  
+  @Override
+  public Void visitParamList(ParamListContext ctx) {
+	  int size = 0;
+	  for(ParamContext c : ctx.param()) {
+		  if (c.type().baseType() != null) {
+		        switch (c.type().getText()) {
+		          case "bool":
+		          case "char":
+		            size--;
+		            break;
+		          case "int":
+		          case "string":
+		        	  size -= 4;
+		            break;
+		        }
+		  } else if (c.type().arrayType() != null) {
+		    	  size -= 4;
+		  }
+		  st.add(c.ident().getText(), size);
+		  typeSt.add(c.ident().getText(), c.type());
+	  } 
+	  return null;
+  }
+  
+//  private void sizeOfParam(ParamContext ctx, Integer size) { 
+//	  if (ctx.type().baseType() != null) {
+//	        switch (ctx.type().getText()) {
+//	          case "bool":
+//	          case "char":
+//	            size++;
+//	            break;
+//	          case "int":
+//	          case "string":
+//	            size += 4;
+//	            break;
+//	        }
+//	      } else if (ctx.type().arrayType() != null) {
+//	       size += 4;
+//	      }
+//	      st.add(ctx.ident().getText(), size);
+//  }
+  
+  @Override
+  public Void visitParam(ParamContext ctx) {
+	  return null;
   }
 
   @Override
@@ -308,19 +361,22 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   
   @Override
   public Void visitIdent(BasicParser.IdentContext ctx) {
-	  String msg = "[sp]";
-	  int stackPointerOffset = currentStackPointer - 
-			  st.lookup(ctx.getText());
-	  if (stackPointerOffset > 0) {
-	    msg = "[sp, #" + stackPointerOffset + "]";
+	  ParserRuleContext context = ctx.getParent();
+	  if(!(context instanceof FuncContext) && !(context instanceof RhsCallContext)) {
+		  String msg = "[sp]";
+		  int stackPointerOffset = currentStackPointer - 
+				  st.lookup(ctx.getText());
+		  if (stackPointerOffset > 0) {
+		    msg = "[sp, #" + stackPointerOffset + "]";
+		  }
+		  if (typeSt.lookupT(ctx.getText()).getText().equals("int") || 
+				  typeSt.lookupT(ctx.getText()).arrayType() != null || 
+				  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+			      writer.addInst(Inst.LDR, "r4, " + msg);
+			    } else {
+			      writer.addInst(Inst.LDRSB, "r4, " + msg);
+			    }
 	  }
-	  if (typeSt.lookupT(ctx.getText()).getText().equals("int") || 
-			  typeSt.lookupT(ctx.getText()).arrayType() != null || 
-			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
-		      writer.addInst(Inst.LDR, "r4, " + msg);
-		    } else {
-		      writer.addInst(Inst.LDRSB, "r4, " + msg);
-		    }
 	  return null;
   }
 
