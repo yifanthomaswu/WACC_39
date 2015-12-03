@@ -36,6 +36,32 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visitFunc(FuncContext ctx) {
+    writer.addLabel("f_" + ctx.ident().getText());
+    writer.addInst(Inst.PUSH, "{lr}");
+    visitChildren(ctx);
+    writer.addInst(Inst.POP, "{pc}");
+    writer.addLtorg();
+    return null;
+  }
+
+  @Override
+  public Void visitReturnStat(ReturnStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.MOV, "r0, r4");
+    writer.addInst(Inst.POP, "{pc}");
+    return null;
+  }
+
+  @Override
+  public Void visitExitStat(ExitStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.MOV, "r0, r4");
+    writer.addInst(Inst.BL, "exit");
+    return null;
+  }
+
   public Void visitIfStat(IfStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.CMP, "r4, #0");
@@ -83,47 +109,62 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitFunc(FuncContext ctx) {
-    writer.addLabel("f_" + ctx.ident().getText());
-    writer.addInst(Inst.PUSH, "{lr}");
-    visitChildren(ctx);
-    writer.addInst(Inst.POP, "{pc}");
-    writer.addLtorg();
-    return null;
-  }
-
-  @Override
-  public Void visitReturnStat(ReturnStatContext ctx) {
-    visit(ctx.expr());
-    writer.addInst(Inst.MOV, "r0, r4");
-    writer.addInst(Inst.POP, "{pc}");
-    return null;
-  }
-
-  @Override
-  public Void visitExitStat(ExitStatContext ctx) {
-    visit(ctx.expr());
-    writer.addInst(Inst.MOV, "r0, r4");
-    writer.addInst(Inst.BL, "exit");
-    return null;
-  }
-
-  @Override
-  public Void visitSkipStat(SkipStatContext ctx) {
-    writer.addInst(Inst.LDR, "r0, =0");
-    writer.addInst(Inst.POP, "{pc}");
-    return null;
-  }
-
-  @Override
-  public Void visitIntExpr(BasicParser.IntExprContext ctx) {
+  public Void visitIntExpr(IntExprContext ctx) {
     writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
     return null;
   }
 
   @Override
+  public Void visitBoolLiter(BoolLiterContext ctx) {
+    if (ctx.getText().equals("true")) {
+      writer.addInst(Inst.MOV, "r4, #1");
+    } else {
+      writer.addInst(Inst.MOV, "r4, #0");
+    }
+    return null;
+  }
+
+  @Override
   public Void visitCharLiter(CharLiterContext ctx) {
-    writer.addInst(Inst.MOV, "r4, #" + ctx.getText());
+    String c = ctx.getText();
+    switch (c.charAt(2)) {
+      case '0':
+        c = "0";
+        break;
+      case 'b':
+        c = "8";
+        break;
+      case 't':
+        c = "9";
+        break;
+      case 'n':
+        c = "10";
+        break;
+      case 'f':
+        c = "12";
+        break;
+      case 'r':
+        c = "13";
+        break;
+      case '\"':
+        c = "\'\"\'";
+        break;
+      case '\'':
+        c = "\'\'\'";
+        break;
+      case '\\':
+        c = "\'\\\'";
+        break;
+    }
+    writer.addInst(Inst.MOV, "r4, #" + c);
+    return null;
+  }
+
+  @Override
+  public Void visitStringLiter(StringLiterContext ctx) {
+    String s = ctx.getText();
+    String msg = writer.addMsg(s.substring(1, s.length() - 1));
+    writer.addInst(Inst.LDR, "r4, =" + msg);
     return null;
   }
 
@@ -208,7 +249,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   // @Override
-  // public Void visitCompStat(BasicParser.CompStatContext ctx) {
+  // public Void visitCompStat(CompStatContext ctx) {
   // int count = 0;
   // while(ctx.getChild(count) instanceof VarDeclStatContext) {
   // count++;
@@ -216,7 +257,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   // visit
   // }
 
-  private int sizeOfDecl(BasicParser.StatContext ctx) {
+  private int sizeOfDecl(StatContext ctx) {
     if (ctx instanceof VarDeclStatContext) {
       int size = 0;
       if (((VarDeclStatContext) ctx).type().baseType() != null) {
@@ -250,7 +291,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitVarDeclStat(BasicParser.VarDeclStatContext ctx) {
+  public Void visitVarDeclStat(VarDeclStatContext ctx) {
     visit(ctx.assignRhs());
     int stackPointerOffset = currentStackPointer
         - st.lookup(ctx.ident().getText());
@@ -264,16 +305,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     } else {
       writer.addInst(Inst.STRB, "r4, " + msg);
 
-    }
-    return null;
-  }
-
-  @Override
-  public Void visitBoolLiter(BasicParser.BoolLiterContext ctx) {
-    if (ctx.getText().equals("true")) {
-      writer.addInst(Inst.MOV, "r4, #1");
-    } else {
-      writer.addInst(Inst.MOV, "r4, #0");
     }
     return null;
   }
