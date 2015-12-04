@@ -130,26 +130,26 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitParamList(ParamListContext ctx) {
-	  int size = 0;
-	  for(int i = ctx.param().size() - 1; i >= 0; i--) {
-		  if (ctx.param(i).type().baseType() != null) {
-		        switch (ctx.param(i).type().getText()) {
-		          case "bool":
-		          case "char":
-		            size--;
-		            break;
-		          case "int":
-		          case "string":
-		        	  size -= 4;
-		            break;
-		        }
-		  } else if (ctx.param(i).type().arrayType() != null) {
-		    	  size -= 4;
-		  }
-		  st.add(ctx.param(i).ident().getText(), size);
-		  typeSt.add(ctx.param(i).ident().getText(), ctx.param(i).type());
-	  } 
-	  return null;
+    int size = 0;
+    for (int i = ctx.param().size() - 1; i >= 0; i--) {
+      if (ctx.param(i).type().baseType() != null) {
+        switch (ctx.param(i).type().getText()) {
+          case "bool":
+          case "char":
+            size--;
+            break;
+          case "int":
+          case "string":
+            size -= 4;
+            break;
+        }
+      } else if (ctx.param(i).type().arrayType() != null) {
+        size -= 4;
+      }
+      st.add(ctx.param(i).ident().getText(), size);
+      typeSt.add(ctx.param(i).ident().getText(), ctx.param(i).type());
+    }
+    return null;
   }
 
   // private void sizeOfParam(ParamContext ctx, Integer size) {
@@ -172,6 +172,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitParam(ParamContext ctx) {
+    return null;
+  }
+
+  @Override
+  public Void visitIntLiter(IntLiterContext ctx) {
+    writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
     return null;
   }
 
