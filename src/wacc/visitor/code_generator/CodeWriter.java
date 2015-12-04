@@ -15,12 +15,27 @@ public class CodeWriter {
   private int lCount;
   private int msgCount;
 
+  private boolean p_throw_overflow_error;
+  private boolean p_throw_runtime_error;
+  private boolean p_check_divide_by_zero;
+  private boolean p_print_ln;
+  private boolean p_print_int;
+  private boolean p_print_bool;
+  private boolean p_print_string;
+
   public CodeWriter(PrintWriter file) {
     this.file = file;
     this.data = new StringBuilder(DATA_HEADER);
     this.text = new StringBuilder(TEXT_HEADER);
     this.lCount = -1;
     this.msgCount = -1;
+    this.p_throw_overflow_error = false;
+    this.p_throw_runtime_error = false;
+    this.p_check_divide_by_zero = false;
+    this.p_print_ln = false;
+    this.p_print_int = false;
+    this.p_print_bool = false;
+    this.p_print_string = false;
   }
 
   public String addMsg(String ascii) {
@@ -77,9 +92,13 @@ public class CodeWriter {
   }
 
   public String p_throw_overflow_error() {
+    String label = "p_throw_overflow_error";
+    if (p_throw_overflow_error) {
+      return label;
+    }
+    p_throw_overflow_error = true;
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
-    String label = "p_throw_overflow_error";
     addLabel(label, sb);
 
     String msg = addMsg("OverflowError: the result is too small/large to "
@@ -90,9 +109,13 @@ public class CodeWriter {
   }
 
   public String p_throw_runtime_error() {
+    String label = "p_throw_runtime_error";
+    if (p_throw_runtime_error) {
+      return label;
+    }
+    p_throw_runtime_error = true;
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
-    String label = "p_throw_runtime_error";
     addLabel(label, sb);
 
     addInst(Inst.BL, p_print_string(), sb);
@@ -102,9 +125,13 @@ public class CodeWriter {
   }
 
   public String p_check_divide_by_zero() {
+    String label = "p_check_divide_by_zero";
+    if (p_check_divide_by_zero) {
+      return label;
+    }
+    p_check_divide_by_zero = true;
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
-    String label = "p_check_divide_by_zero";
     addLabel(label, sb);
 
     addInst(Inst.PUSH, "{lr}", sb);
@@ -117,9 +144,13 @@ public class CodeWriter {
   }
 
   public String p_print_ln() {
+    String label = "p_print_ln";
+    if (p_print_ln) {
+      return label;
+    }
+    p_print_ln = true;
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
-    String label = "p_print_ln";
     addLabel(label, sb);
 
     addInst(Inst.PUSH, "{lr}", sb);
@@ -134,9 +165,13 @@ public class CodeWriter {
   }
 
   public String p_print_int() {
+    String label = "p_print_int";
+    if (p_print_int) {
+      return label;
+    }
+    p_print_int = true;
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
-    String label = "p_print_int";
     addLabel(label, sb);
 
     addInst(Inst.PUSH, "{lr}", sb);
@@ -152,9 +187,13 @@ public class CodeWriter {
   }
 
   public String p_print_bool() {
+    String label = "p_print_bool";
+    if (p_print_bool) {
+      return label;
+    }
+    p_print_bool = true;
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
-    String label = "p_print_bool";
     addLabel(label, sb);
 
     addInst(Inst.PUSH, "{lr}", sb);
@@ -172,9 +211,13 @@ public class CodeWriter {
   }
 
   public String p_print_string() {
+    String label = "p_print_string";
+    if (p_print_string) {
+      return label;
+    }
+    p_print_string = true;
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
-    String label = "p_print_string";
     addLabel(label, sb);
 
     addInst(Inst.PUSH, "{lr}", sb);
