@@ -2,14 +2,11 @@ package wacc.visitor.code_generator;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import wacc.visitor.semantic_error.utils.BaseLiter;
-import wacc.visitor.semantic_error.utils.Type;
-import wacc.visitor.semantic_error.utils.Utils;
 import antlr.*;
 import antlr.BasicParser.*;
+import wacc.visitor.semantic_error.utils.*;
 
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
-
 
   private final CodeWriter writer;
   private int currentStackPointer = 0;
@@ -17,8 +14,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private Regs currentReg;
   private wacc.visitor.semantic_error.utils.SymbolTable typeSt;
 
-  public CodeGeneratorVisitor(CodeWriter writer, wacc.visitor.semantic_error.utils.SymbolTable st) {
-	this.typeSt = st;
+  public CodeGeneratorVisitor(CodeWriter writer,
+      wacc.visitor.semantic_error.utils.SymbolTable st) {
+    this.typeSt = st;
     this.writer = writer;
     this.currentReg = Regs.r4;
   }
@@ -41,12 +39,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
-    ;
     writer.addLtorg();
     return null;
   }
-
-
 
   @Override
   public Void visitReturnStat(ReturnStatContext ctx) {
@@ -64,6 +59,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visitPrintStat(PrintStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.MOV, "r0, r4");
+    writer.addInst(Inst.BL, writer.p_print_string());
+    return null;
+  }
+
+  @Override
   public Void visitIfStat(IfStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.CMP, "r4, #0");
@@ -112,9 +116,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitFunc(FuncContext ctx) {
-	int temp = currentStackPointer;
-	currentStackPointer = 0;
-	st = new SymbolTable(st);
+    int temp = currentStackPointer;
+    currentStackPointer = 0;
+    st = new SymbolTable(st);
     writer.addLabel("f_" + ctx.ident().getText());
     writer.addInst(Inst.PUSH, "{lr}");
     visitChildren(ctx);
@@ -123,7 +127,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     currentStackPointer = temp;
     return null;
   }
-  
+
   @Override
   public Void visitParamList(ParamListContext ctx) {
 	  int size = 0;
@@ -147,30 +151,29 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 	  } 
 	  return null;
   }
-  
-//  private void sizeOfParam(ParamContext ctx, Integer size) { 
-//	  if (ctx.type().baseType() != null) {
-//	        switch (ctx.type().getText()) {
-//	          case "bool":
-//	          case "char":
-//	            size++;
-//	            break;
-//	          case "int":
-//	          case "string":
-//	            size += 4;
-//	            break;
-//	        }
-//	      } else if (ctx.type().arrayType() != null) {
-//	       size += 4;
-//	      }
-//	      st.add(ctx.ident().getText(), size);
-//  }
-  
+
+  // private void sizeOfParam(ParamContext ctx, Integer size) {
+  // if (ctx.type().baseType() != null) {
+  // switch (ctx.type().getText()) {
+  // case "bool":
+  // case "char":
+  // size++;
+  // break;
+  // case "int":
+  // case "string":
+  // size += 4;
+  // break;
+  // }
+  // } else if (ctx.type().arrayType() != null) {
+  // size += 4;
+  // }
+  // st.add(ctx.ident().getText(), size);
+  // }
+
   @Override
   public Void visitParam(ParamContext ctx) {
-	  return null;
+    return null;
   }
-
 
   @Override
   public Void visitBoolLiter(BoolLiterContext ctx) {
@@ -360,101 +363,101 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
-	  visit(ctx.assignRhs());
-	  visit(ctx.assignLhs());
-	  return null;
+    visit(ctx.assignRhs());
+    visit(ctx.assignLhs());
+    return null;
   }
 
   @Override
   public Void visitLhsIdent(BasicParser.LhsIdentContext ctx) {
-	  String msg = "[sp]";
-	  int stackPointerOffset = currentStackPointer -
-			  st.lookup(ctx.getText());
-	  if (stackPointerOffset > 0) {
-	    msg = "[sp, #" + stackPointerOffset + "]";
-	  }
-	  if (typeSt.lookupT(ctx.getText()).equals("int") ||
-			  typeSt.lookupT(ctx.getText()).arrayType() != null ||
-			  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
-		      writer.addInst(Inst.STR, "r4, " + msg);
-		    } else {
-		      writer.addInst(Inst.STRB, "r4, " + msg);
-		    }
-	  return null;
+    String msg = "[sp]";
+    int stackPointerOffset = currentStackPointer - st.lookup(ctx.getText());
+    if (stackPointerOffset > 0) {
+      msg = "[sp, #" + stackPointerOffset + "]";
+    }
+    if (typeSt.lookupT(ctx.getText()).equals("int")
+        || typeSt.lookupT(ctx.getText()).arrayType() != null
+        || typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+      writer.addInst(Inst.STR, "r4, " + msg);
+    } else {
+      writer.addInst(Inst.STRB, "r4, " + msg);
+    }
+    return null;
   }
 
   @Override
   public Void visitIdent(BasicParser.IdentContext ctx) {
-	  ParserRuleContext context = ctx.getParent();
-	  if(!(context instanceof FuncContext) && !(context instanceof RhsCallContext)) {
-		  String msg = "[sp]";
-		  int stackPointerOffset = currentStackPointer - 
-				  st.lookup(ctx.getText());
-		  if (stackPointerOffset > 0) {
-		    msg = "[sp, #" + stackPointerOffset + "]";
-		  }
-		  if (typeSt.lookupT(ctx.getText()).getText().equals("int") || 
-				  typeSt.lookupT(ctx.getText()).arrayType() != null || 
-				  typeSt.lookupT(ctx.getText()).getText().equals("string")) {
-			      writer.addInst(Inst.LDR, "r4, " + msg);
-			    } else {
-			      writer.addInst(Inst.LDRSB, "r4, " + msg);
-			    }
-	  }
-	  return null;
+    ParserRuleContext context = ctx.getParent();
+    if (!(context instanceof FuncContext)
+        && !(context instanceof RhsCallContext)) {
+      String msg = "[sp]";
+      int stackPointerOffset = currentStackPointer - st.lookup(ctx.getText());
+      if (stackPointerOffset > 0) {
+        msg = "[sp, #" + stackPointerOffset + "]";
+      }
+      if (typeSt.lookupT(ctx.getText()).getText().equals("int")
+          || typeSt.lookupT(ctx.getText()).arrayType() != null
+          || typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+        writer.addInst(Inst.LDR, "r4, " + msg);
+      } else {
+        writer.addInst(Inst.LDRSB, "r4, " + msg);
+      }
+    }
+    return null;
   }
 
-	@Override
-	public Void visitArrayLiter(ArrayLiterContext ctx) {
-		int typeSize;
-		int offset = 4;
-		Inst instruction;
+  @Override
+  public Void visitArrayLiter(ArrayLiterContext ctx) {
+    int typeSize;
+    int offset = 4;
+    Inst instruction;
 
-		if (ctx.expr(0) instanceof IntExprContext
-				|| ctx.expr(0) instanceof StringExprContext) {
-			typeSize = 4;
-			instruction = Inst.STR;
-		} else if (ctx.expr(0) instanceof ArrayElemExprContext
-				|| ctx.expr(0) instanceof IdentExprContext) {
+    if (ctx.expr(0) instanceof IntExprContext
+        || ctx.expr(0) instanceof StringExprContext) {
+      typeSize = 4;
+      instruction = Inst.STR;
+    } else if (ctx.expr(0) instanceof ArrayElemExprContext
+        || ctx.expr(0) instanceof IdentExprContext) {
 
-			Type type;
-			if (ctx.expr(0) instanceof ArrayElemExprContext) {
-				type = Utils.getType(((ArrayElemExprContext) ctx.expr(0)).arrayElem().ident(), typeSt);
-			} else {
-				type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), typeSt);
-			}
+      Type type;
+      if (ctx.expr(0) instanceof ArrayElemExprContext) {
+        type = Utils.getType(((ArrayElemExprContext) ctx.expr(0)).arrayElem()
+            .ident(), typeSt);
+      } else {
+        type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), typeSt);
+      }
 
-			if (Utils.isSameBaseType(type, BaseLiter.INT) || type instanceof wacc.visitor.semantic_error.utils.ArrayType) {
-				typeSize = 4;
-				instruction = Inst.STR;
-			} else { // is a bool or char
-				typeSize = 1;
-				instruction = Inst.STRB;
-			}
+      if (Utils.isSameBaseType(type, BaseLiter.INT)
+          || type instanceof wacc.visitor.semantic_error.utils.ArrayType) {
+        typeSize = 4;
+        instruction = Inst.STR;
+      } else { // is a bool or char
+        typeSize = 1;
+        instruction = Inst.STRB;
+      }
 
-		} else { // is a bool or char
-			typeSize = 1;
-			instruction = Inst.STRB;
-		}
+    } else { // is a bool or char
+      typeSize = 1;
+      instruction = Inst.STRB;
+    }
 
-		int spaceToSave = ctx.expr().size() * typeSize + 4;
-		writer.addInst(Inst.LDR, "r0, =" + spaceToSave);
-		writer.addInst(Inst.BL, "malloc");
-		writer.addInst(Inst.MOV, "r4, r0");
+    int spaceToSave = ctx.expr().size() * typeSize + 4;
+    writer.addInst(Inst.LDR, "r0, =" + spaceToSave);
+    writer.addInst(Inst.BL, "malloc");
+    writer.addInst(Inst.MOV, "r4, r0");
 
-		currentReg = Regs.values()[currentReg.ordinal() + 1];
-		for (ExprContext expr : ctx.expr()) {
-			visit(expr);
-			writer.addInst(instruction, "r5, [r4, #" + offset + "]");
-			offset += typeSize;
-		}
-		currentReg = Regs.values()[currentReg.ordinal() - 1];
+    currentReg = Regs.values()[currentReg.ordinal() + 1];
+    for (ExprContext expr : ctx.expr()) {
+      visit(expr);
+      writer.addInst(instruction, "r5, [r4, #" + offset + "]");
+      offset += typeSize;
+    }
+    currentReg = Regs.values()[currentReg.ordinal() - 1];
 
-		writer.addInst(Inst.LDR, "r5, =" + ctx.expr().size());
-		writer.addInst(Inst.STR, "r5, [r4]");
+    writer.addInst(Inst.LDR, "r5, =" + ctx.expr().size());
+    writer.addInst(Inst.STR, "r5, [r4]");
 
-
-		return null;
-	}
+    return null;
+  }
 
 }

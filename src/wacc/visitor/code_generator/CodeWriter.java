@@ -27,48 +27,20 @@ public class CodeWriter {
     msgCount++;
     String label = "msg_" + msgCount;
     addLabel(label, data);
-    data.append("\t\t.word " + ascii.length() + "\n");
-    data.append("\t\t.ascii\t\"" + unEscapeString(ascii) + "\"\n");
+    data.append("\t\t.word " + wordInAscii(ascii) + "\n");
+    data.append("\t\t.ascii\t\"" + ascii + "\"\n");
     return label;
   }
 
-  private static String unEscapeString(String s) {
-    StringBuilder sb = new StringBuilder();
+  private static int wordInAscii(String s) {
+    int count = 0;
     for (int i = 0; i < s.length(); i++) {
-      switch (s.charAt(i)) {
-        case '\0':
-          sb.append("\\0");
-          break;
-        case '\b':
-          sb.append("\\b");
-          break;
-        case '\t':
-          sb.append("\\t");
-          break;
-        case '\n':
-          sb.append("\\n");
-          break;
-        case '\f':
-          sb.append("\\f");
-          break;
-        case '\r':
-          sb.append("\\r");
-          break;
-        case '\"':
-          sb.append("\\\"");
-          break;
-        case '\'':
-          sb.append("\\\'");
-          break;
-        case '\\':
-          sb.append("\\\\");
-          break;
-        default:
-          sb.append(s.charAt(i));
-          break;
+      count++;
+      if (s.charAt(i) == '\\') {
+        i++;
       }
     }
-    return sb.toString();
+    return count;
   }
 
   private void addLabel(String label, StringBuilder sb) {
@@ -111,7 +83,7 @@ public class CodeWriter {
     addLabel(label, sb);
 
     String msg = addMsg("OverflowError: the result is too small/large to "
-        + "store in a 4-byte signed-integer.\n\0");
+        + "store in a 4-byte signed-integer.\\n\\0");
     addInst(Inst.LDR, "r0, =" + msg, sb);
     addInst(Inst.BL, p_throw_runtime_error(), sb);
     return label;
@@ -137,7 +109,7 @@ public class CodeWriter {
 
     addInst(Inst.PUSH, "{lr}", sb);
     addInst(Inst.CMP, "r1, #0", sb);
-    String msg = addMsg("DivideByZeroError: divide or modulo by zero\n\0");
+    String msg = addMsg("DivideByZeroError: divide or modulo by zero\\n\\0");
     addInst(Inst.LDREQ, "r0, =" + msg, sb);
     addInst(Inst.BLEQ, p_throw_runtime_error(), sb);
     addInst(Inst.POP, "{pc}", sb);
@@ -151,7 +123,7 @@ public class CodeWriter {
     addLabel(label, sb);
 
     addInst(Inst.PUSH, "{lr}", sb);
-    String msg = addMsg("\0");
+    String msg = addMsg("\\0");
     addInst(Inst.LDR, "r0, =" + msg, sb);
     addInst(Inst.ADD, "r0, r0, #4", sb);
     addInst(Inst.BL, "puts", sb);
@@ -169,7 +141,7 @@ public class CodeWriter {
 
     addInst(Inst.PUSH, "{lr}", sb);
     addInst(Inst.MOV, "r1, r0", sb);
-    String msg = addMsg("%d\0");
+    String msg = addMsg("%d\\0");
     addInst(Inst.LDR, "r0, =" + msg, sb);
     addInst(Inst.ADD, "r0, r0, #4", sb);
     addInst(Inst.BL, "printf", sb);
@@ -187,9 +159,9 @@ public class CodeWriter {
 
     addInst(Inst.PUSH, "{lr}", sb);
     addInst(Inst.CMP, "r0, #0", sb);
-    String msg0 = addMsg("true\0");
+    String msg0 = addMsg("true\\0");
     addInst(Inst.LDRNE, "r0, =" + msg0, sb);
-    String msg1 = addMsg("false\0");
+    String msg1 = addMsg("false\\0");
     addInst(Inst.LDREQ, "r0, =" + msg1, sb);
     addInst(Inst.ADD, "r0, r0, #4", sb);
     addInst(Inst.BL, "printf", sb);
@@ -208,7 +180,7 @@ public class CodeWriter {
     addInst(Inst.PUSH, "{lr}", sb);
     addInst(Inst.LDR, "{r0}", sb);
     addInst(Inst.ADD, "r2, r0, #4", sb);
-    String msg = addMsg("%.*s\0");
+    String msg = addMsg("%.*s\\0");
     addInst(Inst.LDR, "r0, =" + msg, sb);
     addInst(Inst.ADD, "r0, r0, #4", sb);
     addInst(Inst.BL, "printf", sb);
