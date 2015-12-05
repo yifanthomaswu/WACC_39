@@ -257,7 +257,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
-    visitChildren(ctx);
+//    visitChildren(ctx);
+    visit(ctx.expr(0));
+    currentReg = Reg.r5;
+    visit(ctx.expr(1));
     writer.addInst(Inst.CMP, "r4, r5");
     if (ctx.EQUAL() != null) {
       writer.addInst(Inst.MOVEQ, "r4, #1");
@@ -266,6 +269,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.MOVNE, "r4, #1");
       writer.addInst(Inst.MOVEQ, "r4, #0");
     }
+    currentReg = Reg.r4;
     return null;
   }
 
@@ -280,6 +284,30 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) {
     visitChildren(ctx);
     writer.addInst(Inst.ORR, "r4, r4, r5");
+    return null;
+  }
+
+  @Override
+  public Void visitUnOpExpr(UnOpExprContext ctx) {
+    visit(ctx.expr());
+    if (ctx.unaryOper().UNARY_OPER() != null) {
+      String operator = ctx.unaryOper().UNARY_OPER().getText();
+      if (operator.equals("len")) {
+        //length of array stored as first elem in array, visiting expr will
+        //put start of array into r4
+        writer.addInst(Inst.LDR, "r4, [r4]");
+      } else if (ctx.unaryOper().UNARY_OPER().getText().equals("!")) {
+        //negate r4, as this is value of evaluated bool expr
+        writer.addInst(Inst.EOR, "r4, r4, #1");
+      } else {
+        //do nothing, chars treated as nums in ass
+      }
+    }
+    else {
+      //only minus left
+      writer.addInst(Inst.RSBS, "r4, r4, #0");
+      writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
+    }
     return null;
   }
 
@@ -381,7 +409,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntLiter(IntLiterContext ctx) {
-    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText().replaceFirst("^0+(?!$)", ""));
+    writer.addInst(Inst.LDR, currentReg + ", =" + Integer.parseInt(ctx.getText()));
     return null;
   }
 
