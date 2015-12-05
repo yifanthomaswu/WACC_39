@@ -310,6 +310,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
+    st.add(ctx.ident().getText(), ctx.type());
     visit(ctx.assignRhs());
     int stackPointerOffset = currentStackPointer
         - st.lookupI(ctx.ident().getText());
