@@ -2,28 +2,21 @@ package wacc.visitor.code_generator;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CodeWriter {
 
   private final PrintWriter file;
   private final StringBuilder data;
   private final StringBuilder text;
-  private final List<StringBuilder> text_p = new ArrayList<>();
+  private final List<StringBuilder> textP = new ArrayList<>();
+  private final Set<String> definedP = new HashSet<>();
   private static final String DATA_HEADER = "\t.data\n\n";
   private static final String TEXT_HEADER = "\t.text\n\n\t.global main\n";
   private int lCount;
   private int msgCount;
-
-  private boolean p_throw_overflow_error;
-  private boolean p_throw_runtime_error;
-  private boolean p_check_divide_by_zero;
-  private boolean p_print_reference;
-  private boolean p_check_null_pointer;
-  private boolean p_print_ln;
-  private boolean p_print_int;
-  private boolean p_print_bool;
-  private boolean p_print_string;
 
   public CodeWriter(PrintWriter file) {
     this.file = file;
@@ -31,15 +24,6 @@ public class CodeWriter {
     this.text = new StringBuilder(TEXT_HEADER);
     this.lCount = -1;
     this.msgCount = -1;
-    this.p_throw_overflow_error = false;
-    this.p_throw_runtime_error = false;
-    this.p_check_divide_by_zero = false;
-    this.p_print_reference = false;
-    this.p_check_null_pointer = false;
-    this.p_print_ln = false;
-    this.p_print_int = false;
-    this.p_print_bool = false;
-    this.p_print_string = false;
   }
 
   public String addMsg(String ascii) {
@@ -95,15 +79,33 @@ public class CodeWriter {
     return "L" + lCount;
   }
 
-  public String p_throw_overflow_error() {
-    String label = "p_throw_overflow_error";
-    if (p_throw_overflow_error) {
+  private StringBuilder initP(String label) {
+    definedP.add(label);
+    StringBuilder sb = new StringBuilder();
+    textP.add(sb);
+    addLabelToSB(label, sb);
+    return sb;
+  }
+
+  public String p_throw_runtime_error() {
+    String label = "p_throw_runtime_error";
+    if (definedP.contains(label)) {
       return label;
     }
-    p_throw_overflow_error = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
+    StringBuilder sb = initP(label);
+
+    addInstToSB(Inst.BL, p_print_string(), sb);
+    addInstToSB(Inst.MOV, "r0, #-1", sb);
+    addInstToSB(Inst.BL, "exit", sb);
+    return label;
+  }
+
+  public String p_throw_overflow_error() {
+    String label = "p_throw_overflow_error";
+    if (definedP.contains(label)) {
+      return label;
+    }
+    StringBuilder sb = initP(label);
 
     String msg = addMsg("OverflowError: the result is too small/large to "
         + "store in a 4-byte signed-integer.\\n\\0");
@@ -112,31 +114,12 @@ public class CodeWriter {
     return label;
   }
 
-  public String p_throw_runtime_error() {
-    String label = "p_throw_runtime_error";
-    if (p_throw_runtime_error) {
-      return label;
-    }
-    p_throw_runtime_error = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
-
-    addInstToSB(Inst.BL, p_print_string(), sb);
-    addInstToSB(Inst.MOV, "r0, #-1", sb);
-    addInstToSB(Inst.BL, "exit", sb);
-    return label;
-  }
-
   public String p_check_divide_by_zero() {
     String label = "p_check_divide_by_zero";
-    if (p_check_divide_by_zero) {
+    if (definedP.contains(label)) {
       return label;
     }
-    p_check_divide_by_zero = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
+    StringBuilder sb = initP(label);
 
     addInstToSB(Inst.PUSH, "{lr}", sb);
     addInstToSB(Inst.CMP, "r1, #0", sb);
@@ -147,35 +130,12 @@ public class CodeWriter {
     return label;
   }
 
-  public String p_print_reference() {
-    String label = "p_print_reference";
-    if (p_print_reference) {
-      return label;
-    }
-    p_print_reference = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
-
-    addInstToSB(Inst.PUSH, "{lr}", sb);
-    addInstToSB(Inst.MOV, "r1, r0", sb);
-    String msg = addMsg("%p\\0");
-    addInstToSB(Inst.LDR, "r0, =" + msg, sb);
-    addInstToSB(Inst.ADD, "r0, r0, #4", sb);
-    addInstToSB(Inst.BL, "fflush", sb);
-    addInstToSB(Inst.POP, "{pc}", sb);
-    return label;
-  }
-
   public String p_check_null_pointer() {
     String label = "p_check_null_pointer";
-    if (p_check_null_pointer) {
+    if (definedP.contains(label)) {
       return label;
     }
-    p_check_null_pointer = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
+    StringBuilder sb = initP(label);
 
     addInstToSB(Inst.PUSH, "{lr}", sb);
     addInstToSB(Inst.CMP, "r0, #0", sb);
@@ -186,15 +146,33 @@ public class CodeWriter {
     return label;
   }
 
-  public String p_print_ln() {
-    String label = "p_print_ln";
-    if (p_print_ln) {
+  public String p_check_array_bounds() {
+    String label = "p_check_array_bounds";
+    if (definedP.contains(label)) {
       return label;
     }
-    p_print_ln = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
+    StringBuilder sb = initP(label);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.CMP, "r0, #0", sb);
+    String msg0 = addMsg("ArrayIndexOutOfBoundsError: negative index\\n\\0");
+    addInstToSB(Inst.LDRLT, "r0, =" + msg0, sb);
+    addInstToSB(Inst.BLLT, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.LDR, "r1, [r1]", sb);
+    addInstToSB(Inst.CMP, "r0, r1", sb);
+    String msg1 = addMsg("ArrayIndexOutOfBoundsError: index too large\\n\\0");
+    addInstToSB(Inst.LDRCS, "r0, =" + msg1, sb);
+    addInstToSB(Inst.BLCS, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
+  public String p_print_ln() {
+    String label = "p_print_ln";
+    if (definedP.contains(label)) {
+      return label;
+    }
+    StringBuilder sb = initP(label);
 
     addInstToSB(Inst.PUSH, "{lr}", sb);
     String msg = addMsg("\\0");
@@ -209,13 +187,10 @@ public class CodeWriter {
 
   public String p_print_int() {
     String label = "p_print_int";
-    if (p_print_int) {
+    if (definedP.contains(label)) {
       return label;
     }
-    p_print_int = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
+    StringBuilder sb = initP(label);
 
     addInstToSB(Inst.PUSH, "{lr}", sb);
     addInstToSB(Inst.MOV, "r1, r0", sb);
@@ -231,13 +206,10 @@ public class CodeWriter {
 
   public String p_print_bool() {
     String label = "p_print_bool";
-    if (p_print_bool) {
+    if (definedP.contains(label)) {
       return label;
     }
-    p_print_bool = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
+    StringBuilder sb = initP(label);
 
     addInstToSB(Inst.PUSH, "{lr}", sb);
     addInstToSB(Inst.CMP, "r0, #0", sb);
@@ -255,13 +227,10 @@ public class CodeWriter {
 
   public String p_print_string() {
     String label = "p_print_string";
-    if (p_print_string) {
+    if (definedP.contains(label)) {
       return label;
     }
-    p_print_string = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
+    StringBuilder sb = initP(label);
 
     addInstToSB(Inst.PUSH, "{lr}", sb);
     addInstToSB(Inst.LDR, "r1, [r0]", sb);
@@ -276,13 +245,66 @@ public class CodeWriter {
     return label;
   }
 
+  public String p_print_reference() {
+    String label = "p_print_reference";
+    if (definedP.contains(label)) {
+      return label;
+    }
+    StringBuilder sb = initP(label);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.MOV, "r1, r0", sb);
+    String msg = addMsg("%p\\0");
+    addInstToSB(Inst.LDR, "r0, =" + msg, sb);
+    addInstToSB(Inst.ADD, "r0, r0, #4", sb);
+    addInstToSB(Inst.BL, "printf", sb);
+    addInstToSB(Inst.MOV, "r0, #0", sb);
+    addInstToSB(Inst.BL, "fflush", sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
+  public String p_read_int() {
+    String label = "p_read_int";
+    if (definedP.contains(label)) {
+      return label;
+    }
+    StringBuilder sb = initP(label);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.MOV, "r1, r0", sb);
+    String msg = addMsg("%d\\0");
+    addInstToSB(Inst.LDR, "r0, =" + msg, sb);
+    addInstToSB(Inst.ADD, "r0, r0, #4", sb);
+    addInstToSB(Inst.BL, "scanf", sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
+  public String p_read_char() {
+    String label = "p_read_char";
+    if (definedP.contains(label)) {
+      return label;
+    }
+    StringBuilder sb = initP(label);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.MOV, "r1, r0", sb);
+    String msg = addMsg(" %c\\0");
+    addInstToSB(Inst.LDR, "r0, =" + msg, sb);
+    addInstToSB(Inst.ADD, "r0, r0, #4", sb);
+    addInstToSB(Inst.BL, "scanf", sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
   public void writeToFile() {
     if (msgCount != -1) {
       file.write(data.toString());
       file.write("\n");
     }
     file.write(text.toString());
-    for (StringBuilder sb : text_p) {
+    for (StringBuilder sb : textP) {
       file.write(sb.toString());
     }
   }
