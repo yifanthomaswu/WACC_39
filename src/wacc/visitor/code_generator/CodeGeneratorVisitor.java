@@ -324,7 +324,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.STR, "r4, " + msg);
     } else {
       writer.addInst(Inst.STRB, "r4, " + msg);
-
     }
     return null;
   }
