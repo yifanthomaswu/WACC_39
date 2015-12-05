@@ -1,6 +1,7 @@
 package wacc.visitor.code_generator;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
@@ -11,11 +12,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
   private SymbolTable st;
-  private int currentStackPointer = 0;
+  private int currentStackPointer;
   private Reg currentReg;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
+    this.currentStackPointer = 0;
     this.currentReg = Reg.r4;
   }
 
@@ -48,6 +50,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
+    return null;
+  }
+
+  @Override
+  public Void visitReadStat(ReadStatContext ctx) {
+    visit(ctx.assignLhs());
+    writer.addInst(Inst.MOV, "r0, r4");
+    Type type = Utils.getType(ctx.assignLhs(), st);
+    if (Utils.isSameBaseType(type, BaseLiter.INT)) {
+      writer.addInst(Inst.BL, writer.p_read_int());
+    } else {
+      writer.addInst(Inst.BL, writer.p_read_char());
+    }
     return null;
   }
 
@@ -162,32 +177,76 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitParamList(ParamListContext ctx) {
     int size = 0;
-    for (int i = ctx.param().size() - 1; i >= 0; i--) {
-      if (ctx.param(i).type().baseType() != null) {
-        switch (ctx.param(i).type().getText()) {
-          case "bool":
-          case "char":
-            size--;
-            break;
-          case "int":
-          case "string":
-            size -= 4;
-            break;
-        }
-      } else if (ctx.param(i).type().arrayType() != null) {
-        size -= 4;
+    for (int i = 0; i < ctx.param().size(); i++) {
+      if(i == 0) {
+    	  size -= 4;
       }
       st.add(ctx.param(i).ident().getText(), size);
       st.add(ctx.param(i).ident().getText(), ctx.param(i).type());
-    }
+     if (ctx.param(i).type().baseType() != null) {
+    	        switch (ctx.param(i).type().getText()) {
+    	          case "bool":
+    	          case "char":
+    	            size--;
+    	            break;
+    	          case "int":
+    	          case "string":
+    	            size -= 4;
+    	            break;
+    	        }
+    	  } else if (ctx.param(i).type().arrayType() != null) {
+    	        size -= 4;
+    	  } 
+      }
+      
     return null;
   }
 
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
-    writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
-    writer.addInst(Inst.MOV, "r4, r0");
-    return null;
+	  visitChildren(ctx);
+	  writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
+	  int size = 0;
+	  for(ExprContext c : ctx.argList().expr()) {
+		  Type t = Utils.getType(c,st);
+		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) ||
+				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+			  size++;
+		  } else {
+			  size += 4;
+		  } 
+	  }
+	  if(size >0) {
+		  writer.addInst(Inst.ADD, "sp, sp, #" + size);
+	  }
+	  writer.addInst(Inst.MOV, "r4, r0");
+	  return null;
+
+  }
+  
+  @Override
+  public Void visitArgList(ArgListContext ctx) {
+	  if(ctx.expr().size() > 0) {
+		  String msg = "[sp]";
+		  int offset = 0;
+		  Type t = Utils.getType(ctx.expr(0),st);
+		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
+				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+			  writer.addInst(Inst.LDRSB, "r4, " + msg);
+			  offset++;
+		  } else {
+			  writer.addInst(Inst.LDR, "r4, " + msg);
+			  offset += 4;
+		  }
+		  msg = "[sp, #-" + offset + "]!";
+		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
+				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+			  writer.addInst(Inst.STRB, "r4, " + msg);
+		  } else {
+			  writer.addInst(Inst.STR, "r4, " + msg);
+		  }
+	  } 
+	  return null;
   }
 
   // private void sizeOfParam(ParamContext ctx, Integer size) {
@@ -376,34 +435,36 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
+  public Void visitAssignStat(AssignStatContext ctx) {
     visit(ctx.assignRhs());
     visit(ctx.assignLhs());
     return null;
   }
 
   @Override
-  public Void visitLhsIdent(BasicParser.LhsIdentContext ctx) {
+  public Void visitLhsIdent(LhsIdentContext ctx) {
+    IdentContext ident = ctx.ident();
     String msg = "[sp]";
-    int stackPointerOffset = currentStackPointer - st.lookupI(ctx.getText());
+    int stackPointerOffset = currentStackPointer - st.lookupI(ident.getText());
     if (stackPointerOffset > 0) {
       msg = "[sp, #" + stackPointerOffset + "]";
     }
-    if (st.lookupT(ctx.getText()).equals("int")
-        || st.lookupT(ctx.getText()).arrayType() != null
-        || st.lookupT(ctx.getText()).getText().equals("string")) {
-      writer.addInst(Inst.STR, "r4, " + msg);
-    } else {
+    Type type = Utils.getType(ident, st);
+    if (Utils.isSameBaseType(type, BaseLiter.BOOL)
+        || Utils.isSameBaseType(type, BaseLiter.CHAR)) {
       writer.addInst(Inst.STRB, "r4, " + msg);
-    }
+    } else {
+      writer.addInst(Inst.STR, "r4, " + msg);
+    }// TODO
     return null;
   }
 
   @Override
-  public Void visitIdent(BasicParser.IdentContext ctx) {
+  public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
     if (!(context instanceof FuncContext)
-        && !(context instanceof RhsCallContext)) {
+        && !(context instanceof RhsCallContext) 
+        && !(context instanceof ParamContext)) {
       String msg = "[sp]";
       int stackPointerOffset = currentStackPointer - st.lookupI(ctx.getText());
       if (stackPointerOffset > 0) {
@@ -532,6 +593,36 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.STR, currentReg + ", [" + previousReg + "]");
     currentReg = Reg.values()[currentReg.ordinal() - 1];
     return null;
+  }
+  
+  @Override
+  public Void visitArrayElem(ArrayElemContext ctx) { 
+    writer.addInst(Inst.ADD, currentReg + ", sp, #0");
+    Type type = Utils.getType(ctx.ident(), st);
+    Reg previousReg = currentReg;
+    currentReg = Reg.values()[currentReg.ordinal() + 1];
+    String typeString = type.toString();
+    for (int level = 0; level < ((ArrayType) type).getLevel(); level++) {
+      visit(ctx.expr(level));
+      typeString = typeString.substring(0, typeString.length() - 2);
+      writeArrayElemInstructions(typeString, previousReg);
+    }
+    currentReg = Reg.values()[currentReg.ordinal() - 1];
+    return null;
+  }
+  
+  private void writeArrayElemInstructions(String type, Reg previousReg) {
+    writer.addInst(Inst.LDR, previousReg + ", [" + previousReg + "]");
+    writer.addInst(Inst.MOV, "r0, " + currentReg);
+    writer.addInst(Inst.MOV, "r1, " + previousReg);
+    writer.addInst(Inst.BL, writer.p_check_array_bounds());
+    writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", #4");
+
+    if (type.endsWith("[]") || type.contains("INT")) {
+      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + currentReg + ", LSL #2");
+    } else { // reached a BOOL or CHAR type
+      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + currentReg); 
+    }
   }
 
   @Override
