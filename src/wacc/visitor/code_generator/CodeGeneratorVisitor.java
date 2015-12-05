@@ -4,20 +4,18 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
 import antlr.BasicParser.*;
-import wacc.visitor.semantic_error.utils.*;
+import wacc.visitor.SymbolTable;
+import wacc.visitor.type.*;
 
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
   private SymbolTable st;
-  private wacc.visitor.semantic_error.utils.SymbolTable typeSt;
   private int currentStackPointer = 0;
   private Reg currentReg;
 
-  public CodeGeneratorVisitor(CodeWriter writer,
-      wacc.visitor.semantic_error.utils.SymbolTable st) {
+  public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
-    this.typeSt = st;
     this.currentReg = Reg.r4;
   }
 
@@ -62,14 +60,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitPrintStat(PrintStatContext ctx) {
     visit(ctx.expr());
-    printStatsHelper(Utils.getType(ctx.expr(), typeSt));
+    printStatsHelper(Utils.getType(ctx.expr(), st));
     return null;
   }
 
   @Override
   public Void visitPrintlnStat(PrintlnStatContext ctx) {
     visit(ctx.expr());
-    printStatsHelper(Utils.getType(ctx.expr(), typeSt));
+    printStatsHelper(Utils.getType(ctx.expr(), st));
     writer.addInst(Inst.BL, writer.p_print_ln());
     return null;
   }
@@ -169,7 +167,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         size -= 4;
       }
       st.add(ctx.param(i).ident().getText(), size);
-      typeSt.add(ctx.param(i).ident().getText(), ctx.param(i).type());
+      st.add(ctx.param(i).ident().getText(), ctx.param(i).type());
     }
     return null;
   }
@@ -314,7 +312,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
     visit(ctx.assignRhs());
     int stackPointerOffset = currentStackPointer
-        - st.lookup(ctx.ident().getText());
+        - st.lookupI(ctx.ident().getText());
     String msg = "[sp]";
     if (stackPointerOffset > 0) {
       msg = "[sp, #" + stackPointerOffset + "]";
@@ -338,13 +336,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitLhsIdent(BasicParser.LhsIdentContext ctx) {
     String msg = "[sp]";
-    int stackPointerOffset = currentStackPointer - st.lookup(ctx.getText());
+    int stackPointerOffset = currentStackPointer - st.lookupI(ctx.getText());
     if (stackPointerOffset > 0) {
       msg = "[sp, #" + stackPointerOffset + "]";
     }
-    if (typeSt.lookupT(ctx.getText()).equals("int")
-        || typeSt.lookupT(ctx.getText()).arrayType() != null
-        || typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+    if (st.lookupT(ctx.getText()).equals("int")
+        || st.lookupT(ctx.getText()).arrayType() != null
+        || st.lookupT(ctx.getText()).getText().equals("string")) {
       writer.addInst(Inst.STR, "r4, " + msg);
     } else {
       writer.addInst(Inst.STRB, "r4, " + msg);
@@ -358,13 +356,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     if (!(context instanceof FuncContext)
         && !(context instanceof RhsCallContext)) {
       String msg = "[sp]";
-      int stackPointerOffset = currentStackPointer - st.lookup(ctx.getText());
+      int stackPointerOffset = currentStackPointer - st.lookupI(ctx.getText());
       if (stackPointerOffset > 0) {
         msg = "[sp, #" + stackPointerOffset + "]";
       }
-      if (typeSt.lookupT(ctx.getText()).getText().equals("int")
-          || typeSt.lookupT(ctx.getText()).arrayType() != null
-          || typeSt.lookupT(ctx.getText()).getText().equals("string")) {
+      if (st.lookupT(ctx.getText()).getText().equals("int")
+          || st.lookupT(ctx.getText()).arrayType() != null
+          || st.lookupT(ctx.getText()).getText().equals("string")) {
         writer.addInst(Inst.LDR, currentReg + ", " + msg);
       } else {
         writer.addInst(Inst.LDRSB, currentReg + ", " + msg);
@@ -446,13 +444,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       Type type;
       if (ctx.expr(0) instanceof ArrayElemExprContext) {
         type = Utils.getType(((ArrayElemExprContext) ctx.expr(0)).arrayElem()
-            .ident(), typeSt);
+            .ident(), st);
       } else {
-        type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), typeSt);
+        type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), st);
       }
 
       if (Utils.isSameBaseType(type, BaseLiter.INT)
-          || type instanceof wacc.visitor.semantic_error.utils.ArrayType) {
+          || type instanceof wacc.visitor.type.ArrayType) {
         typeSize = 4;
         instruction = Inst.STR;
       } else { // is a bool or char

@@ -1,4 +1,4 @@
-package wacc.visitor.semantic_error.utils;
+package wacc.visitor.type;
 
 public abstract class Type {
 

@@ -1,36 +1,38 @@
-package wacc.visitor.semantic_error.utils;
+package wacc.visitor;
 
 import java.util.List;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.MultiMap;
 
-import antlr.BasicParser.*;
+import antlr.BasicParser.FuncContext;
+import antlr.BasicParser.TypeContext;
 
 public class SymbolTable {
 
   private final SymbolTable encSymTable;
-  private final MultiMap<String, ParserRuleContext> dict = new MultiMap<>();
+  private final MultiMap<String, Object> dict = new MultiMap<>();
 
   public SymbolTable(SymbolTable st) {
     encSymTable = st;
-  }
-
-  public void add(String name, ParserRuleContext object) {
-    dict.map(name, object);
   }
 
   public SymbolTable getEncSymTable() {
     return encSymTable;
   }
 
-  private ParserRuleContext lookup(String name, Class<?> context) {
-    List<ParserRuleContext> entries = dict.get(name);
-    if (entries == null)
+  public void add(String name, Object object) {
+    dict.map(name, object);
+  }
+
+  private Object lookup(String name, Class<?> c) {
+    List<Object> objects = dict.get(name);
+    if (objects == null) {
       return null;
-    for (ParserRuleContext entry : entries) {
-      if (context.isInstance(entry))
-        return entry;
+    }
+    for (Object object : objects) {
+      if (c.isInstance(object)) {
+        return object;
+      }
     }
     return null;
   }
@@ -43,10 +45,14 @@ public class SymbolTable {
     return (FuncContext) lookup(name, FuncContext.class);
   }
 
-  public ParserRuleContext lookupAll(String name, Class<?> context) {
+  public Integer lookupI(String name) {
+    return (Integer) lookup(name, Integer.class);
+  }
+
+  public Object lookupAll(String name, Class<?> c) {
     SymbolTable s = this;
     do {
-      ParserRuleContext object = s.lookup(name, context);
+      Object object = s.lookup(name, c);
       if (object != null) {
         return object;
       }
@@ -61,7 +67,10 @@ public class SymbolTable {
 
   public FuncContext lookupAllF(String name) {
     return (FuncContext) lookupAll(name, FuncContext.class);
+  }
 
+  public Integer lookupAllI(String name) {
+    return (Integer) lookupAll(name, Integer.class);
   }
 
 }

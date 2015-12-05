@@ -1,6 +1,7 @@
-package wacc.visitor.semantic_error.utils;
+package wacc.visitor.type;
 
 import antlr.BasicParser.*;
+import wacc.visitor.SymbolTable;
 import wacc.visitor.semantic_error.SemanticErrorException;
 
 public class Utils {
