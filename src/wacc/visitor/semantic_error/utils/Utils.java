@@ -131,4 +131,8 @@ public class Utils {
     }
   }
 
+  public static boolean isStringType(Type type) {
+    return type.toString().equals("CHAR[]");
+  }
+
 }

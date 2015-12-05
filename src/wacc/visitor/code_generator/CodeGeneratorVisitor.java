@@ -9,16 +9,16 @@ import wacc.visitor.semantic_error.utils.*;
 public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
-  private int currentStackPointer = 0;
   private SymbolTable st;
-  private Regs currentReg;
   private wacc.visitor.semantic_error.utils.SymbolTable typeSt;
+  private int currentStackPointer = 0;
+  private Reg currentReg;
 
   public CodeGeneratorVisitor(CodeWriter writer,
       wacc.visitor.semantic_error.utils.SymbolTable st) {
-    this.typeSt = st;
     this.writer = writer;
-    this.currentReg = Regs.r4;
+    this.typeSt = st;
+    this.currentReg = Reg.r4;
   }
 
   @Override
@@ -62,9 +62,31 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitPrintStat(PrintStatContext ctx) {
     visit(ctx.expr());
-    writer.addInst(Inst.MOV, "r0, r4");
-    writer.addInst(Inst.BL, writer.p_print_string());
+    printStatsHelper(Utils.getType(ctx.expr(), typeSt));
     return null;
+  }
+
+  @Override
+  public Void visitPrintlnStat(PrintlnStatContext ctx) {
+    visit(ctx.expr());
+    printStatsHelper(Utils.getType(ctx.expr(), typeSt));
+    writer.addInst(Inst.BL, writer.p_print_ln());
+    return null;
+  }
+
+  private void printStatsHelper(Type type) {
+    writer.addInst(Inst.MOV, "r0, r4");
+    if (Utils.isSameBaseType(type, BaseLiter.INT)) {
+      writer.addInst(Inst.BL, writer.p_print_int());
+    } else if (Utils.isSameBaseType(type, BaseLiter.BOOL)) {
+      writer.addInst(Inst.BL, writer.p_print_bool());
+    } else if (Utils.isSameBaseType(type, BaseLiter.CHAR)) {
+      writer.addInst(Inst.BL, "putchar");
+    } else if (Utils.isStringType(type)) {
+      writer.addInst(Inst.BL, writer.p_print_string());
+    } else {
+      // TODO
+    }
   }
 
   @Override
@@ -351,7 +373,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     return null;
   }
-  
+
   @Override
   public Void visitIntLiter(IntLiterContext ctx) {
     writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
@@ -408,7 +430,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.LDR, currentReg + ", =" + msg);
     return null;
   }
-  
+
   @Override
   public Void visitArrayLiter(ArrayLiterContext ctx) {
     int typeSize;
@@ -449,17 +471,18 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.BL, "malloc");
     writer.addInst(Inst.MOV, currentReg + ", r0");
 
-    Regs previousReg = currentReg;
-    currentReg = Regs.values()[currentReg.ordinal() + 1];
+    Reg previousReg = currentReg;
+    currentReg = Reg.values()[currentReg.ordinal() + 1];
     for (ExprContext expr : ctx.expr()) {
       visit(expr);
-      writer.addInst(instruction, currentReg + ", [" + previousReg + ", #" + offset + "]");
+      writer.addInst(instruction, currentReg + ", [" + previousReg + ", #"
+          + offset + "]");
       offset += typeSize;
     }
 
     writer.addInst(Inst.LDR, currentReg + ", =" + ctx.expr().size());
-    writer.addInst(Inst.STR, currentReg +", [" + previousReg + "]");
-    currentReg = Regs.values()[currentReg.ordinal() - 1];
+    writer.addInst(Inst.STR, currentReg + ", [" + previousReg + "]");
+    currentReg = Reg.values()[currentReg.ordinal() - 1];
     return null;
   }
 
