@@ -181,12 +181,12 @@ public class CodeWriter {
     addInstToSB(Inst.PUSH, "{lr}", sb);
     addInstToSB(Inst.CMP, "r0, #0", sb);
     String msg0 = addMsg("ArrayIndexOutOfBoundsError: negative index\\n\\0");
-    addInstToSB(Inst.LDRLT, "r0, ="+ msg0, sb);
+    addInstToSB(Inst.LDRLT, "r0, =" + msg0, sb);
     addInstToSB(Inst.BLLT, p_throw_runtime_error(), sb);
     addInstToSB(Inst.LDR, "r1, [r1]", sb);
     addInstToSB(Inst.CMP, "r0, r1", sb);
     String msg1 = addMsg("ArrayIndexOutOfBoundsError: index too large\\n\\0");
-    addInstToSB(Inst.LDRCS, "r0, ="+ msg1, sb);
+    addInstToSB(Inst.LDRCS, "r0, =" + msg1, sb);
     addInstToSB(Inst.BLCS, p_throw_runtime_error(), sb);
     addInstToSB(Inst.POP, "{pc}", sb);
     return label;
@@ -297,6 +297,8 @@ public class CodeWriter {
     String msg = addMsg("%p\\0");
     addInstToSB(Inst.LDR, "r0, =" + msg, sb);
     addInstToSB(Inst.ADD, "r0, r0, #4", sb);
+    addInstToSB(Inst.BL, "printf", sb);
+    addInstToSB(Inst.MOV, "r0, #0", sb);
     addInstToSB(Inst.BL, "fflush", sb);
     addInstToSB(Inst.POP, "{pc}", sb);
     return label;
