@@ -15,15 +15,16 @@ public class CodeWriter {
   private int lCount;
   private int msgCount;
 
-  private boolean p_throw_overflow_error;
   private boolean p_throw_runtime_error;
+  private boolean p_throw_overflow_error;
   private boolean p_check_divide_by_zero;
-  private boolean p_print_reference;
   private boolean p_check_null_pointer;
+  private boolean p_check_array_bounds;
   private boolean p_print_ln;
   private boolean p_print_int;
   private boolean p_print_bool;
   private boolean p_print_string;
+  private boolean p_print_reference;
 
   public CodeWriter(PrintWriter file) {
     this.file = file;
@@ -31,15 +32,16 @@ public class CodeWriter {
     this.text = new StringBuilder(TEXT_HEADER);
     this.lCount = -1;
     this.msgCount = -1;
-    this.p_throw_overflow_error = false;
     this.p_throw_runtime_error = false;
+    this.p_throw_overflow_error = false;
     this.p_check_divide_by_zero = false;
-    this.p_print_reference = false;
     this.p_check_null_pointer = false;
+    this.p_check_array_bounds = false;
     this.p_print_ln = false;
     this.p_print_int = false;
     this.p_print_bool = false;
     this.p_print_string = false;
+    this.p_print_reference = false;
   }
 
   public String addMsg(String ascii) {
@@ -95,6 +97,22 @@ public class CodeWriter {
     return "L" + lCount;
   }
 
+  public String p_throw_runtime_error() {
+    String label = "p_throw_runtime_error";
+    if (p_throw_runtime_error) {
+      return label;
+    }
+    p_throw_runtime_error = true;
+    StringBuilder sb = new StringBuilder();
+    text_p.add(sb);
+    addLabelToSB(label, sb);
+
+    addInstToSB(Inst.BL, p_print_string(), sb);
+    addInstToSB(Inst.MOV, "r0, #-1", sb);
+    addInstToSB(Inst.BL, "exit", sb);
+    return label;
+  }
+
   public String p_throw_overflow_error() {
     String label = "p_throw_overflow_error";
     if (p_throw_overflow_error) {
@@ -109,22 +127,6 @@ public class CodeWriter {
         + "store in a 4-byte signed-integer.\\n\\0");
     addInstToSB(Inst.LDR, "r0, =" + msg, sb);
     addInstToSB(Inst.BL, p_throw_runtime_error(), sb);
-    return label;
-  }
-
-  public String p_throw_runtime_error() {
-    String label = "p_throw_runtime_error";
-    if (p_throw_runtime_error) {
-      return label;
-    }
-    p_throw_runtime_error = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
-
-    addInstToSB(Inst.BL, p_print_string(), sb);
-    addInstToSB(Inst.MOV, "r0, #-1", sb);
-    addInstToSB(Inst.BL, "exit", sb);
     return label;
   }
 
@@ -147,26 +149,6 @@ public class CodeWriter {
     return label;
   }
 
-  public String p_print_reference() {
-    String label = "p_print_reference";
-    if (p_print_reference) {
-      return label;
-    }
-    p_print_reference = true;
-    StringBuilder sb = new StringBuilder();
-    text_p.add(sb);
-    addLabelToSB(label, sb);
-
-    addInstToSB(Inst.PUSH, "{lr}", sb);
-    addInstToSB(Inst.MOV, "r1, r0", sb);
-    String msg = addMsg("%p\\0");
-    addInstToSB(Inst.LDR, "r0, =" + msg, sb);
-    addInstToSB(Inst.ADD, "r0, r0, #4", sb);
-    addInstToSB(Inst.BL, "fflush", sb);
-    addInstToSB(Inst.POP, "{pc}", sb);
-    return label;
-  }
-
   public String p_check_null_pointer() {
     String label = "p_check_null_pointer";
     if (p_check_null_pointer) {
@@ -182,6 +164,30 @@ public class CodeWriter {
     String msg = addMsg("NullReferenceError: dereference a null reference\\n\\0");
     addInstToSB(Inst.LDREQ, "r0, =" + msg, sb);
     addInstToSB(Inst.BLEQ, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
+  public String p_check_array_bounds() {
+    String label = "p_check_array_bounds";
+    if (p_check_array_bounds) {
+      return label;
+    }
+    p_check_array_bounds = true;
+    StringBuilder sb = new StringBuilder();
+    text_p.add(sb);
+    addLabelToSB(label, sb);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.CMP, "r0, #0", sb);
+    String msg0 = addMsg("ArrayIndexOutOfBoundsError: negative index\\n\\0");
+    addInstToSB(Inst.LDRLT, "r0, ="+ msg0, sb);
+    addInstToSB(Inst.BLLT, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.LDR, "r1, [r1]", sb);
+    addInstToSB(Inst.CMP, "r0, r1", sb);
+    String msg1 = addMsg("ArrayIndexOutOfBoundsError: index too large\\n\\0");
+    addInstToSB(Inst.LDRCS, "r0, ="+ msg1, sb);
+    addInstToSB(Inst.BLCS, p_throw_runtime_error(), sb);
     addInstToSB(Inst.POP, "{pc}", sb);
     return label;
   }
@@ -271,6 +277,26 @@ public class CodeWriter {
     addInstToSB(Inst.ADD, "r0, r0, #4", sb);
     addInstToSB(Inst.BL, "printf", sb);
     addInstToSB(Inst.MOV, "r0, #0", sb);
+    addInstToSB(Inst.BL, "fflush", sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
+  public String p_print_reference() {
+    String label = "p_print_reference";
+    if (p_print_reference) {
+      return label;
+    }
+    p_print_reference = true;
+    StringBuilder sb = new StringBuilder();
+    text_p.add(sb);
+    addLabelToSB(label, sb);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.MOV, "r1, r0", sb);
+    String msg = addMsg("%p\\0");
+    addInstToSB(Inst.LDR, "r0, =" + msg, sb);
+    addInstToSB(Inst.ADD, "r0, r0, #4", sb);
     addInstToSB(Inst.BL, "fflush", sb);
     addInstToSB(Inst.POP, "{pc}", sb);
     return label;
