@@ -83,7 +83,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     } else if (Utils.isStringType(type)) {
       writer.addInst(Inst.BL, writer.p_print_string());
     } else {
-      // TODO
+      writer.addInst(Inst.BL, writer.p_print_reference());
     }
   }
 
@@ -172,12 +172,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     return null;
   }
-  
+
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
-	  writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
-	  writer.addInst(Inst.MOV, "r4, r0");
-	  return null;
+    writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
+    writer.addInst(Inst.MOV, "r4, r0");
+    return null;
   }
 
   // private void sizeOfParam(ParamContext ctx, Integer size) {
@@ -257,7 +257,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
-//    visitChildren(ctx);
+    // visitChildren(ctx);
     visit(ctx.expr(0));
     currentReg = Reg.r5;
     visit(ctx.expr(1));
@@ -293,19 +293,17 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     if (ctx.unaryOper().UNARY_OPER() != null) {
       String operator = ctx.unaryOper().UNARY_OPER().getText();
       if (operator.equals("len")) {
-        //length of array stored as first elem in array, visiting expr will
-        //put start of array into r4
+        // length of array stored as first elem in array, visiting expr will
+        // put start of array into r4
         writer.addInst(Inst.LDR, "r4, [r4]");
       } else if (operator.equals("!")) {
-        //negate r4, as this is value of evaluated bool expr
+        // negate r4, as this is value of evaluated bool expr
         writer.addInst(Inst.EOR, "r4, r4, #1");
       } else {
         //do nothing, chars treated as nums in ass
-        //
       }
-    }
-    else {
-      //only minus left
+    } else {
+      // only minus left
       writer.addInst(Inst.RSBS, "r4, r4, #0");
       writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
     }
@@ -328,7 +326,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
             currentStackPointer += 4;
             break;
         }
-      } else if (((VarDeclStatContext) ctx).type().arrayType() != null) {
+      } else {
         size = 4;
         currentStackPointer += 4;
       }
@@ -350,17 +348,21 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     st.add(ctx.ident().getText(), ctx.type());
     visit(ctx.assignRhs());
     int stackPointerOffset = currentStackPointer - st.lookupI(ctx.ident().getText());
-    String msg = "[sp]";
-    if (stackPointerOffset > 0) {
-      msg = "[sp, #" + stackPointerOffset + "]";
-    }
-    if (ctx.type().getText().equals("int") || ctx.type().arrayType() != null
-        || ctx.type().getText().equals("string")) {
-      writer.addInst(Inst.STR, "r4, " + msg);
-    } else {
-      writer.addInst(Inst.STRB, "r4, " + msg);
-    }
+    store(Utils.getType(ctx.type()), stackPointerOffset, "r4", "sp");
     return null;
+  }
+
+  private void store(Type type, int stackPointerOffset, String reg1, String reg2) {
+    String msg = "[" + reg2 + "]";
+    if (stackPointerOffset > 0) {
+      msg = "["+ reg2 + ", #" + stackPointerOffset + "]";
+    }
+    if (Utils.isSameBaseType(type, BaseLiter.INT) || type instanceof ArrayType
+        || Utils.isStringType(type) || type instanceof PairType) {
+      writer.addInst(Inst.STR, reg1 + ", " + msg);
+    } else {
+      writer.addInst(Inst.STRB, reg1 + ", " + msg);
+    }
   }
 
   @Override
@@ -399,6 +401,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       }
       if (st.lookupT(ctx.getText()).getText().equals("int")
           || st.lookupT(ctx.getText()).arrayType() != null
+          || st.lookupT(ctx.getText()).pairType() != null
           || st.lookupT(ctx.getText()).getText().equals("string")) {
         writer.addInst(Inst.LDR, currentReg + ", " + msg);
       } else {
@@ -410,7 +413,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntLiter(IntLiterContext ctx) {
-    writer.addInst(Inst.LDR, currentReg + ", =" + Integer.parseInt(ctx.getText()));
+    writer.addInst(Inst.LDR,
+        currentReg + ", =" + Integer.parseInt(ctx.getText()));
     return null;
   }
 
@@ -518,6 +522,43 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.STR, currentReg + ", [" + previousReg + "]");
     currentReg = Reg.values()[currentReg.ordinal() - 1];
     return null;
+  }
+
+  @Override
+  public Void visitRhsNewPair(BasicParser.RhsNewPairContext ctx) {
+    writer.addInst(Inst.LDR, "r0, =8");
+    writer.addInst(Inst.BL, "malloc");
+    writer.addInst(Inst.MOV, "r4, r0");
+
+    currentReg = Reg.r5;
+
+    visit(ctx.expr(0));
+    Type type0 = Utils.getType(ctx.expr(0), st);
+    writer.addInst(Inst.LDR, "r0, =" + getSize(type0));
+    writer.addInst(Inst.BL, "malloc");
+    store(type0, 0, "r5", "r0");
+    writer.addInst(Inst.STR, "r0, [r4]");
+
+    visit(ctx.expr(1));
+    Type type1 = Utils.getType(ctx.expr(1), st);
+    writer.addInst(Inst.LDR, "r0, =" + getSize(type1));
+    writer.addInst(Inst.BL, "malloc");
+    store(type1, 0, "r5", "r0");
+    writer.addInst(Inst.STR, "r0, [r4, #4]");
+
+    currentReg = Reg.r4;
+
+    return null;
+  }
+
+  private int getSize(Type type) {
+    int size;
+    if (Utils.isSameBaseType(type, BaseLiter.BOOL)
+            || Utils.isSameBaseType(type, BaseLiter.CHAR))
+      size = 1;
+    else
+    size = 4;
+    return size;
   }
 
 }
