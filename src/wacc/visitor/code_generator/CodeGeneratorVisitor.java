@@ -552,13 +552,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   private int getSize(Type type) {
-    int size0;
+    int size;
     if (Utils.isSameBaseType(type, BaseLiter.BOOL)
             || Utils.isSameBaseType(type, BaseLiter.CHAR))
-      size0 = 1;
+      size = 1;
     else
-    size0 = 4;
-    return size0;
+    size = 4;
+    return size;
   }
 
 }
