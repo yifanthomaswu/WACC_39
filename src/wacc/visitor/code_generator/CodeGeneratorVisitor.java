@@ -1,6 +1,7 @@
 package wacc.visitor.code_generator;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
 import antlr.BasicParser.*;
@@ -68,6 +69,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitPrintlnStat(PrintlnStatContext ctx) {
     visit(ctx.expr());
     printStatsHelper(Utils.getType(ctx.expr(), st));
+    //printStatsHelper(ctx.expr());
     writer.addInst(Inst.BL, writer.p_print_ln());
     return null;
   }
@@ -82,6 +84,24 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.BL, "putchar");
     } else if (Utils.isStringType(type)) {
       writer.addInst(Inst.BL, writer.p_print_string());
+    } else {
+      // TODO
+    }
+  }
+  
+  private void printStatsHelper(ExprContext ctx) {
+    writer.addInst(Inst.MOV, "r0, r4");
+    if (ctx instanceof IntExprContext) {
+      writer.addInst(Inst.BL, writer.p_print_int());
+    } else if (ctx instanceof BoolExprContext) {
+      writer.addInst(Inst.BL, writer.p_print_bool());
+    } else if (ctx instanceof CharExprContext) {
+      writer.addInst(Inst.BL, "putchar");
+    } else if (ctx instanceof StringExprContext) {
+      writer.addInst(Inst.BL, writer.p_print_string());
+    } else if (ctx instanceof ArrayElemExprContext) {
+     
+    
     } else {
       // TODO
     }
@@ -482,6 +502,36 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.STR, currentReg + ", [" + previousReg + "]");
     currentReg = Reg.values()[currentReg.ordinal() - 1];
     return null;
+  }
+  
+  @Override
+  public Void visitArrayElem(ArrayElemContext ctx) { 
+    writer.addInst(Inst.ADD, currentReg + ", sp, #0");
+    Type type = Utils.getType(ctx.ident(), st);
+    Reg previousReg = currentReg;
+    currentReg = Reg.values()[currentReg.ordinal() + 1];
+    String typeString = type.toString();
+    for (int level = 0; level < ((ArrayType) type).getLevel(); level++) {
+      visit(ctx.expr(level));
+      typeString = typeString.substring(0, typeString.length() - 2);
+      writeArrayElemInstructions(typeString, previousReg);
+    }
+    currentReg = Reg.values()[currentReg.ordinal() - 1];
+    return null;
+  }
+  
+  private void writeArrayElemInstructions(String type, Reg previousReg) {
+    writer.addInst(Inst.LDR, previousReg + ", [" + previousReg + "]");
+    writer.addInst(Inst.MOV, "r0, " + currentReg);
+    writer.addInst(Inst.MOV, "r1, " + previousReg);
+    writer.addInst(Inst.BL, writer.p_check_array_bounds());
+    writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", #4");
+
+    if (type.endsWith("[]") || type.contains("INT")) {
+      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + currentReg + ", LSL #2");
+    } else { // reached a BOOL or CHAR type
+      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + currentReg); 
+    }
   }
 
 }

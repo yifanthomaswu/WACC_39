@@ -20,6 +20,7 @@ public class CodeWriter {
   private boolean p_check_divide_by_zero;
   private boolean p_print_reference;
   private boolean p_check_null_pointer;
+  private boolean p_check_array_bounds;
   private boolean p_print_ln;
   private boolean p_print_int;
   private boolean p_print_bool;
@@ -36,6 +37,7 @@ public class CodeWriter {
     this.p_check_divide_by_zero = false;
     this.p_print_reference = false;
     this.p_check_null_pointer = false;
+    this.p_check_array_bounds = false;
     this.p_print_ln = false;
     this.p_print_int = false;
     this.p_print_bool = false;
@@ -182,6 +184,30 @@ public class CodeWriter {
     String msg = addMsg("NullReferenceError: dereference a null reference\\n\\0");
     addInstToSB(Inst.LDREQ, "r0, =" + msg, sb);
     addInstToSB(Inst.BLEQ, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+  
+  public String p_check_array_bounds() {
+    String label = "p_check_array_bounds";
+    if (p_check_array_bounds) {
+      return label;
+    }
+    p_check_array_bounds = true;
+    StringBuilder sb = new StringBuilder();
+    text_p.add(sb);
+    addLabelToSB(label, sb);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.CMP, "r0, #0", sb);
+    String msg1 = addMsg("ArrayIndexOutOfBoundsError: negative index\\n\\0");
+    addInstToSB(Inst.LDRLT, "r0, =" + msg1, sb);
+    addInstToSB(Inst.BLLT, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.LDR, "r1, [r1]", sb);
+    addInstToSB(Inst.CMP, "r0, r1", sb);
+    String msg2 = addMsg("ArrayIndexOutOfBoundsError: index too large\\n\\0");
+    addInstToSB(Inst.LDRCS, "r0, =" + msg2, sb);
+    addInstToSB(Inst.BLCS, p_throw_runtime_error(), sb);
     addInstToSB(Inst.POP, "{pc}", sb);
     return label;
   }
