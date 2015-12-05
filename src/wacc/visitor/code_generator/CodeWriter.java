@@ -144,7 +144,7 @@ public class CodeWriter {
     addInst(Inst.POP, "{pc}", sb);
     return label;
   }
-  
+
   public String p_print_reference() {
     String label = "p_print_reference";
     if (p_print_reference) {
@@ -154,17 +154,17 @@ public class CodeWriter {
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
     addLabel(label, sb);
-    
+
     addInst(Inst.PUSH, "{lr}", sb);
     addInst(Inst.MOV, "r1, r0", sb);
-    String msg = addMsg("%p\0");
+    String msg = addMsg("%p\\0");
     addInst(Inst.LDR, "r0, =" + msg, sb);
     addInst(Inst.ADD, "r0, r0, #4", sb);
     addInst(Inst.BL, "fflush", sb);
-    addInst(Inst.POP, "{pc}");
+    addInst(Inst.POP, "{pc}", sb);
     return label;
   }
-  
+
   public String p_check_null_pointer() {
     String label = "p_check_null_pointer";
     if (p_check_null_pointer) {
@@ -174,13 +174,13 @@ public class CodeWriter {
     StringBuilder sb = new StringBuilder();
     text_p.add(sb);
     addLabel(label, sb);
-    
+
     addInst(Inst.PUSH, "{lr}", sb);
     addInst(Inst.CMP, "r0, #0", sb);
-    String msg = addMsg("NullReferenceError: dereference a null reference\n\0");
-    addInst(Inst.LDREQ, "r0, =" + msg);
+    String msg = addMsg("NullReferenceError: dereference a null reference\\n\\0");
+    addInst(Inst.LDREQ, "r0, =" + msg, sb);
     addInst(Inst.BLEQ, p_throw_runtime_error(), sb);
-    addInst(Inst.POP, "{pc}");
+    addInst(Inst.POP, "{pc}", sb);
     return label;
   }
 
