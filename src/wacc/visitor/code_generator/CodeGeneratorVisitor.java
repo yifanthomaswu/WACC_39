@@ -68,6 +68,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitPrintlnStat(PrintlnStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.MOV, "r0, r4");
+    writer.addInst(Inst.BL, writer.p_print_ln());
+    return null;
+  }
+  
+  @Override
   public Void visitIfStat(IfStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.CMP, "r4, #0");
