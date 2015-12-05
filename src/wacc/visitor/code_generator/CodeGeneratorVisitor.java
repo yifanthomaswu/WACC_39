@@ -152,31 +152,74 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitParamList(ParamListContext ctx) {
     int size = 0;
-    for (int i = ctx.param().size() - 1; i >= 0; i--) {
-      if (ctx.param(i).type().baseType() != null) {
-        switch (ctx.param(i).type().getText()) {
-          case "bool":
-          case "char":
-            size--;
-            break;
-          case "int":
-          case "string":
-            size -= 4;
-            break;
-        }
-      } else if (ctx.param(i).type().arrayType() != null) {
-        size -= 4;
+    for (int i = 0; i < ctx.param().size(); i++) {
+      if(i == 0) {
+    	  size -= 4;
       }
       st.add(ctx.param(i).ident().getText(), size);
       st.add(ctx.param(i).ident().getText(), ctx.param(i).type());
-    }
+     if (ctx.param(i).type().baseType() != null) {
+    	        switch (ctx.param(i).type().getText()) {
+    	          case "bool":
+    	          case "char":
+    	            size--;
+    	            break;
+    	          case "int":
+    	          case "string":
+    	            size -= 4;
+    	            break;
+    	        }
+    	  } else if (ctx.param(i).type().arrayType() != null) {
+    	        size -= 4;
+    	  } 
+      }
+      
     return null;
   }
   
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
+	  visitChildren(ctx);
 	  writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
+	  int size = 0;
+	  for(ExprContext c : ctx.argList().expr()) {
+		  Type t = Utils.getType(c,st);
+		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) ||
+				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+			  size++;
+		  } else {
+			  size += 4;
+		  } 
+	  }
+	  if(size >0) {
+		  writer.addInst(Inst.ADD, "sp, sp, #" + size);
+	  }
 	  writer.addInst(Inst.MOV, "r4, r0");
+	  return null;
+  }
+  
+  @Override
+  public Void visitArgList(ArgListContext ctx) {
+	  if(ctx.expr().size() > 0) {
+		  String msg = "[sp]";
+		  int offset = 0;
+		  Type t = Utils.getType(ctx.expr(0),st);
+		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
+				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+			  writer.addInst(Inst.LDRSB, "r4, " + msg);
+			  offset++;
+		  } else {
+			  writer.addInst(Inst.LDR, "r4, " + msg);
+			  offset += 4;
+		  }
+		  msg = "[sp, #-" + offset + "]!";
+		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
+				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+			  writer.addInst(Inst.STRB, "r4, " + msg);
+		  } else {
+			  writer.addInst(Inst.STR, "r4, " + msg);
+		  }
+	  } 
 	  return null;
   }
 
@@ -390,7 +433,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitIdent(BasicParser.IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
     if (!(context instanceof FuncContext)
-        && !(context instanceof RhsCallContext)) {
+        && !(context instanceof RhsCallContext) 
+        && !(context instanceof ParamContext)) {
       String msg = "[sp]";
       int stackPointerOffset = currentStackPointer - st.lookupI(ctx.getText());
       if (stackPointerOffset > 0) {
