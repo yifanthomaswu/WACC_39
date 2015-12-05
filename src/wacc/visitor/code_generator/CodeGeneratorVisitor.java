@@ -145,6 +145,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
     currentStackPointer = temp;
+    st = st.getEncSymTable();
     return null;
   }
 
@@ -170,6 +171,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       st.add(ctx.param(i).ident().getText(), ctx.param(i).type());
     }
     return null;
+  }
+  
+  @Override
+  public Void visitRhsCall(RhsCallContext ctx) {
+	  writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
+	  writer.addInst(Inst.MOV, "r4, r0");
+	  return null;
   }
 
   // private void sizeOfParam(ParamContext ctx, Integer size) {
@@ -312,8 +320,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
     st.add(ctx.ident().getText(), ctx.type());
     visit(ctx.assignRhs());
-    int stackPointerOffset = currentStackPointer
-        - st.lookupI(ctx.ident().getText());
+    int stackPointerOffset = currentStackPointer - st.lookupI(ctx.ident().getText());
     String msg = "[sp]";
     if (stackPointerOffset > 0) {
       msg = "[sp, #" + stackPointerOffset + "]";
