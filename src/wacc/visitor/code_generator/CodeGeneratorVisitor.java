@@ -288,7 +288,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         //length of array stored as first elem in array, visiting expr will
         //put start of array into r4
         writer.addInst(Inst.LDR, "r4, [r4]");
-      } else if (ctx.unaryOper().UNARY_OPER().getText().equals("!")) {
+      } else if (operator.equals("!")) {
         //negate r4, as this is value of evaluated bool expr
         writer.addInst(Inst.EOR, "r4, r4, #1");
       } else {
