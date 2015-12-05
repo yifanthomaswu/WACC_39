@@ -275,6 +275,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visitUnOpExpr(UnOpExprContext ctx) {
+    visit(ctx.expr());
+    if (ctx.unaryOper().UNARY_OPER().equals("len")) {
+      writer.addInst(Inst.LDR, "r4, [r4]");
+    }
+    return null;
+  }
+
   private int sizeOfDecl(StatContext ctx) {
     if (ctx instanceof VarDeclStatContext) {
       int size = 0;
@@ -373,7 +382,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntLiter(IntLiterContext ctx) {
-    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText().replaceFirst("^0+(?!$)", ""));
+    writer.addInst(Inst.LDR, currentReg + ", =" + Integer.parseInt(ctx.getText()));
     return null;
   }
 
