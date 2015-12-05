@@ -375,7 +375,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntLiter(IntLiterContext ctx) {
-    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
+    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText().replaceFirst("^0+(?!$)", ""));
     return null;
   }
 

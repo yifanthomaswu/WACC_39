@@ -221,7 +221,7 @@ public class CodeWriter {
     addLabel(label, sb);
 
     addInst(Inst.PUSH, "{lr}", sb);
-    addInst(Inst.LDR, "{r0}", sb);
+    addInst(Inst.LDR, "r1, [r0]", sb);
     addInst(Inst.ADD, "r2, r0, #4", sb);
     String msg = addMsg("%.*s\\0");
     addInst(Inst.LDR, "r0, =" + msg, sb);
