@@ -11,11 +11,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
   private SymbolTable st;
-  private int currentStackPointer = 0;
+  private int currentStackPointer;
   private Reg currentReg;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
+    this.currentStackPointer = 0;
     this.currentReg = Reg.r4;
   }
 
@@ -38,6 +39,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.LDR, "r0, =0");
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
+    return null;
+  }
+
+  @Override
+  public Void visitReadStat(ReadStatContext ctx) {
+    visit(ctx.assignLhs());
+    writer.addInst(Inst.MOV, "r0, r4");
+    Type type = Utils.getType(ctx.assignLhs(), st);
+    if (Utils.isSameBaseType(type, BaseLiter.INT)) {
+      writer.addInst(Inst.BL, writer.p_read_int());
+    } else {
+      writer.addInst(Inst.BL, writer.p_read_char());
+    }
     return null;
   }
 
@@ -363,31 +377,32 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitAssignStat(BasicParser.AssignStatContext ctx) {
+  public Void visitAssignStat(AssignStatContext ctx) {
     visit(ctx.assignRhs());
     visit(ctx.assignLhs());
     return null;
   }
 
   @Override
-  public Void visitLhsIdent(BasicParser.LhsIdentContext ctx) {
+  public Void visitLhsIdent(LhsIdentContext ctx) {
+    IdentContext ident = ctx.ident();
     String msg = "[sp]";
-    int stackPointerOffset = currentStackPointer - st.lookupI(ctx.getText());
+    int stackPointerOffset = currentStackPointer - st.lookupI(ident.getText());
     if (stackPointerOffset > 0) {
       msg = "[sp, #" + stackPointerOffset + "]";
     }
-    if (st.lookupT(ctx.getText()).equals("int")
-        || st.lookupT(ctx.getText()).arrayType() != null
-        || st.lookupT(ctx.getText()).getText().equals("string")) {
-      writer.addInst(Inst.STR, "r4, " + msg);
-    } else {
+    Type type = Utils.getType(ident, st);
+    if (Utils.isSameBaseType(type, BaseLiter.BOOL)
+        || Utils.isSameBaseType(type, BaseLiter.CHAR)) {
       writer.addInst(Inst.STRB, "r4, " + msg);
-    }
+    } else {
+      writer.addInst(Inst.STR, "r4, " + msg);
+    }// TODO
     return null;
   }
 
   @Override
-  public Void visitIdent(BasicParser.IdentContext ctx) {
+  public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
     if (!(context instanceof FuncContext)
         && !(context instanceof RhsCallContext)) {
