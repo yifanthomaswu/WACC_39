@@ -28,11 +28,21 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
+    int tempSize = size;
     if (size > 0) {
+      while (size > 1024) {
+        writer.addInst(Inst.SUB, "sp, sp, #1024");
+        size %= 1024;
+      }
       writer.addInst(Inst.SUB, "sp, sp, #" + size);
     }
+    size = tempSize;
     visit(ctx.stat());
     if (size > 0) {
+      while (size > 1024) {
+        writer.addInst(Inst.ADD, "sp, sp, #1024");
+        size %= 1024;
+      }
       writer.addInst(Inst.ADD, "sp, sp, #" + size);
     }
     writer.addInst(Inst.LDR, "r0, =0");
