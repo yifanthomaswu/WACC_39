@@ -176,66 +176,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitIntLiter(IntLiterContext ctx) {
-    writer.addInst(Inst.LDR, "r4, =" + ctx.getText());
-    return null;
-  }
-
-  @Override
-  public Void visitBoolLiter(BoolLiterContext ctx) {
-    if (ctx.getText().equals("true")) {
-      writer.addInst(Inst.MOV, "r4, #1");
-    } else {
-      writer.addInst(Inst.MOV, "r4, #0");
-    }
-    return null;
-  }
-
-  @Override
-  public Void visitCharLiter(CharLiterContext ctx) {
-    String c = ctx.getText();
-    switch (c.charAt(2)) {
-      case '0':
-        c = "0";
-        break;
-      case 'b':
-        c = "8";
-        break;
-      case 't':
-        c = "9";
-        break;
-      case 'n':
-        c = "10";
-        break;
-      case 'f':
-        c = "12";
-        break;
-      case 'r':
-        c = "13";
-        break;
-      case '\"':
-        c = "\'\"\'";
-        break;
-      case '\'':
-        c = "\'\'\'";
-        break;
-      case '\\':
-        c = "\'\\\'";
-        break;
-    }
-    writer.addInst(Inst.MOV, "r4, #" + c);
-    return null;
-  }
-
-  @Override
-  public Void visitStringLiter(StringLiterContext ctx) {
-    String s = ctx.getText();
-    String msg = writer.addMsg(s.substring(1, s.length() - 1));
-    writer.addInst(Inst.LDR, "r4, =" + msg);
-    return null;
-  }
-
-  @Override
   public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
     visitChildren(ctx);
     if (ctx.MULT() != null) {
@@ -404,14 +344,71 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       if (typeSt.lookupT(ctx.getText()).getText().equals("int")
           || typeSt.lookupT(ctx.getText()).arrayType() != null
           || typeSt.lookupT(ctx.getText()).getText().equals("string")) {
-        writer.addInst(Inst.LDR, "r4, " + msg);
+        writer.addInst(Inst.LDR, currentReg + ", " + msg);
       } else {
-        writer.addInst(Inst.LDRSB, "r4, " + msg);
+        writer.addInst(Inst.LDRSB, currentReg + ", " + msg);
       }
     }
     return null;
   }
+  
+  @Override
+  public Void visitIntLiter(IntLiterContext ctx) {
+    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.getText());
+    return null;
+  }
 
+  @Override
+  public Void visitBoolLiter(BoolLiterContext ctx) {
+    if (ctx.getText().equals("true")) {
+      writer.addInst(Inst.MOV, currentReg + ", #1");
+    } else {
+      writer.addInst(Inst.MOV, currentReg + ", #0");
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitCharLiter(CharLiterContext ctx) {
+    String c = ctx.getText();
+    switch (c.charAt(2)) {
+      case '0':
+        c = "0";
+        break;
+      case 'b':
+        c = "8";
+        break;
+      case 't':
+        c = "9";
+        break;
+      case 'n':
+        c = "10";
+        break;
+      case 'f':
+        c = "12";
+        break;
+      case 'r':
+        c = "13";
+        break;
+      case '\"':
+        c = "\'\"\'";
+        break;
+      case '\\':
+        c = "\'\\\'";
+        break;
+    }
+    writer.addInst(Inst.MOV, currentReg + ", #" + c);
+    return null;
+  }
+
+  @Override
+  public Void visitStringLiter(StringLiterContext ctx) {
+    String s = ctx.getText();
+    String msg = writer.addMsg(s.substring(1, s.length() - 1));
+    writer.addInst(Inst.LDR, currentReg + ", =" + msg);
+    return null;
+  }
+  
   @Override
   public Void visitArrayLiter(ArrayLiterContext ctx) {
     int typeSize;
@@ -450,19 +447,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     int spaceToSave = ctx.expr().size() * typeSize + 4;
     writer.addInst(Inst.LDR, "r0, =" + spaceToSave);
     writer.addInst(Inst.BL, "malloc");
-    writer.addInst(Inst.MOV, "r4, r0");
+    writer.addInst(Inst.MOV, currentReg + ", r0");
 
+    Regs previousReg = currentReg;
     currentReg = Regs.values()[currentReg.ordinal() + 1];
     for (ExprContext expr : ctx.expr()) {
       visit(expr);
-      writer.addInst(instruction, "r5, [r4, #" + offset + "]");
+      writer.addInst(instruction, currentReg + ", [" + previousReg + ", #" + offset + "]");
       offset += typeSize;
     }
+
+    writer.addInst(Inst.LDR, currentReg + ", =" + ctx.expr().size());
+    writer.addInst(Inst.STR, currentReg +", [" + previousReg + "]");
     currentReg = Regs.values()[currentReg.ordinal() - 1];
-
-    writer.addInst(Inst.LDR, "r5, =" + ctx.expr().size());
-    writer.addInst(Inst.STR, "r5, [r4]");
-
     return null;
   }
 
