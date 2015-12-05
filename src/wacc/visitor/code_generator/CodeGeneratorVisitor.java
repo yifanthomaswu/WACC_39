@@ -301,6 +301,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         writer.addInst(Inst.EOR, "r4, r4, #1");
       } else {
         //do nothing, chars treated as nums in ass
+        //
       }
     }
     else {
