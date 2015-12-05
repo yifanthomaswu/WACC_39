@@ -35,11 +35,13 @@ public class CodeWriter {
     this.p_throw_runtime_error = false;
     this.p_throw_overflow_error = false;
     this.p_check_divide_by_zero = false;
+    this.p_check_null_pointer = false;
     this.p_check_array_bounds = false;
     this.p_print_ln = false;
     this.p_print_int = false;
     this.p_print_bool = false;
     this.p_print_string = false;
+    this.p_print_reference = false;
   }
 
   public String addMsg(String ascii) {

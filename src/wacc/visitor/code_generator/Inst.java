@@ -30,8 +30,10 @@ public enum Inst {
   ADDS,
   SUB,
   SUBS,
+  RSBS,
   SMULL,
   CMP,
   AND,
-  ORR;
+  ORR,
+  EOR;
 }
