@@ -50,7 +50,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     currentSP = 0;
     writer.addLabel("f_" + ctx.ident().getText());
     writer.addInst(Inst.PUSH, "{lr}");
-    visit(ctx.paramList());
+    if(ctx.paramList() != null) {
+    	 visit(ctx.paramList());
+    }
     int size = stackSize(ctx.stat());
     subSP(size);
     visit(ctx.stat());
