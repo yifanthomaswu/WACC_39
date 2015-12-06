@@ -208,17 +208,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
 	  visitChildren(ctx);
-	  writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
 	  int size = 0;
-	  for(ExprContext c : ctx.argList().expr()) {
-		  Type t = Utils.getType(c,st);
-		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) ||
-				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-			  size++;
-		  } else {
-			  size += 4;
-		  } 
+	  if(ctx.argList() != null) {
+		  for(ExprContext c : ctx.argList().expr()) {
+			  Type t = Utils.getType(c,st);
+			  if(Utils.isSameBaseType(t, BaseLiter.CHAR) ||
+					  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+				  size++;
+			  } else {
+				  size += 4;
+			  } 
+		  }
 	  }
+	  writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
 	  if(size >0) {
 		  writer.addInst(Inst.ADD, "sp, sp, #" + size);
 	  }
@@ -229,17 +231,34 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   
   @Override
   public Void visitArgList(ArgListContext ctx) {
-	  if(ctx.expr().size() > 0) {
-		  String msg = "[sp]";
+	  for(int i = ctx.expr().size() - 1; i >= 0; i--) {
 		  int offset = 0;
-		  Type t = Utils.getType(ctx.expr(0),st);
-		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
-				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-			  writer.addInst(Inst.LDRSB, "r4, " + msg);
-			  offset++;
+		  Type t = Utils.getType(ctx.expr(i), st);
+		  String msg = "[sp]";
+		  if(!ctx.isEmpty()) {
+			  if(Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+				  if(ctx.expr(i).getText().equals("true")) {
+					  writer.addInst(Inst.MOV, "r4, #1");
+				  } else {
+					  writer.addInst(Inst.MOV, "r4, #0");
+				  }
+				  offset++;
+			  } else if(Utils.isSameBaseType(t, BaseLiter.CHAR)) {
+				  offset++;
+				  writer.addInst(Inst.MOV, "r4, #" + ctx.expr(i).getText());
+			  } else if(Utils.isSameBaseType(t, BaseLiter.INT)){
+				  offset += 4;
+				  writer.addInst(Inst.LDR, "r4, =" + ctx.expr(i).getText());
+			  } else if(Utils.isStringType(t)) {
+				  offset += 4;
+				  writer.addInst(Inst.LDR, "=" + "some message here");
+			  } else {
+				  offset += 4;
+				  writer.addInst(Inst.LDR, "r4, [sp, #" + 
+				  st.lookupI(ctx.expr(i).getText()) + "]");
+			  }
 		  } else {
 			  writer.addInst(Inst.LDR, "r4, " + msg);
-			  offset += 4;
 		  }
 		  msg = "[sp, #-" + offset + "]!";
 		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
@@ -248,7 +267,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 		  } else {
 			  writer.addInst(Inst.STR, "r4, " + msg);
 		  }
-	  } 
+	  }
 	  return null;
   }
 
