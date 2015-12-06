@@ -13,11 +13,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private SymbolTable st;
   private int currentSP;
   private Reg currentReg;
+  private int numberOfPushes;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
     this.currentSP = 0;
     this.currentReg = Reg.R4;
+    this.numberOfPushes = 0;
   }
 
   @Override
@@ -352,10 +354,24 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   // }
 
   private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
+
     visit(expr1);
-    currentReg = Reg.values()[currentReg.ordinal() + 1];
+
+    if (currentReg == Reg.R10) {
+      writer.addInst(Inst.PUSH, "{r10}");
+      numberOfPushes++;
+    } else {
+      currentReg = Reg.values()[currentReg.ordinal() + 1];
+    }
+
     visit(expr2);
-    currentReg = Reg.values()[currentReg.ordinal() - 1];
+
+    if (currentReg == Reg.R10 && numberOfPushes > 0) {
+      writer.addInst(Inst.POP, "{r11}");
+      numberOfPushes--;
+    } else {
+      currentReg = Reg.values()[currentReg.ordinal() - 1];
+    }
     return null;
   }
 
@@ -374,8 +390,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.BL, writer.p_check_divide_by_zero());
       if (ctx.DIV() != null) {
         writer.addInst(Inst.BL, "__aeabi_idiv");
-      } else {
+        writer.addInst(Inst.MOV, currentReg + ", r0");
+      } else { // ctx.MOD() != null case
         writer.addInst(Inst.BL, "__aeabi_idivmod");
+        writer.addInst(Inst.MOV, currentReg + ", r1");
       }
     }
     return null;
@@ -385,12 +403,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
     visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
     Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
-
+    Inst instr;
     if (ctx.PLUS() != null) {
-      writer.addInst(Inst.ADDS, currentReg + ", " + currentReg + ", " + nextReg);
+      instr = Inst.ADDS;
     } else {
-      writer.addInst(Inst.SUBS, currentReg + ", " + currentReg + ", " + nextReg);
+      instr = Inst.SUBS;
     }
+
+    if (currentReg == Reg.R10) {
+      writer.addInst(instr, "r10, r11, r10");
+    } else {
+      writer.addInst(instr, currentReg + ", " + currentReg + ", " + nextReg);
+    }
+
     writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
     return null;
   }
