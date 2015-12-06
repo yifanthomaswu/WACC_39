@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
+import antlr.BasicParser.ArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.visitor.SymbolTable;
 import wacc.visitor.type.*;
@@ -30,11 +31,21 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
+    int tempSize = size;
     if (size > 0) {
+      while (size > 1024) {
+        writer.addInst(Inst.SUB, "sp, sp, #1024");
+        size %= 1024;
+      }
       writer.addInst(Inst.SUB, "sp, sp, #" + size);
     }
+    size = tempSize;
     visit(ctx.stat());
     if (size > 0) {
+      while (size > 1024) {
+        writer.addInst(Inst.ADD, "sp, sp, #1024");
+        size %= 1024;
+      }
       writer.addInst(Inst.ADD, "sp, sp, #" + size);
     }
     writer.addInst(Inst.LDR, "r0, =0");
@@ -359,7 +370,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         // negate r4, as this is value of evaluated bool expr
         writer.addInst(Inst.EOR, "r4, r4, #1");
       } else {
-        // do nothing, chars treated as nums in ass
+        //do nothing, chars treated as nums in ass
       }
     } else {
       // only minus left
@@ -452,7 +463,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
-    if (!(context instanceof FuncContext)
+    if (context instanceof ArrayElemContext) {
+      writer.addInst(Inst.LDR, currentReg + ", [" + currentReg + "]");
+    } else if (!(context instanceof FuncContext)
         && !(context instanceof RhsCallContext) 
         && !(context instanceof ParamContext)) {
       String msg = "[sp]";
@@ -598,7 +611,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writeArrayElemInstructions(typeString, previousReg);
     }
     currentReg = Reg.values()[currentReg.ordinal() - 1];
-    return null;
+    return visit(ctx.ident());
   }
   
   private void writeArrayElemInstructions(String type, Reg previousReg) {
