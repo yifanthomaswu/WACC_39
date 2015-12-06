@@ -659,7 +659,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writeArrayElemInstructions(typeString, previousReg);
     }
     reg = reg.previous();
+    writer.addInst(Inst.BLLT,"lololololololol");
     visit(ctx.ident());
+    writer.addInst(Inst.BLLT,"lololololololol");
     if (ctx.parent instanceof LhsArrayElemContext) {
       previousReg = reg;
       reg = reg.previous();
