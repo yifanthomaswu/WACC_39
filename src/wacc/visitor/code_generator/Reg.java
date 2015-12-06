@@ -1,5 +1,21 @@
 package wacc.visitor.code_generator;
 
 public enum Reg {
-  r4, r5, r6, r7, r8, r9, r10, r11;
+  R4, R5, R6, R7, R8, R10, R11;
+
+  private static final Reg[] values = values();
+
+  public Reg getNext() {
+    return values[this.ordinal() + 1];
+  }
+
+  public Reg getPrevious() {
+    return values[this.ordinal() - 1];
+  }
+
+  @Override
+  public String toString() {
+    return this.name().toLowerCase();
+  };
+
 }
