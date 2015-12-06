@@ -5,11 +5,11 @@ public enum Reg {
 
   private static final Reg[] values = values();
 
-  public Reg getNext() {
+  public Reg next() {
     return values[this.ordinal() + 1];
   }
 
-  public Reg getPrevious() {
+  public Reg previous() {
     return values[this.ordinal() - 1];
   }
 
