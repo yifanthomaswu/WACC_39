@@ -272,17 +272,27 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitParam(ParamContext ctx) {
     return null;
   }
-
+  
+  private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
+    visit(expr1);
+    currentReg = Reg.values()[currentReg.ordinal() + 1];
+    visit(expr2);
+    currentReg = Reg.values()[currentReg.ordinal() - 1];
+    return null;
+  }
+  
   @Override
   public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
-    visitChildren(ctx);
+    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
+    
     if (ctx.MULT() != null) {
-      writer.addInst(Inst.SMULL, "r4, r5, r4, r5");
-      writer.addInst(Inst.CMP, "r5, r4, ASR #31");
+      writer.addInst(Inst.SMULL, currentReg + ", " + nextReg + ", " + currentReg + ", " + nextReg);
+      writer.addInst(Inst.CMP, nextReg + ", " + currentReg + ", ASR #31");
       writer.addInst(Inst.BLNE, writer.p_throw_overflow_error());
     } else {
-      writer.addInst(Inst.MOV, "r0, r4");
-      writer.addInst(Inst.MOV, "r1, r5");
+      writer.addInst(Inst.MOV, "r0, " + currentReg);
+      writer.addInst(Inst.MOV, "r1, " + nextReg);
       writer.addInst(Inst.BL, writer.p_check_divide_by_zero());
       if (ctx.DIV() != null) {
         writer.addInst(Inst.BL, "__aeabi_idiv");
@@ -297,6 +307,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
     visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
     Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
+    
     if (ctx.PLUS() != null) {
       writer.addInst(Inst.ADDS, currentReg + ", " + currentReg + ", " + nextReg);
     } else {
@@ -305,20 +316,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
     return null;
   }
-  
-  private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
-    visit(expr1);
-    currentReg = Reg.values()[currentReg.ordinal() + 1];
-    visit(expr2);
-    currentReg = Reg.values()[currentReg.ordinal() - 1];
-    return null;
-  }
 
   @Override
   public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
     visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
-    
     Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
+    
     writer.addInst(Inst.CMP, currentReg + ", " + nextReg);
     if (ctx.GRT() != null) {
       writer.addInst(Inst.MOVGT, currentReg + ", #1");
