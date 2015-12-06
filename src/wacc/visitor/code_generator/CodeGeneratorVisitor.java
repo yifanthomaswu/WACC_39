@@ -150,6 +150,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitAssignStat(AssignStatContext ctx) {
     visit(ctx.assignRhs());
     visit(ctx.assignLhs());
+    if (ctx.assignLhs() instanceof LhsArrayElemContext)
+      strWithOffset(Utils.getType(((RhsExprContext)ctx.assignRhs()).expr(), st),0, "r4", "r5");
     return null;
   }
 
@@ -661,9 +663,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writeArrayElemInstructions(typeString, previousReg);
     }
     reg = reg.previous();
-    writer.addInst(Inst.BLLT,"lololololololol");
-    visit(ctx.ident());
-    writer.addInst(Inst.BLLT,"lololololololol");
+    //visit(ctx.ident());
     if (ctx.parent instanceof LhsArrayElemContext) {
       previousReg = reg;
       reg = reg.previous();
@@ -706,7 +706,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       // of second
       // pair
     }
-    // writer.addInst(Inst.LDR, "r4, [r4]");
     if (right) {
       load(type, 0, "r4", "r4");
     } else {
