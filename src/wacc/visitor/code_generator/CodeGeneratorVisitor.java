@@ -26,6 +26,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitProgram(ProgramContext ctx) {
     st = new SymbolTable(null);
     for (FuncContext c : ctx.func()) {
+      st.add(c.ident().getText(), c);
+    }
+    for (FuncContext c : ctx.func()) {
       visit(c);
     }
 
@@ -291,67 +294,30 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
-    visitChildren(ctx);
-    writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
-    int size = 0;
-    for (ExprContext c : ctx.argList().expr()) {
-      Type t = Utils.getType(c, st);
-      if (Utils.isSameBaseType(t, BaseLiter.CHAR) ||
-          Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-        size++;
-      } else {
-        size += 4;
-      }
-    }
-    if (size > 0) {
-      writer.addInst(Inst.ADD, "sp, sp, #" + size);
-    }
+    visit(ctx.argList());
+    String ident = ctx.ident().getText();
+    writer.addInst(Inst.BL, "f_" + ident);
+    int size = stackSize(st.lookupAllF(ident));
+    currentSP -= size;
+    addSP(size);
     writer.addInst(Inst.MOV, "r4, r0");
     return null;
   }
 
   @Override
   public Void visitArgList(ArgListContext ctx) {
-    if (ctx.expr().size() > 0) {
-      String msg = "[sp]";
-      int offset = 0;
-      Type t = Utils.getType(ctx.expr(0), st);
-      if (Utils.isSameBaseType(t, BaseLiter.CHAR) ||
-          Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-        writer.addInst(Inst.LDRSB, "r4, " + msg);
-        offset++;
+    for (int i = ctx.expr().size() - 1; i >= 0; i--) {
+      visit(ctx.expr(i));
+      int size = getSize(Utils.getType(ctx.expr(i), st));
+      currentSP += size;
+      if (size == 1) {
+        writer.addInst(Inst.STRB, "r4, [sp, #-1]!");
       } else {
-        writer.addInst(Inst.LDR, "r4, " + msg);
-        offset += 4;
-      }
-      msg = "[sp, #-" + offset + "]!";
-      if (Utils.isSameBaseType(t, BaseLiter.CHAR) ||
-          Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-        writer.addInst(Inst.STRB, "r4, " + msg);
-      } else {
-        writer.addInst(Inst.STR, "r4, " + msg);
+        writer.addInst(Inst.STR, "r4, [sp, #-4]!");
       }
     }
     return null;
   }
-
-  // private void sizeOfParam(ParamContext ctx, Integer size) {
-  // if (ctx.type().baseType() != null) {
-  // switch (ctx.type().getText()) {
-  // case "bool":
-  // case "char":
-  // size++;
-  // break;
-  // case "int":
-  // case "string":
-  // size += 4;
-  // break;
-  // }
-  // } else if (ctx.type().arrayType() != null) {
-  // size += 4;
-  // }
-  // st.add(ctx.ident().getText(), size);
-  // }
 
   private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
 
