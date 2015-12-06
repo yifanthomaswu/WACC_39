@@ -340,19 +340,42 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitArgList(ArgListContext ctx) {
-    for (int i = ctx.expr().size() - 1; i >= 0; i--) {
-      visit(ctx.expr(i));
-      int size = getSize(Utils.getType(ctx.expr(i), st));
-      sp += size;
-      if (size == 1) {
-        writer.addInst(Inst.STRB, "r4, [sp, #-1]!");
-      } else {
-        writer.addInst(Inst.STR, "r4, [sp, #-4]!");
-      }
-    }
-    return null;
+	  for (int i = ctx.expr().size() - 1; i >= 0; i--) {
+	      visit(ctx.expr(i));
+	      int size = getSize(Utils.getType(ctx.expr(i), st));
+	      sp += size;
+	      if (size == 1) {
+	        writer.addInst(Inst.STRB, "r4, [sp, #-1]!");
+	      } else {
+	        writer.addInst(Inst.STR, "r4, [sp, #-4]!");
+	      }
+	    }
+	  return null;
   }
 
+  // private void sizeOfParam(ParamContext ctx, Integer size) {
+  // if (ctx.type().baseType() != null) {
+  // switch (ctx.type().getText()) {
+  // case "bool":
+  // case "char":
+  // size++;
+  // break;
+  // case "int":
+  // case "string":
+  // size += 4;
+  // break;
+  // }
+  // } else if (ctx.type().arrayType() != null) {
+  // size += 4;
+  // }
+  // st.add(ctx.ident().getText(), size);
+  // }
+
+  @Override
+  public Void visitParam(ParamContext ctx) {
+    return null;
+  }
+  
   private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
 
     visit(expr1);
