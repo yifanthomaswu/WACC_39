@@ -324,7 +324,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
-    visit(ctx.argList());
+    if (ctx.argList() != null) {
+      visit(ctx.argList());
+    }
     String ident = ctx.ident().getText();
     writer.addInst(Inst.BL, "f_" + ident);
     int size = stackSize(st.lookupAllF(ident));
