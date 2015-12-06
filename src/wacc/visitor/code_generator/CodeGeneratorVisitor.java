@@ -291,6 +291,28 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitLhsIdent(LhsIdentContext ctx) {
+    String ident = ctx.ident().getText();
+    int offset = currentSP - st.lookupI(ident);
+    if (ctx.getParent() instanceof AssignStatContext) {
+      Inst inst;
+      if (getSize(Utils.getType(st.lookupAllT(ident))) == 1) {
+        inst = Inst.STRB;
+      } else {
+        inst = Inst.STR;
+      }
+      if (offset == 0) {
+        writer.addInst(inst, "r4, [sp]");
+      } else {
+        writer.addInst(inst, "r4, [sp, #" + offset + "]");
+      }
+    } else {
+      writer.addInst(Inst.ADD, "r4, sp, #" + offset);
+    }
+    return null;
+  }
+
+  @Override
   public Void visitRhsCall(RhsCallContext ctx) {
     visit(ctx.argList());
     String ident = ctx.ident().getText();
@@ -474,13 +496,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
   }
 
-  @Override
-  public Void visitLhsIdent(LhsIdentContext ctx) {
-    int stackPointerOffset = currentSP - st.lookupI(ctx.ident().getText());
-    store(Utils.getType(ctx.ident(), st), stackPointerOffset, "r4", "sp");
-    // TODO
-    return null;
-  }
+//  @Override
+//  public Void visitLhsIdent(LhsIdentContext ctx) {
+//    int stackPointerOffset = currentSP - st.lookupI(ctx.ident().getText());
+//    store(Utils.getType(ctx.ident(), st), stackPointerOffset, "r4", "sp");
+//    // TODO
+//    return null;
+//  }
 
   @Override
   public Void visitIdent(IdentContext ctx) {
@@ -514,8 +536,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntLiter(IntLiterContext ctx) {
-    writer.addInst(Inst.LDR,
-        currentReg + ", =" + Integer.parseInt(ctx.getText()));
+    writer.addInst(Inst.LDR, currentReg + ", =" + Integer.parseInt(ctx.getText()));
     return null;
   }
 
