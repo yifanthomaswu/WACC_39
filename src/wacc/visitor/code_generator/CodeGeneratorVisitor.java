@@ -1,10 +1,8 @@
 package wacc.visitor.code_generator;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
-import antlr.BasicParser.ArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.visitor.SymbolTable;
 import wacc.visitor.type.*;
@@ -13,25 +11,106 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
   private SymbolTable st;
-  private int currentStackPointer;
+  private int currentSP;
   private Reg currentReg;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
-    this.currentStackPointer = 0;
-    this.currentReg = Reg.r4;
+    this.currentSP = 0;
+    this.currentReg = Reg.R4;
   }
 
   @Override
   public Void visitProgram(ProgramContext ctx) {
     st = new SymbolTable(null);
-    int size = sizeOfDecl(ctx.stat());
     for (FuncContext c : ctx.func()) {
       visit(c);
     }
+
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
-    int tempSize = size;
+    int size = stackSize(ctx.stat());
+    subSP(size);
+    visit(ctx.stat());
+    addSP(size);
+    writer.addInst(Inst.LDR, "r0, =0");
+    writer.addInst(Inst.POP, "{pc}");
+    writer.addLtorg();
+    return null;
+  }
+
+  @Override
+  public Void visitFunc(FuncContext ctx) {
+    st = new SymbolTable(st);
+    int tempSP = currentSP;
+    currentSP = 0;
+
+    writer.addLabel("f_" + ctx.ident().getText());
+    writer.addInst(Inst.PUSH, "{lr}");
+    visit(ctx.paramList());
+    int size = stackSize(ctx.stat());
+    subSP(size);
+    visit(ctx.stat());
+    addSP(size);
+    writer.addInst(Inst.POP, "{pc}");
+    writer.addLtorg();
+
+    currentSP = tempSP;
+    st = st.getEncSymTable();
+    return null;
+  }
+
+  @Override
+  public Void visitParamList(ParamListContext ctx) {
+    int offset = -4;
+    for (ParamContext c : ctx.param()) {
+      String ident = c.ident().getText();
+      st.add(ident, offset);
+      st.add(ident, c.type());
+      offset -= getSize(Utils.getType(c.type()));
+    }
+    return null;
+  }
+
+  private int stackSize(StatContext ctx) {
+    if (ctx instanceof VarDeclStatContext) {
+      int size = getSize(Utils.getType(((VarDeclStatContext) ctx).type()));
+      currentSP += size;
+      st.add(((VarDeclStatContext) ctx).ident().getText(), currentSP);
+      return size;
+    } else if (ctx instanceof CompStatContext) {
+      int size = 0;
+      for (StatContext c : ((CompStatContext) ctx).stat()) {
+        size += stackSize(c);
+      }
+      return size;
+    } else {
+      return 0;
+    }
+  }
+
+  private static int stackSize(FuncContext ctx) {
+    if (ctx.paramList() == null) {
+      return 0;
+    } else {
+      int size = 0;
+      for (ParamContext c : ctx.paramList().param()) {
+        size += getSize(Utils.getType(c.type()));
+      }
+      return size;
+    }
+  }
+
+  private static int getSize(Type type) {
+    if (Utils.isSameBaseType(type, BaseLiter.BOOL)
+        || Utils.isSameBaseType(type, BaseLiter.CHAR)) {
+      return 1;
+    } else {
+      return 4;
+    }
+  }
+
+  private void subSP(int size) {
     if (size > 0) {
       while (size > 1024) {
         writer.addInst(Inst.SUB, "sp, sp, #1024");
@@ -39,8 +118,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       }
       writer.addInst(Inst.SUB, "sp, sp, #" + size);
     }
-    size = tempSize;
-    visit(ctx.stat());
+  }
+
+  private void addSP(int size) {
     if (size > 0) {
       while (size > 1024) {
         writer.addInst(Inst.ADD, "sp, sp, #1024");
@@ -48,9 +128,32 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       }
       writer.addInst(Inst.ADD, "sp, sp, #" + size);
     }
-    writer.addInst(Inst.LDR, "r0, =0");
-    writer.addInst(Inst.POP, "{pc}");
-    writer.addLtorg();
+  }
+
+  @Override
+  public Void visitVarDeclStat(VarDeclStatContext ctx) {
+    String ident = ctx.ident().getText();
+    st.add(ident, ctx.type());
+    visit(ctx.assignRhs());
+    Inst inst;
+    if (getSize(Utils.getType(ctx.type())) == 1) {
+      inst = Inst.STRB;
+    } else {
+      inst = Inst.STR;
+    }
+    int offset = currentSP - st.lookupI(ident);
+    if (offset == 0) {
+      writer.addInst(inst, "r4, [sp]");
+    } else {
+      writer.addInst(inst, "r4, [sp, #" + offset + "]");
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitAssignStat(AssignStatContext ctx) {
+    visit(ctx.assignRhs());
+    visit(ctx.assignLhs());
     return null;
   }
 
@@ -121,14 +224,26 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.BEQ, pair[0]);
 
     st = new SymbolTable(st);
+    int perviousSP0 = currentSP;
+    currentSP = 0;
+    int size0 = stackSize(ctx.stat(0));
+    subSP(size0);
     visit(ctx.stat(0));
+    addSP(size0);
+    currentSP = perviousSP0;
     st = st.getEncSymTable();
 
     writer.addInst(Inst.B, pair[1]);
     writer.addLabel(pair[0]);
 
     st = new SymbolTable(st);
+    int perviousSP1 = currentSP;
+    currentSP = 0;
+    int size1 = stackSize(ctx.stat(1));
+    subSP(size1);
     visit(ctx.stat(1));
+    addSP(size1);
+    currentSP = perviousSP1;
     st = st.getEncSymTable();
 
     writer.addLabel(pair[1]);
@@ -142,7 +257,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addLabel(pair[1]);
 
     st = new SymbolTable(st);
+    int perviousSP = currentSP;
+    currentSP = 0;
+    int size = stackSize(ctx.stat());
+    subSP(size);
     visit(ctx.stat());
+    addSP(size);
+    currentSP = perviousSP;
     st = st.getEncSymTable();
 
     writer.addLabel(pair[0]);
@@ -155,99 +276,61 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitScopingStat(ScopingStatContext ctx) {
     st = new SymbolTable(st);
+    int perviousSP = currentSP;
+    currentSP = 0;
+    int size = stackSize(ctx.stat());
+    subSP(size);
     visit(ctx.stat());
+    addSP(size);
+    currentSP = perviousSP;
     st = st.getEncSymTable();
-    return null;
-  }
-
-  @Override
-  public Void visitFunc(FuncContext ctx) {
-    int temp = currentStackPointer;
-    currentStackPointer = 0;
-    st = new SymbolTable(st);
-    writer.addLabel("f_" + ctx.ident().getText());
-    writer.addInst(Inst.PUSH, "{lr}");
-    visitChildren(ctx);
-    writer.addInst(Inst.POP, "{pc}");
-    writer.addLtorg();
-    currentStackPointer = temp;
-    st = st.getEncSymTable();
-    return null;
-  }
-
-  @Override
-  public Void visitParamList(ParamListContext ctx) {
-    int size = 0;
-    for (int i = 0; i < ctx.param().size(); i++) {
-      if(i == 0) {
-    	  size -= 4;
-      }
-      st.add(ctx.param(i).ident().getText(), size);
-      st.add(ctx.param(i).ident().getText(), ctx.param(i).type());
-     if (ctx.param(i).type().baseType() != null) {
-    	        switch (ctx.param(i).type().getText()) {
-    	          case "bool":
-    	          case "char":
-    	            size--;
-    	            break;
-    	          case "int":
-    	          case "string":
-    	            size -= 4;
-    	            break;
-    	        }
-    	  } else if (ctx.param(i).type().arrayType() != null) {
-    	        size -= 4;
-    	  } 
-      }
-      
     return null;
   }
 
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
-	  visitChildren(ctx);
-	  writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
-	  int size = 0;
-	  for(ExprContext c : ctx.argList().expr()) {
-		  Type t = Utils.getType(c,st);
-		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) ||
-				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-			  size++;
-		  } else {
-			  size += 4;
-		  } 
-	  }
-	  if(size >0) {
-		  writer.addInst(Inst.ADD, "sp, sp, #" + size);
-	  }
-	  writer.addInst(Inst.MOV, "r4, r0");
-	  return null;
-
+    visitChildren(ctx);
+    writer.addInst(Inst.BL, "f_" + ctx.ident().getText());
+    int size = 0;
+    for (ExprContext c : ctx.argList().expr()) {
+      Type t = Utils.getType(c, st);
+      if (Utils.isSameBaseType(t, BaseLiter.CHAR) ||
+          Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+        size++;
+      } else {
+        size += 4;
+      }
+    }
+    if (size > 0) {
+      writer.addInst(Inst.ADD, "sp, sp, #" + size);
+    }
+    writer.addInst(Inst.MOV, "r4, r0");
+    return null;
   }
-  
+
   @Override
   public Void visitArgList(ArgListContext ctx) {
-	  if(ctx.expr().size() > 0) {
-		  String msg = "[sp]";
-		  int offset = 0;
-		  Type t = Utils.getType(ctx.expr(0),st);
-		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
-				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-			  writer.addInst(Inst.LDRSB, "r4, " + msg);
-			  offset++;
-		  } else {
-			  writer.addInst(Inst.LDR, "r4, " + msg);
-			  offset += 4;
-		  }
-		  msg = "[sp, #-" + offset + "]!";
-		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
-				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
-			  writer.addInst(Inst.STRB, "r4, " + msg);
-		  } else {
-			  writer.addInst(Inst.STR, "r4, " + msg);
-		  }
-	  } 
-	  return null;
+    if (ctx.expr().size() > 0) {
+      String msg = "[sp]";
+      int offset = 0;
+      Type t = Utils.getType(ctx.expr(0), st);
+      if (Utils.isSameBaseType(t, BaseLiter.CHAR) ||
+          Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+        writer.addInst(Inst.LDRSB, "r4, " + msg);
+        offset++;
+      } else {
+        writer.addInst(Inst.LDR, "r4, " + msg);
+        offset += 4;
+      }
+      msg = "[sp, #-" + offset + "]!";
+      if (Utils.isSameBaseType(t, BaseLiter.CHAR) ||
+          Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+        writer.addInst(Inst.STRB, "r4, " + msg);
+      } else {
+        writer.addInst(Inst.STR, "r4, " + msg);
+      }
+    }
+    return null;
   }
 
   // private void sizeOfParam(ParamContext ctx, Integer size) {
@@ -268,11 +351,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   // st.add(ctx.ident().getText(), size);
   // }
 
-  @Override
-  public Void visitParam(ParamContext ctx) {
-    return null;
-  }
-  
   private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
     visit(expr1);
     currentReg = Reg.values()[currentReg.ordinal() + 1];
@@ -280,12 +358,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     currentReg = Reg.values()[currentReg.ordinal() - 1];
     return null;
   }
-  
+
   @Override
   public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
     visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
     Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
-    
+
     if (ctx.MULT() != null) {
       writer.addInst(Inst.SMULL, currentReg + ", " + nextReg + ", " + currentReg + ", " + nextReg);
       writer.addInst(Inst.CMP, nextReg + ", " + currentReg + ", ASR #31");
@@ -307,7 +385,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
     visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
     Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
-    
+
     if (ctx.PLUS() != null) {
       writer.addInst(Inst.ADDS, currentReg + ", " + currentReg + ", " + nextReg);
     } else {
@@ -321,7 +399,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
     visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
     Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
-    
+
     writer.addInst(Inst.CMP, currentReg + ", " + nextReg);
     if (ctx.GRT() != null) {
       writer.addInst(Inst.MOVGT, currentReg + ", #1");
@@ -343,7 +421,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
     visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
     Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
-    
+
     writer.addInst(Inst.CMP, currentReg + ", " + nextReg);
     if (ctx.EQUAL() != null) {
       writer.addInst(Inst.MOVEQ, currentReg + ", #1");
@@ -384,7 +462,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         // negate r4, as this is value of evaluated bool expr
         writer.addInst(Inst.EOR, "r4, r4, #1");
       } else {
-        //do nothing, chars treated as nums in ass
+        // do nothing, chars treated as nums in ass
       }
     } else {
       // only minus left
@@ -394,52 +472,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  private int sizeOfDecl(StatContext ctx) {
-    if (ctx instanceof VarDeclStatContext) {
-      int size = 0;
-      if (((VarDeclStatContext) ctx).type().baseType() != null) {
-        switch (((VarDeclStatContext) ctx).type().getText()) {
-          case "bool":
-          case "char":
-            size = 1;
-            currentStackPointer++;
-            break;
-          case "int":
-          case "string":
-            size = 4;
-            currentStackPointer += 4;
-            break;
-        }
-      } else {
-        size = 4;
-        currentStackPointer += 4;
-      }
-      st.add(((VarDeclStatContext) ctx).ident().getText(), currentStackPointer);
-      return size;
-    } else if (ctx instanceof CompStatContext) {
-      int result = 0;
-      for (StatContext c : ((CompStatContext) ctx).stat()) {
-        result += sizeOfDecl(c);
-      }
-      return result;
-    } else {
-      return 0;
-    }
-  }
-
-  @Override
-  public Void visitVarDeclStat(VarDeclStatContext ctx) {
-    st.add(ctx.ident().getText(), ctx.type());
-    visit(ctx.assignRhs());
-    int stackPointerOffset = currentStackPointer - st.lookupI(ctx.ident().getText());
-    store(Utils.getType(ctx.type()), stackPointerOffset, "r4", "sp");
-    return null;
-  }
-
-  private void store(Type type, int stackPointerOffset, String reg1, String reg2) {
+  private void store(Type type, int offset, String reg1, String reg2) {
     String msg = "[" + reg2 + "]";
-    if (stackPointerOffset > 0) {
-      msg = "["+ reg2 + ", #" + stackPointerOffset + "]";
+    if (offset > 0) {
+      msg = "[" + reg2 + ", #" + offset + "]";
     }
     if (Utils.isSameBaseType(type, BaseLiter.INT) || type instanceof ArrayType
         || Utils.isStringType(type) || type instanceof PairType) {
@@ -450,17 +486,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitAssignStat(AssignStatContext ctx) {
-    visit(ctx.assignRhs());
-    visit(ctx.assignLhs());
-    return null;
-  }
-
-  @Override
   public Void visitLhsIdent(LhsIdentContext ctx) {
     IdentContext ident = ctx.ident();
     String msg = "[sp]";
-    int stackPointerOffset = currentStackPointer - st.lookupI(ident.getText());
+    int stackPointerOffset = currentSP - st.lookupI(ident.getText());
     if (stackPointerOffset > 0) {
       msg = "[sp, #" + stackPointerOffset + "]";
     }
@@ -470,7 +499,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.STRB, "r4, " + msg);
     } else {
       writer.addInst(Inst.STR, "r4, " + msg);
-    }// TODO
+    } // TODO
     return null;
   }
 
@@ -482,17 +511,17 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       if (Utils.isSameBaseType(type, BaseLiter.BOOL)
           || Utils.isSameBaseType(type, BaseLiter.CHAR)
           || Utils.isStringType(type)) {
-        writer.addInst(Inst.STRB,"r4, [" + currentReg + "]");
+        writer.addInst(Inst.STRB, "r4, [" + currentReg + "]");
       } else {
-        writer.addInst(Inst.STR,"r4, [" + currentReg + "]");
+        writer.addInst(Inst.STR, "r4, [" + currentReg + "]");
       }
     } else if (context.parent instanceof ArrayElemExprContext) {
-      writer.addInst(Inst.LDR,"r4, [" + currentReg + "]");
+      writer.addInst(Inst.LDR, "r4, [" + currentReg + "]");
     } else if (!(context instanceof FuncContext)
-        && !(context instanceof RhsCallContext) 
+        && !(context instanceof RhsCallContext)
         && !(context instanceof ParamContext)) {
       String msg = "[sp]";
-      int stackPointerOffset = currentStackPointer - st.lookupI(ctx.getText());
+      int stackPointerOffset = currentSP - st.lookupI(ctx.getText());
       if (stackPointerOffset > 0) {
         msg = "[sp, #" + stackPointerOffset + "]";
       }
@@ -620,9 +649,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     currentReg = Reg.values()[currentReg.ordinal() - 1];
     return null;
   }
-  
+
   @Override
-  public Void visitArrayElem(ArrayElemContext ctx) { 
+  public Void visitArrayElem(ArrayElemContext ctx) {
     Reg previousReg = currentReg;
     currentReg = Reg.values()[currentReg.ordinal() + 1];
     if (ctx.parent instanceof LhsArrayElemContext) {
@@ -645,7 +674,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     }
     return null;
   }
-  
+
   private void writeArrayElemInstructions(String type, Reg previousReg) {
     writer.addInst(Inst.LDR, previousReg + ", [" + previousReg + "]");
     writer.addInst(Inst.MOV, "r0, " + currentReg);
@@ -656,17 +685,17 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     if (type.endsWith("[]") || type.contains("INT")) {
       writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + currentReg + ", LSL #2");
     } else { // reached a BOOL or CHAR type
-      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + currentReg); 
+      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + currentReg);
     }
   }
 
   @Override
-  public Void visitRhsNewPair(BasicParser.RhsNewPairContext ctx) {
+  public Void visitRhsNewPair(RhsNewPairContext ctx) {
     writer.addInst(Inst.LDR, "r0, =8");
     writer.addInst(Inst.BL, "malloc");
     writer.addInst(Inst.MOV, "r4, r0");
 
-    currentReg = Reg.r5;
+    currentReg = Reg.R5;
 
     visit(ctx.expr(0));
     Type type0 = Utils.getType(ctx.expr(0), st);
@@ -682,19 +711,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     store(type1, 0, "r5", "r0");
     writer.addInst(Inst.STR, "r0, [r4, #4]");
 
-    currentReg = Reg.r4;
+    currentReg = Reg.R4;
 
     return null;
-  }
-
-  private int getSize(Type type) {
-    int size;
-    if (Utils.isSameBaseType(type, BaseLiter.BOOL)
-            || Utils.isSameBaseType(type, BaseLiter.CHAR))
-      size = 1;
-    else
-    size = 4;
-    return size;
   }
 
 }
