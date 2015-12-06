@@ -167,6 +167,18 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitFreeStat(FreeStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.MOV, "r0, r4");
+    if (Utils.getType(ctx.expr(), st) instanceof PairType) {
+      writer.addInst(Inst.BL, writer.p_free_pair());
+    } else {
+      writer.addInst(Inst.BL, writer.p_free_array());
+    }
+    return null;
+  }
+
+  @Override
   public Void visitReturnStat(ReturnStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.MOV, "r0, r4");
