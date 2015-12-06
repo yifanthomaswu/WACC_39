@@ -341,35 +341,45 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitArgList(ArgListContext ctx) {
 	  for(int i = ctx.expr().size() - 1; i >= 0; i--) {
-		  int offset = 0;
 		  Type t = Utils.getType(ctx.expr(i), st);
 		  String msg = "[sp]";
+		  if(currentSP > 0) {
+			  msg = "[sp, #" + currentSP + "]";
+		  }
 		  if(!ctx.isEmpty()) {
-			  if(Utils.isSameBaseType(t, BaseLiter.BOOL)) {
+			  if(st.lookupI(ctx.expr(i).getText()) != null) {
+				  writer.addInst(Inst.LDR, "r4, "+ msg);
+				  if(Utils.isSameBaseType(t, BaseLiter.BOOL) || 
+						  Utils.isSameBaseType(t, BaseLiter.CHAR)) {
+					  currentSP++;
+				  } else {
+					  currentSP += 4;
+				  }
+			  } else if(Utils.isSameBaseType(t, BaseLiter.BOOL)) {
 				  if(ctx.expr(i).getText().equals("true")) {
 					  writer.addInst(Inst.MOV, "r4, #1");
 				  } else {
 					  writer.addInst(Inst.MOV, "r4, #0");
 				  }
-				  offset++;
+				  currentSP++;
 			  } else if(Utils.isSameBaseType(t, BaseLiter.CHAR)) {
-				  offset++;
+				  currentSP++;
 				  writer.addInst(Inst.MOV, "r4, #" + ctx.expr(i).getText());
 			  } else if(Utils.isSameBaseType(t, BaseLiter.INT)){
-				  offset += 4;
+				  currentSP += 4;
 				  writer.addInst(Inst.LDR, "r4, =" + ctx.expr(i).getText());
 			  } else if(Utils.isStringType(t)) {
-				  offset += 4;
+				  currentSP += 4;
 				  writer.addInst(Inst.LDR, "=" + "some message here");
 			  } else {
-				  offset += 4;
+				  currentSP += 4;
 				  writer.addInst(Inst.LDR, "r4, [sp, #" + 
 				  st.lookupI(ctx.expr(i).getText()) + "]");
 			  }
 		  } else {
 			  writer.addInst(Inst.LDR, "r4, " + msg);
 		  }
-		  msg = "[sp, #-" + offset + "]!";
+		  msg = "[sp, #-" + currentSP + "]!";
 		  if(Utils.isSameBaseType(t, BaseLiter.CHAR) || 
 				  Utils.isSameBaseType(t, BaseLiter.BOOL)) {
 			  writer.addInst(Inst.STRB, "r4, " + msg);
