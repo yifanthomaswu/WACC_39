@@ -39,7 +39,7 @@ public class PairType extends Type {
     base = null;
   }
 
-  Type getElem(int i) {
+  public Type getElem(int i) {
     if (base[i] == null) {
       return new PairType();
     } else {
