@@ -304,30 +304,39 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
     return null;
   }
+  
+  private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
+    visit(expr1);
+    currentReg = Reg.values()[currentReg.ordinal() + 1];
+    visit(expr2);
+    currentReg = Reg.values()[currentReg.ordinal() - 1];
+    return null;
+  }
 
   @Override
   public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
-    visitChildren(ctx);
-    writer.addInst(Inst.CMP, "r4, r5");
+    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    
+    Reg nextReg = Reg.values()[currentReg.ordinal() + 1];
+    writer.addInst(Inst.CMP, currentReg + ", " + nextReg);
     if (ctx.GRT() != null) {
-      writer.addInst(Inst.MOVGT, "r4, #1");
-      writer.addInst(Inst.MOVLE, "r4, #0");
+      writer.addInst(Inst.MOVGT, currentReg + ", #1");
+      writer.addInst(Inst.MOVLE, currentReg + ", #0");
     } else if (ctx.GRT_EQUAL() != null) {
-      writer.addInst(Inst.MOVGE, "r4, #1");
-      writer.addInst(Inst.MOVLT, "r4, #0");
+      writer.addInst(Inst.MOVGE, currentReg + ", #1");
+      writer.addInst(Inst.MOVLT, currentReg + ", #0");
     } else if (ctx.LESS() != null) {
-      writer.addInst(Inst.MOVLT, "r4, #1");
-      writer.addInst(Inst.MOVGE, "r4, #0");
+      writer.addInst(Inst.MOVLT, currentReg + ", #1");
+      writer.addInst(Inst.MOVGE, currentReg + ", #0");
     } else {
-      writer.addInst(Inst.MOVLE, "r4, #1");
-      writer.addInst(Inst.MOVGT, "r4, #0");
+      writer.addInst(Inst.MOVLE, currentReg + ", #1");
+      writer.addInst(Inst.MOVGT, currentReg + ", #0");
     }
     return null;
   }
 
   @Override
   public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
-    // visitChildren(ctx);
     visit(ctx.expr(0));
     currentReg = Reg.r5;
     visit(ctx.expr(1));
