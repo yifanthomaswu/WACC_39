@@ -463,8 +463,17 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
-    if (context instanceof ArrayElemContext) {
-      writer.addInst(Inst.LDR, currentReg + ", [" + currentReg + "]");
+    if (context.parent instanceof LhsArrayElemContext) {
+      Type type = Utils.getType(ctx, st);
+      if (Utils.isSameBaseType(type, BaseLiter.BOOL)
+          || Utils.isSameBaseType(type, BaseLiter.CHAR)
+          || Utils.isStringType(type)) {
+        writer.addInst(Inst.STRB,"r4, [" + currentReg + "]");
+      } else {
+        writer.addInst(Inst.STR,"r4, [" + currentReg + "]");
+      }
+    } else if (context.parent instanceof ArrayElemExprContext) {
+      writer.addInst(Inst.LDR,"r4, [" + currentReg + "]");
     } else if (!(context instanceof FuncContext)
         && !(context instanceof RhsCallContext) 
         && !(context instanceof ParamContext)) {
@@ -600,10 +609,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   
   @Override
   public Void visitArrayElem(ArrayElemContext ctx) { 
-    writer.addInst(Inst.ADD, currentReg + ", sp, #0");
-    Type type = Utils.getType(ctx.ident(), st);
     Reg previousReg = currentReg;
     currentReg = Reg.values()[currentReg.ordinal() + 1];
+    if (ctx.parent instanceof LhsArrayElemContext) {
+      previousReg = currentReg;
+      currentReg = Reg.values()[currentReg.ordinal() + 1];
+    }
+    writer.addInst(Inst.ADD, previousReg + ", sp, #0");
+    Type type = Utils.getType(ctx.ident(), st);
     String typeString = type.toString();
     for (int level = 0; level < ((ArrayType) type).getLevel(); level++) {
       visit(ctx.expr(level));
@@ -611,7 +624,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writeArrayElemInstructions(typeString, previousReg);
     }
     currentReg = Reg.values()[currentReg.ordinal() - 1];
-    return visit(ctx.ident());
+    visit(ctx.ident());
+    if (ctx.parent instanceof LhsArrayElemContext) {
+      previousReg = currentReg;
+      currentReg = Reg.values()[currentReg.ordinal() - 1];
+    }
+    return null;
   }
   
   private void writeArrayElemInstructions(String type, Reg previousReg) {
