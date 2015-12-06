@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import antlr.*;
+import antlr.BasicParser.ArrayElemContext;
 import antlr.BasicParser.*;
 import wacc.visitor.SymbolTable;
 import wacc.visitor.type.*;
@@ -462,7 +463,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
-    if (!(context instanceof FuncContext)
+    if (context instanceof ArrayElemContext) {
+      writer.addInst(Inst.LDR, currentReg + ", [" + currentReg + "]");
+    } else if (!(context instanceof FuncContext)
         && !(context instanceof RhsCallContext) 
         && !(context instanceof ParamContext)) {
       String msg = "[sp]";
@@ -608,7 +611,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writeArrayElemInstructions(typeString, previousReg);
     }
     currentReg = Reg.values()[currentReg.ordinal() - 1];
-    return null;
+    return visit(ctx.ident());
   }
   
   private void writeArrayElemInstructions(String type, Reg previousReg) {
