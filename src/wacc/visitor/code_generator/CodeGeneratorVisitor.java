@@ -293,6 +293,28 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitLhsIdent(LhsIdentContext ctx) {
+    String ident = ctx.ident().getText();
+    int offset = currentSP - st.lookupI(ident);
+    if (ctx.getParent() instanceof AssignStatContext) {
+      Inst inst;
+      if (getSize(Utils.getType(st.lookupAllT(ident))) == 1) {
+        inst = Inst.STRB;
+      } else {
+        inst = Inst.STR;
+      }
+      if (offset == 0) {
+        writer.addInst(inst, "r4, [sp]");
+      } else {
+        writer.addInst(inst, "r4, [sp, #" + offset + "]");
+      }
+    } else {
+      writer.addInst(Inst.ADD, "r4, sp, #" + offset);
+    }
+    return null;
+  }
+
+  @Override
   public Void visitRhsCall(RhsCallContext ctx) {
     visit(ctx.argList());
     String ident = ctx.ident().getText();
@@ -477,24 +499,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitLhsIdent(LhsIdentContext ctx) {
-    IdentContext ident = ctx.ident();
-    String msg = "[sp]";
-    int stackPointerOffset = currentSP - st.lookupI(ident.getText());
-    if (stackPointerOffset > 0) {
-      msg = "[sp, #" + stackPointerOffset + "]";
-    }
-    Type type = Utils.getType(ident, st);
-    if (Utils.isSameBaseType(type, BaseLiter.BOOL)
-        || Utils.isSameBaseType(type, BaseLiter.CHAR)) {
-      writer.addInst(Inst.STRB, "r4, " + msg);
-    } else {
-      writer.addInst(Inst.STR, "r4, " + msg);
-    } // TODO
-    return null;
-  }
-
-  @Override
   public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
     if (context.parent instanceof LhsArrayElemContext) {
@@ -530,8 +534,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitIntLiter(IntLiterContext ctx) {
-    writer.addInst(Inst.LDR,
-        currentReg + ", =" + Integer.parseInt(ctx.getText()));
+    writer.addInst(Inst.LDR, currentReg + ", =" + Integer.parseInt(ctx.getText()));
     return null;
   }
 
