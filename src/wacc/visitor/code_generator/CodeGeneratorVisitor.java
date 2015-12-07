@@ -286,7 +286,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitLhsIdent(LhsIdentContext ctx) {
     String ident = ctx.ident().getText();
-    int offset = sp - st.lookupI(ident);
+    int offset = sp - st.lookupAllI(ident);
     if (ctx.getParent() instanceof AssignStatContext) {
       strWithOffset(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
     } else {
@@ -532,13 +532,16 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       strWithOffset(Utils.getType(ctx, st), 0, "r4", reg.toString());
     } else if (context.parent instanceof ArrayElemExprContext) {
       writer.addInst(Inst.LDR, "r4, [" + reg + "]");
+    } else if (context.parent.parent.parent instanceof WhileStatContext) {
+    	Type type = Utils.getType(st.lookupAllT(ctx.getText()));
+    	load(type, sp, reg.toString(), "sp");
     } else if (!(context instanceof FuncContext)
         && !(context instanceof RhsCallContext)
         && !(context instanceof ParamContext)) {
-      int stackPointerOffset = sp - st.lookupI(ctx.getText());
-      Type type = Utils.getType(st.lookupT(ctx.getText()));
+      int stackPointerOffset = sp - st.lookupAllI(ctx.getText());
+      Type type = Utils.getType(st.lookupAllT(ctx.getText()));
       load(type, stackPointerOffset, reg.toString(), "sp");
-    }
+    } 
     return null;
   }
 
