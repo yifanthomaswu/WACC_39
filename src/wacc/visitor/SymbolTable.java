@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.misc.MultiMap;
 
 import antlr.BasicParser.FuncContext;
 import antlr.BasicParser.TypeContext;
-import org.antlr.v4.runtime.misc.ObjectEqualityComparator;
 
 public class SymbolTable {
 
@@ -55,8 +54,6 @@ public class SymbolTable {
     do {
       Object object = s.lookup(name, c);
       if (object != null) {
-        Object objectT = s.lookup(name, TypeContext.class);
-        if (objectT != null)
           return object;
       }
       s = s.encSymTable;
