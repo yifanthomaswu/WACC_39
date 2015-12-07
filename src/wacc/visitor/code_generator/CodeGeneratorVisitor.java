@@ -66,14 +66,26 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
+//  @Override
+//  public Void visitParamList(ParamListContext ctx) {
+//    int offset = -4;
+//    for (ParamContext c : ctx.param()) {
+//      String ident = c.ident().getText();
+//      st.add(ident, offset);
+//      st.add(ident, c.type());
+//      offset -= getSize(Utils.getType(c.type()));
+//    }
+//    return null;
+//  }
+  
   @Override
   public Void visitParamList(ParamListContext ctx) {
-    int offset = -4;
-    for (ParamContext c : ctx.param()) {
-      String ident = c.ident().getText();
+	  int offset = 4;
+    for (int i=ctx.param().size() - 1; i >= 0; i--) {
+      String ident = ctx.param(i).ident().getText();
       st.add(ident, offset);
-      st.add(ident, c.type());
-      offset -= getSize(Utils.getType(c.type()));
+      st.add(ident, ctx.param(i).type());
+      offset -= getSize(Utils.getType(ctx.param(i).type()));
     }
     return null;
   }
@@ -101,8 +113,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       return 0;
     } else {
       int size = 0;
-      for (ParamContext c : ctx.paramList().param()) {
-        size += getSize(Utils.getType(c.type()));
+      for (int i = ctx.paramList().param().size() - 1; i >= 0; i--) {
+    	  size += getSize(Utils.getType(ctx.paramList().param(i).type()));      
       }
       return size;
     }
