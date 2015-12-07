@@ -48,13 +48,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     st = new SymbolTable(st);
     int tempSP = sp;
     sp = 0;
-
+    int size = stackSize(ctx.stat());
+    sp = size;
     writer.addLabel("f_" + ctx.ident().getText());
     writer.addInst(Inst.PUSH, "{lr}");
     if (ctx.paramList() != null) {
       visit(ctx.paramList());
     }
-    int size = stackSize(ctx.stat());
+    
     subSP(size);
     visit(ctx.stat());
     addSP(size);
@@ -80,7 +81,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   
   @Override
   public Void visitParamList(ParamListContext ctx) {
-	  int offset = 4;
+	  int offset = sp + 4;
     for (int i=0; i < ctx.param().size(); i++) {
       String ident = ctx.param(i).ident().getText();
       st.add(ident, offset);
