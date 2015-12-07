@@ -36,7 +36,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
     int size = stackSize(ctx.stat());
-    scopingOffset += size;
+    //scopingOffset += size;
     subSP(size);
     visit(ctx.stat());
     addSP(size);
@@ -319,9 +319,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitLhsIdent(LhsIdentContext ctx) {
     String ident = ctx.ident().getText();
     int offset =  st.lookupAllI(ident);
-    if (st.lookupT(ident) == null)
+    if (st.lookupT(ident) == null) {
       //offset += scopingOffset;
       offset = scopingOffset - offset;
+    }
     if (ctx.getParent() instanceof AssignStatContext) {
       strWithOffset(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
     } else {
