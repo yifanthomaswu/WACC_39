@@ -81,13 +81,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private int stackSize(StatContext ctx) {
     if (ctx instanceof VarDeclStatContext) {
       int size = getSize(Utils.getType(((VarDeclStatContext) ctx).type()));
-      sp += size;
       st.add(((VarDeclStatContext) ctx).ident().getText(), sp);
+      sp += size;
       return size;
     } else if (ctx instanceof CompStatContext) {
       int size = 0;
-      for (StatContext c : ((CompStatContext) ctx).stat()) {
-        size += stackSize(c);
+      
+      for (int i = ((CompStatContext) ctx).stat().size() - 1; i >= 0; i--) {
+    	  size += stackSize(((CompStatContext) ctx).stat(i));        
       }
       return size;
     } else {
@@ -141,7 +142,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     String ident = ctx.ident().getText();
     st.add(ident, ctx.type());
     visit(ctx.assignRhs());
-    int offset = sp - st.lookupI(ident);
+    int offset = st.lookupI(ident);
     strWithOffset(Utils.getType(ctx.type()), offset, "r4", "sp");
     return null;
   }
@@ -301,7 +302,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitLhsIdent(LhsIdentContext ctx) {
     String ident = ctx.ident().getText();
-    int offset = sp - st.lookupAllI(ident);
+    int offset =  st.lookupAllI(ident);
     if (ctx.getParent() instanceof AssignStatContext) {
       strWithOffset(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
     } else {
@@ -524,13 +525,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       strWithOffset(Utils.getType(ctx, st), 0, "r4", reg.toString());
     } else if (context.parent instanceof ArrayElemExprContext) {
       writer.addInst(Inst.LDR, "r4, [" + reg + "]");
-    } else if (context.parent.parent.parent instanceof WhileStatContext) {
+    } else if (context instanceof WhileStatContext) {
     	Type type = Utils.getType(st.lookupAllT(ctx.getText()));
-    	load(type, sp, reg.toString(), "sp");
+    	load(type, st.lookupAllI(ctx.getText()), reg.toString(), "sp");
     } else if (!(context instanceof FuncContext)
         && !(context instanceof RhsCallContext)
         && !(context instanceof ParamContext)) {
-      int stackPointerOffset = sp - st.lookupAllI(ctx.getText());
+      int stackPointerOffset = st.lookupAllI(ctx.getText());
       Type type = Utils.getType(st.lookupAllT(ctx.getText()));
       load(type, stackPointerOffset, reg.toString(), "sp");
     } 
