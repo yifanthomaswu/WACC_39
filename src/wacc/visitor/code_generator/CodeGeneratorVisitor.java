@@ -556,9 +556,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         && !(context instanceof RhsCallContext)
         && !(context instanceof ParamContext)) {
       int stackPointerOffset = st.lookupAllI(ctx.getText());
-      if (context.parent.parent.parent.parent instanceof FuncContext) {
-        stackPointerOffset += 4;
-      }
       Type type = Utils.getType(st.lookupAllT(ctx.getText()));
       load(type, stackPointerOffset, reg.toString(), "sp");
     } 
