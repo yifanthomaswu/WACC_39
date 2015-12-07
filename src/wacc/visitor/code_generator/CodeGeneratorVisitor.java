@@ -14,12 +14,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private int sp;
   private Reg reg;
   private int numberOfPushes;
+  private int scopingOffset;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
     this.sp = 0;
     this.reg = Reg.R4;
     this.numberOfPushes = 0;
+    this.scopingOffset = 0;
   }
 
   @Override
@@ -298,13 +300,17 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitScopingStat(ScopingStatContext ctx) {
     st = new SymbolTable(st);
-    int perviousSP = sp;
+    int previousSP = sp;
     sp = 0;
     int size = stackSize(ctx.stat());
+    scopingOffset += size;
+
     subSP(size);
     visit(ctx.stat());
     addSP(size);
-    sp = perviousSP;
+
+    scopingOffset -= size;
+    sp = previousSP;
     st = st.getEncSymTable();
     return null;
   }
@@ -313,6 +319,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitLhsIdent(LhsIdentContext ctx) {
     String ident = ctx.ident().getText();
     int offset =  st.lookupAllI(ident);
+    if (st.lookupT(ident) == null)
+      offset += scopingOffset;
     if (ctx.getParent() instanceof AssignStatContext) {
       strWithOffset(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
     } else {
