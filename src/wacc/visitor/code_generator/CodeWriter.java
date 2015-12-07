@@ -298,6 +298,47 @@ public class CodeWriter {
     return label;
   }
 
+  public String p_free_pair() {
+    String label = "p_free_pair";
+    if (definedP.contains(label)) {
+      return label;
+    }
+    StringBuilder sb = initP(label);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.CMP, "r0, #0", sb);
+    String msg = addMsg("NullReferenceError: dereference a null reference\\n\\0");
+    addInstToSB(Inst.LDREQ, "r0, =" + msg, sb);
+    addInstToSB(Inst.BEQ, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.PUSH, "{r0}", sb);
+    addInstToSB(Inst.LDR, "r0, [r0]", sb);
+    addInstToSB(Inst.BL, "free", sb);
+    addInstToSB(Inst.LDR, "r0, [sp]", sb);
+    addInstToSB(Inst.LDR, "r0, [r0, #4]", sb);
+    addInstToSB(Inst.BL, "free", sb);
+    addInstToSB(Inst.POP, "{r0}", sb);
+    addInstToSB(Inst.BL, "free", sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
+  public String p_free_array() {
+    String label = "p_free_array";
+    if (definedP.contains(label)) {
+      return label;
+    }
+    StringBuilder sb = initP(label);
+
+    addInstToSB(Inst.PUSH, "{lr}", sb);
+    addInstToSB(Inst.CMP, "r0, #0", sb);
+    String msg = addMsg("NullReferenceError: dereference a null reference\\n\\0");
+    addInstToSB(Inst.LDREQ, "r0, =" + msg, sb);
+    addInstToSB(Inst.BEQ, p_throw_runtime_error(), sb);
+    addInstToSB(Inst.BL, "free", sb);
+    addInstToSB(Inst.POP, "{pc}", sb);
+    return label;
+  }
+
   public void writeToFile() {
     if (msgCount != -1) {
       file.write(data.toString());

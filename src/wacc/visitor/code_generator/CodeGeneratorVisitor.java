@@ -150,6 +150,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitAssignStat(AssignStatContext ctx) {
     visit(ctx.assignRhs());
     visit(ctx.assignLhs());
+    if (ctx.assignLhs() instanceof LhsArrayElemContext) {
+      strWithOffset(Utils.getType(((RhsExprContext) ctx.assignRhs()).expr(), st), 0, "r4", "r5");
+    }
     return null;
   }
 
@@ -162,6 +165,18 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(Inst.BL, writer.p_read_int());
     } else {
       writer.addInst(Inst.BL, writer.p_read_char());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitFreeStat(FreeStatContext ctx) {
+    visit(ctx.expr());
+    writer.addInst(Inst.MOV, "r0, r4");
+    if (Utils.getType(ctx.expr(), st) instanceof PairType) {
+      writer.addInst(Inst.BL, writer.p_free_pair());
+    } else {
+      writer.addInst(Inst.BL, writer.p_free_array());
     }
     return null;
   }
@@ -338,42 +353,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitArgList(ArgListContext ctx) {
-	  for (int i = ctx.expr().size() - 1; i >= 0; i--) {
-	      visit(ctx.expr(i));
-	      int size = getSize(Utils.getType(ctx.expr(i), st));
-	      sp += size;
-	      if (size == 1) {
-	        writer.addInst(Inst.STRB, "r4, [sp, #-1]!");
-	      } else {
-	        writer.addInst(Inst.STR, "r4, [sp, #-4]!");
-	      }
-	    }
-	  return null;
-  }
-
-  // private void sizeOfParam(ParamContext ctx, Integer size) {
-  // if (ctx.type().baseType() != null) {
-  // switch (ctx.type().getText()) {
-  // case "bool":
-  // case "char":
-  // size++;
-  // break;
-  // case "int":
-  // case "string":
-  // size += 4;
-  // break;
-  // }
-  // } else if (ctx.type().arrayType() != null) {
-  // size += 4;
-  // }
-  // st.add(ctx.ident().getText(), size);
-  // }
-
-  @Override
-  public Void visitParam(ParamContext ctx) {
+    for (int i = ctx.expr().size() - 1; i >= 0; i--) {
+      visit(ctx.expr(i));
+      int size = getSize(Utils.getType(ctx.expr(i), st));
+      sp += size;
+      if (size == 1) {
+        writer.addInst(Inst.STRB, "r4, [sp, #-1]!");
+      } else {
+        writer.addInst(Inst.STR, "r4, [sp, #-4]!");
+      }
+    }
     return null;
   }
-  
+
   private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
 
     visit(expr1);
@@ -687,7 +679,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writeArrayElemInstructions(typeString, previousReg);
     }
     reg = reg.previous();
-    visit(ctx.ident());
+    // visit(ctx.ident());
     if (ctx.parent instanceof LhsArrayElemContext) {
       previousReg = reg;
       reg = reg.previous();
@@ -730,7 +722,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       // of second
       // pair
     }
-    // writer.addInst(Inst.LDR, "r4, [r4]");
     if (right) {
       load(type, 0, "r4", "r4");
     } else {
