@@ -70,7 +70,17 @@ public class SymbolTable {
   }
 
   public Integer lookupAllI(String name) {
-    return (Integer) lookupAll(name, Integer.class);
+    SymbolTable s = this;
+    do {
+      Object object = s.lookup(name, Integer.class);
+      if (object != null) {
+        Object objectT = s.lookup(name, TypeContext.class);
+        if (objectT != null)
+          return (Integer) object;
+      }
+      s = s.encSymTable;
+    } while (s != null);
+    return null;
   }
 
 }
