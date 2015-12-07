@@ -723,7 +723,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitPairElem(PairElemContext ctx) {
     boolean right = ctx.getParent() instanceof AssignRhsContext;
-    reg = right ? Reg.R4 : Reg.R5;
+    reg = right ? Reg.R4 : reg.next();
     visit(ctx.expr()); // puts res of expr in reg
     writer.addInst(Inst.MOV, "r0, " + reg);
     writer.addInst(Inst.BL, writer.p_check_null_pointer());
@@ -747,8 +747,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       strWithOffset(type, 0, "r4", reg.toString());
     }
 
-    reg = Reg.R4;
+    reg = right ? Reg.R4 : reg.previous();
     return null;
   }
+
+  @Override
+  public Void visitPairExpr(PairExprContext ctx) {
+    writer.addInst(Inst.LDR, reg + ", =0");
+    return null;
+  }
+
 
 }
