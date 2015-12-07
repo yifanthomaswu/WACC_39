@@ -57,7 +57,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     if (ctx.paramList() != null) {
       visit(ctx.paramList());
     }
-    
     subSP(size);
     visit(ctx.stat());
     //addSP(size);
@@ -83,7 +82,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   
   @Override
   public Void visitParamList(ParamListContext ctx) {
-	  int offset = sp + 4;
+	  int offset = sp + 4;	  
     for (int i=0; i < ctx.param().size(); i++) {
       String ident = ctx.param(i).ident().getText();
       st.add(ident, offset);
@@ -557,6 +556,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         && !(context instanceof RhsCallContext)
         && !(context instanceof ParamContext)) {
       int stackPointerOffset = st.lookupAllI(ctx.getText());
+      if (context.parent.parent.parent.parent instanceof FuncContext) {
+        stackPointerOffset += 4;
+      }
       Type type = Utils.getType(st.lookupAllT(ctx.getText()));
       load(type, stackPointerOffset, reg.toString(), "sp");
     } 
@@ -696,7 +698,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       previousReg = reg;
       reg = reg.next();
     }
-    writer.addInst(Inst.ADD, previousReg + ", sp, #0");
+    int offset = st.lookupAllI(ctx.ident().getText()); 
+    writer.addInst(Inst.ADD, previousReg + ", sp, #" + offset);
     Type type = Utils.getType(ctx.ident(), st);
     String typeString = type.toString();
     for (int level = 0; level < ((ArrayType) type).getLevel(); level++) {
