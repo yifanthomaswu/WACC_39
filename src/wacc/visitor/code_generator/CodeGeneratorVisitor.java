@@ -537,7 +537,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(inst, rd + ", [" + rn + ", #" + offset + "]");
     }
   }
-
+/*
   @Override
   public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
@@ -567,6 +567,33 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         Type type = Utils.getType(st.lookupAllT(ident));
         load(type, stackPointerOffset, reg.toString(), "sp");
       }
+    }
+    return null;
+  }*/
+
+  @Override
+  public Void visitIdent(IdentContext ctx) {
+    ParserRuleContext context = ctx.getParent();
+    if (context.parent instanceof LhsArrayElemContext) {
+      Type type = Utils.getType(ctx, st);
+      if (Utils.isSameBaseType(type, BaseLiter.BOOL)
+              || Utils.isSameBaseType(type, BaseLiter.CHAR)
+              || Utils.isStringType(type)) {
+        writer.addInst(Inst.STRB,"r4, [" + reg + "]");
+      } else {
+        writer.addInst(Inst.STR,"r4, [" + reg + "]");
+      }
+    } else if (context.parent instanceof ArrayElemExprContext) {
+      writer.addInst(Inst.LDR, "r4, [" + reg + "]");
+    } else if (context instanceof WhileStatContext) {
+      Type type = Utils.getType(st.lookupAllT(ctx.getText()));
+      load(type, st.lookupAllI(ctx.getText()), reg.toString(), "sp");
+    } else if (!(context instanceof FuncContext)
+            && !(context instanceof RhsCallContext)
+            && !(context instanceof ParamContext)) {
+      int stackPointerOffset = st.lookupAllI(ctx.getText());
+      Type type = Utils.getType(st.lookupAllT(ctx.getText()));
+      load(type, stackPointerOffset, reg.toString(), "sp");
     }
     return null;
   }
