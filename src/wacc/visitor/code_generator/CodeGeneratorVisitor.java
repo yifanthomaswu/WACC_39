@@ -81,11 +81,11 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitParamList(ParamListContext ctx) {
 	  int offset = 4;
-    for (int i=ctx.param().size() - 1; i >= 0; i--) {
+    for (int i=0; i < ctx.param().size(); i++) {
       String ident = ctx.param(i).ident().getText();
       st.add(ident, offset);
       st.add(ident, ctx.param(i).type());
-      offset -= getSize(Utils.getType(ctx.param(i).type()));
+      offset += getSize(Utils.getType(ctx.param(i).type()));
     }
     return null;
   }
@@ -98,7 +98,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       return size;
     } else if (ctx instanceof CompStatContext) {
       int size = 0;
-      
       for (int i = ((CompStatContext) ctx).stat().size() - 1; i >= 0; i--) {
     	  size += stackSize(((CompStatContext) ctx).stat(i));        
       }
