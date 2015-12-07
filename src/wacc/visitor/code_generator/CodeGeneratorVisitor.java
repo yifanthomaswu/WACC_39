@@ -48,17 +48,16 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     st = new SymbolTable(st);
     int tempSP = sp;
     sp = 0;
-    int size = stackSize(ctx.stat());
-    sp = size;
+
     writer.addLabel("f_" + ctx.ident().getText());
     writer.addInst(Inst.PUSH, "{lr}");
     if (ctx.paramList() != null) {
       visit(ctx.paramList());
     }
-    
+    int size = stackSize(ctx.stat());
     subSP(size);
     visit(ctx.stat());
-    //addSP(size);
+    addSP(size);
     writer.addInst(Inst.POP, "{pc}");
     writer.addLtorg();
 
@@ -81,12 +80,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   
   @Override
   public Void visitParamList(ParamListContext ctx) {
-	  int offset = sp + 4;
-    for (int i=0; i < ctx.param().size(); i++) {
+	  int offset = 4;
+    for (int i=ctx.param().size() - 1; i >= 0; i--) {
       String ident = ctx.param(i).ident().getText();
       st.add(ident, offset);
       st.add(ident, ctx.param(i).type());
-      offset += getSize(Utils.getType(ctx.param(i).type()));
+      offset -= getSize(Utils.getType(ctx.param(i).type()));
     }
     return null;
   }
@@ -99,6 +98,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       return size;
     } else if (ctx instanceof CompStatContext) {
       int size = 0;
+      
       for (int i = ((CompStatContext) ctx).stat().size() - 1; i >= 0; i--) {
     	  size += stackSize(((CompStatContext) ctx).stat(i));        
       }
@@ -163,9 +163,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitAssignStat(AssignStatContext ctx) {
     visit(ctx.assignRhs());
     visit(ctx.assignLhs());
-    if (ctx.assignLhs() instanceof LhsArrayElemContext) {
+/*    if (ctx.assignLhs() instanceof LhsArrayElemContext) {
       strWithOffset(Utils.getType(((RhsExprContext) ctx.assignRhs()).expr(), st), 0, "r4", "r5");
-    }
+    }*/
     return null;
   }
 
@@ -198,7 +198,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitReturnStat(ReturnStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.MOV, "r0, r4");
-    addSP(sp);
     writer.addInst(Inst.POP, "{pc}");
     return null;
   }
@@ -535,7 +534,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitIdent(IdentContext ctx) {
     ParserRuleContext context = ctx.getParent();
     if (context.parent instanceof LhsArrayElemContext) {
-      strWithOffset(Utils.getType(ctx, st), 0, "r4", reg.toString());
+        Type type = Utils.getType(ctx, st);
+        if (Utils.isSameBaseType(type, BaseLiter.BOOL)
+            || Utils.isSameBaseType(type, BaseLiter.CHAR)
+            || Utils.isStringType(type)) {
+          writer.addInst(Inst.STRB,"r4, [" + reg + "]");
+        } else {
+          writer.addInst(Inst.STR,"r4, [" + reg + "]");
+        }
     } else if (context.parent instanceof ArrayElemExprContext) {
       writer.addInst(Inst.LDR, "r4, [" + reg + "]");
     } else if (context instanceof WhileStatContext) {
