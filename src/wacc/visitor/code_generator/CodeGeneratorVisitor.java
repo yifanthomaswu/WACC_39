@@ -688,7 +688,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       previousReg = reg;
       reg = reg.next();
     }
-    writer.addInst(Inst.ADD, previousReg + ", sp, #0");
+    int offset = st.lookupAllI(ctx.ident().getText()); 
+    writer.addInst(Inst.ADD, previousReg + ", sp, #" + offset);
     Type type = Utils.getType(ctx.ident(), st);
     String typeString = type.toString();
     for (int level = 0; level < ((ArrayType) type).getLevel(); level++) {
