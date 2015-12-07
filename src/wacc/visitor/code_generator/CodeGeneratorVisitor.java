@@ -36,6 +36,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
     int size = stackSize(ctx.stat());
+    scopingOffset += size;
     subSP(size);
     visit(ctx.stat());
     addSP(size);
@@ -319,7 +320,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     String ident = ctx.ident().getText();
     int offset =  st.lookupAllI(ident);
     if (st.lookupT(ident) == null)
-      offset += scopingOffset;
+      //offset += scopingOffset;
+      offset = scopingOffset - offset;
     if (ctx.getParent() instanceof AssignStatContext) {
       strWithOffset(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
     } else {
@@ -548,20 +550,26 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
           writer.addInst(Inst.STR,"r4, [" + reg + "]");
         }
     } else if (context.parent instanceof ArrayElemExprContext) {
-      writer.addInst(Inst.LDR, "r4, [" + reg + "]");
-    } else if (context instanceof WhileStatContext) {
-    	Type type = Utils.getType(st.lookupAllT(ctx.getText()));
-    	load(type, st.lookupAllI(ctx.getText()), reg.toString(), "sp");
-    } else if (!(context instanceof FuncContext)
-        && !(context instanceof RhsCallContext)
-        && !(context instanceof ParamContext)) {
-      int stackPointerOffset = st.lookupAllI(ctx.getText());
-      if (context.parent.parent.parent.parent instanceof FuncContext) {
-        stackPointerOffset += 4;
+      Type type = ((ArrayType)Utils.getType(ctx, st)).getBase();
+      load(type, 0, "r4", reg.toString());
+    } else {
+      String ident = ctx.getText();
+      if (context instanceof WhileStatContext) {
+          Type type = Utils.getType(st.lookupAllT(ident));
+          load(type, st.lookupAllI(ident), reg.toString(), "sp");
+      } else if (!(context instanceof FuncContext)
+          && !(context instanceof RhsCallContext)
+          && !(context instanceof ParamContext)) {
+        int stackPointerOffset = st.lookupAllI(ident);
+        if (st.lookupT(ident) == null)
+          stackPointerOffset = scopingOffset - stackPointerOffset;
+        if (context.parent.parent.parent.parent instanceof FuncContext) {
+          stackPointerOffset += 4;
+        }
+        Type type = Utils.getType(st.lookupAllT(ident));
+        load(type, stackPointerOffset, reg.toString(), "sp");
       }
-      Type type = Utils.getType(st.lookupAllT(ctx.getText()));
-      load(type, stackPointerOffset, reg.toString(), "sp");
-    } 
+    }
     return null;
   }
 
@@ -656,13 +664,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
         type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), st);
       }
 
-      if (Utils.isSameBaseType(type, BaseLiter.INT)
-          || type instanceof wacc.visitor.type.ArrayType) {
-        typeSize = 4;
-        instruction = Inst.STR;
-      } else { // is a bool or char
+      if (Utils.isSameBaseType(type, BaseLiter.CHAR)
+              || Utils.isSameBaseType(type, BaseLiter.BOOL)){ // is a bool or char
         typeSize = 1;
         instruction = Inst.STRB;
+      } else {
+        typeSize = 4;
+        instruction = Inst.STR;
       }
 
     } else { // is a bool or char
@@ -698,7 +706,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       previousReg = reg;
       reg = reg.next();
     }
-    int offset = st.lookupAllI(ctx.ident().getText()); 
+    int offset = st.lookupAllI(ctx.ident().getText());
     writer.addInst(Inst.ADD, previousReg + ", sp, #" + offset);
     Type type = Utils.getType(ctx.ident(), st);
     String typeString = type.toString();
