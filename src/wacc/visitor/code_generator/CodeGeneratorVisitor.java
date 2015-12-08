@@ -733,7 +733,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addInst(Inst.BL, writer.p_check_array_bounds());
     writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", #4");
 
-    if (type.endsWith("[]") || type.contains("INT")) {
+    if (type.endsWith("[]") || type.contains("INT") || type.contains("PAIR")) {
       writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg + ", LSL #2");
     } else { // reached a BOOL or CHAR type
       writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg);
