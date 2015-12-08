@@ -174,7 +174,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitReturnStat(ReturnStatContext ctx) {
     visit(ctx.expr());
     writer.addInst(Inst.MOV, "r0, r4");
-    addSP(sp);
+    addSP(-sp);
     writer.addInst(Inst.POP, "{pc}");
     return null;
   }
