@@ -1,9 +1,9 @@
 package wacc.visitor.syntactic_error;
 
 import antlr.*;
-import antlr.BasicParser.*;
+import antlr.WACCParser.*;
 
-public class SyntacticVisitor extends BasicParserBaseVisitor<Void> {
+public class SyntacticVisitor extends WACCParserBaseVisitor<Void> {
 
   @Override
   public Void visitFunc(FuncContext ctx) {

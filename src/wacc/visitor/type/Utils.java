@@ -1,6 +1,6 @@
 package wacc.visitor.type;
 
-import antlr.BasicParser.*;
+import antlr.WACCParser.*;
 import wacc.visitor.SymbolTable;
 import wacc.visitor.semantic_error.SemanticErrorException;
 

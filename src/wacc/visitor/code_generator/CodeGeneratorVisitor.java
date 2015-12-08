@@ -3,11 +3,11 @@ package wacc.visitor.code_generator;
 import java.util.List;
 
 import antlr.*;
-import antlr.BasicParser.*;
+import antlr.WACCParser.*;
 import wacc.visitor.SymbolTable;
 import wacc.visitor.type.*;
 
-public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
+public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
   private SymbolTable st;

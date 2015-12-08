@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.antlr.v4.runtime.misc.MultiMap;
 
-import antlr.BasicParser.FuncContext;
-import antlr.BasicParser.TypeContext;
+import antlr.WACCParser.FuncContext;
+import antlr.WACCParser.TypeContext;
 
 public class SymbolTable {
 

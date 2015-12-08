@@ -1,7 +1,7 @@
-parser grammar BasicParser;
+parser grammar WACCParser;
 
 options {
-  tokenVocab=BasicLexer;
+  tokenVocab=WACCLexer;
 }
 
 // EOF indicates that the program must consume to the end of the input.
@@ -42,8 +42,8 @@ assignRhs: expr                                                  # RhsExpr
 
 argList: expr (COMMA expr)* ;
 
-pairElem: FST expr                                               //# FstPairElem
-| SND expr                                                       //# SndPairElem
+pairElem: FST expr
+| SND expr
 ;
 
 type: baseType
@@ -57,9 +57,9 @@ arrayType: (baseType | pairType) (OPEN_SQUARE_BR CLOSE_SQUARE_BR)+ ;
 
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 
-pairElemType: baseType                                           //# PairElemBase
-| arrayType                                                      //# PairElemArray
-| PAIR                                                           //# PairElemPair
+pairElemType: baseType
+| arrayType
+| PAIR
 ;
 
 expr: intLiter                                                   # IntExpr

@@ -1,6 +1,6 @@
 package wacc.visitor.type;
 
-import antlr.BasicParser.*;
+import antlr.WACCParser.*;
 
 public class ArrayType extends Type {
 

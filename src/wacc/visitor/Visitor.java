@@ -20,13 +20,13 @@ public class Visitor {
     ANTLRInputStream input = new ANTLRInputStream(System.in);
 
     // create a lexer that feeds off of input CharStream
-    BasicLexer lexer = new BasicLexer(input);
+    WACCLexer lexer = new WACCLexer(input);
 
     // create a buffer of tokens pulled from the lexer
     CommonTokenStream tokens = new CommonTokenStream(lexer);
 
     // create a parser that feeds off the tokens buffer
-    BasicParser parser = new BasicParser(tokens);
+    WACCParser parser = new WACCParser(tokens);
 
     // add an error listener for custom syntactic error messages
     parser.removeErrorListeners();

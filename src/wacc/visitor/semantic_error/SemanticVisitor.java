@@ -3,11 +3,11 @@ package wacc.visitor.semantic_error;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import antlr.*;
-import antlr.BasicParser.*;
+import antlr.WACCParser.*;
 import wacc.visitor.SymbolTable;
 import wacc.visitor.type.*;
 
-public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
+public class SemanticVisitor extends WACCParserBaseVisitor<Void> {
 
   private SymbolTable st;
 
