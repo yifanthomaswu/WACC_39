@@ -134,7 +134,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     if (size > 0) {
       while (size > 1024) {
         writer.addInst(Inst.SUB, "sp, sp, #1024");
-        size %= 1024;
+        size -= 1024;
       }
       writer.addInst(Inst.SUB, "sp, sp, #" + size);
     }
@@ -144,7 +144,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     if (size > 0) {
       while (size > 1024) {
         writer.addInst(Inst.ADD, "sp, sp, #1024");
-        size %= 1024;
+        size -= 1024;
       }
       writer.addInst(Inst.ADD, "sp, sp, #" + size);
     }
