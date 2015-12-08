@@ -302,8 +302,6 @@ public class CodeWriter {
       return label;
     }
     StringBuilder sb = initP(label);
-    addInstToSB(Inst.MOV, "r0, #134", sb);
-    addInstToSB(Inst.BL, "exit", sb);
 
     addInstToSB(Inst.PUSH, "{lr}", sb);
     addInstToSB(Inst.CMP, "r0, #0", sb);
