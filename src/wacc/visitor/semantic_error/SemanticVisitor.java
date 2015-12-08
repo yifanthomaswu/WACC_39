@@ -53,6 +53,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
+    visit(ctx.assignRhs());
     String ident = ctx.ident().getText();
     if (st.lookupT(ident) != null) {
       String msg = "\"" + ident + "\" is already defined in this scope";
@@ -232,7 +233,7 @@ public class SemanticVisitor extends BasicParserBaseVisitor<Void> {
       Type exprType = Utils.getType(c, st);
       if (!Utils.isSameBaseType(exprType, BaseLiter.INT)) {
         String msg = "Incompatible type at \"" + c.getText()
-            + "\" (expected: INT, actual: " + exprType + ")";
+        + "\" (expected: INT, actual: " + exprType + ")";
         throw new SemanticErrorException(c.getStart(), msg);
       }
     }

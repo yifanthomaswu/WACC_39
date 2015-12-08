@@ -505,10 +505,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       String operator = ctx.unaryOper().UNARY_OPER().getText();
       if (operator.equals("len")) {
         // length of array stored as first elem in array, visiting expr will
-        // put start of array into r4
+        // put start of array into reg
         writer.addInst(Inst.LDR, reg + ", [" + reg + "]");
       } else if (operator.equals("!")) {
-        // negate r4, as this is value of evaluated bool expr
+        // negate reg, as this is value of evaluated bool expr
         writer.addInst(Inst.EOR, reg + ", " + reg + ", #1");
       } // do nothing if ord or chr, chars treated as nums in ass
     } else {
