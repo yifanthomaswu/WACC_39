@@ -598,6 +598,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
+  //
+
   private void load(Type type, int stackPointerOffset, String reg1, String reg2) {
     String msg = "[" + reg2 + "]";
     if (stackPointerOffset > 0) {
