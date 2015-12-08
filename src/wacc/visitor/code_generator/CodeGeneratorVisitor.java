@@ -36,7 +36,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     writer.addLabel("main");
     writer.addInst(Inst.PUSH, "{lr}");
     int size = stackSize(ctx.stat());
-    //scopingOffset += size;
     subSP(size);
     visit(ctx.stat());
     addSP(size);
@@ -80,10 +79,10 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 //    }
 //    return null;
 //  }
-  
+
   @Override
   public Void visitParamList(ParamListContext ctx) {
-	  int offset = sp + 4;	  
+    int offset = sp + 4;
     for (int i=0; i < ctx.param().size(); i++) {
       String ident = ctx.param(i).ident().getText();
       st.add(ident, offset);
@@ -102,7 +101,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     } else if (ctx instanceof CompStatContext) {
       int size = 0;
       for (int i = ((CompStatContext) ctx).stat().size() - 1; i >= 0; i--) {
-    	  size += stackSize(((CompStatContext) ctx).stat(i));        
+        size += stackSize(((CompStatContext) ctx).stat(i));
       }
       return size;
     } else {
@@ -116,7 +115,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     } else {
       int size = 0;
       for (int i = ctx.paramList().param().size() - 1; i >= 0; i--) {
-    	  size += getSize(Utils.getType(ctx.paramList().param(i).type()));      
+        size += getSize(Utils.getType(ctx.paramList().param(i).type()));
       }
       return size;
     }
@@ -124,7 +123,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   private static int getSize(Type type) {
     if (Utils.isSameBaseType(type, BaseLiter.BOOL)
-        || Utils.isSameBaseType(type, BaseLiter.CHAR)) {
+            || Utils.isSameBaseType(type, BaseLiter.CHAR)) {
       return 1;
     } else {
       return 4;
@@ -319,10 +318,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   public Void visitLhsIdent(LhsIdentContext ctx) {
     String ident = ctx.ident().getText();
     int offset =  st.lookupAllI(ident);
-    if (st.lookupT(ident) == null) {
-      //offset += scopingOffset;
-      offset = scopingOffset - offset;
-    }
+    if (st.lookupT(ident) == null)
+      offset += scopingOffset;
     if (ctx.getParent() instanceof AssignStatContext) {
       strWithOffset(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
     } else {
@@ -537,39 +534,6 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       writer.addInst(inst, rd + ", [" + rn + ", #" + offset + "]");
     }
   }
-/*
-  @Override
-  public Void visitIdent(IdentContext ctx) {
-    ParserRuleContext context = ctx.getParent();
-    if (context.parent instanceof LhsArrayElemContext) {
-        Type type = Utils.getType(ctx, st);
-        if (Utils.isSameBaseType(type, BaseLiter.BOOL)
-            || Utils.isSameBaseType(type, BaseLiter.CHAR)
-            || Utils.isStringType(type)) {
-          writer.addInst(Inst.STRB,"r4, [" + reg + "]");
-        } else {
-          writer.addInst(Inst.STR,"r4, [" + reg + "]");
-        }
-    } else if (context.parent instanceof ArrayElemExprContext) {
-      Type type = ((ArrayType)Utils.getType(ctx, st)).getBase();
-      load(type, 0, "r4", reg.toString());
-    } else {
-      String ident = ctx.getText();
-      if (context instanceof WhileStatContext) {
-          Type type = Utils.getType(st.lookupAllT(ident));
-          load(type, st.lookupAllI(ident), reg.toString(), "sp");
-      } else if (!(context instanceof FuncContext)
-          && !(context instanceof RhsCallContext)
-          && !(context instanceof ParamContext)) {
-        int stackPointerOffset = st.lookupAllI(ident);
-        //if (st.lookupT(ident) == null)
-         // stackPointerOffset = scopingOffset - stackPointerOffset;
-        Type type = Utils.getType(st.lookupAllT(ident));
-        load(type, stackPointerOffset, reg.toString(), "sp");
-      }
-    }
-    return null;
-  }*/
 
   @Override
   public Void visitIdent(IdentContext ctx) {
@@ -598,15 +562,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  //
-
   private void load(Type type, int stackPointerOffset, String reg1, String reg2) {
     String msg = "[" + reg2 + "]";
     if (stackPointerOffset > 0) {
       msg = "[" + reg2 + ", #" + stackPointerOffset + "]";
     }
     if (Utils.isSameBaseType(type, BaseLiter.CHAR)
-        || Utils.isSameBaseType(type, BaseLiter.BOOL)) {
+            || Utils.isSameBaseType(type, BaseLiter.BOOL)) {
       writer.addInst(Inst.LDRSB, reg1 + ", " + msg);
     } else {
       writer.addInst(Inst.LDR, reg1 + ", " + msg);
@@ -677,28 +639,19 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     Inst instruction;
 
     if (ctx.expr(0) instanceof IntExprContext
-        || ctx.expr(0) instanceof StringExprContext) {
+            || ctx.expr(0) instanceof StringExprContext) {
       typeSize = 4;
       instruction = Inst.STR;
     } else if (ctx.expr(0) instanceof ArrayElemExprContext
-        || ctx.expr(0) instanceof IdentExprContext) {
+            || ctx.expr(0) instanceof IdentExprContext) {
 
       Type type;
       if (ctx.expr(0) instanceof ArrayElemExprContext) {
         type = Utils.getType(((ArrayElemExprContext) ctx.expr(0)).arrayElem()
-            .ident(), st);
+                .ident(), st);
       } else {
         type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), st);
       }
-/*
-      if (Utils.isSameBaseType(type, BaseLiter.CHAR)
-              || Utils.isSameBaseType(type, BaseLiter.BOOL)){ // is a bool or char
-        typeSize = 1;
-        instruction = Inst.STRB;
-      } else {
-        typeSize = 4;
-        instruction = Inst.STR;
-      }*/
 
       if (Utils.isSameBaseType(type, BaseLiter.INT)
               || type instanceof wacc.visitor.type.ArrayType) {
@@ -724,7 +677,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     for (ExprContext expr : ctx.expr()) {
       visit(expr);
       writer.addInst(instruction, reg + ", [" + previousReg + ", #"
-          + offset + "]");
+              + offset + "]");
       offset += typeSize;
     }
 
