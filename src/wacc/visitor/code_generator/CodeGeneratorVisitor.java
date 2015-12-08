@@ -550,7 +550,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     } else if (context.parent instanceof ArrayElemExprContext) {
 //      writer.addInst(Inst.LDR, "r4, [" + reg + "]");
       Type type = ((ArrayType)Utils.getType(ctx, st)).getBase();
-      load(type, st.lookupAllI(ctx.getText()), reg.toString(), "sp");
+      load(type, 0, "r4", reg.toString());
     } else if (context instanceof WhileStatContext) {
       Type type = Utils.getType(st.lookupAllT(ctx.getText()));
       load(type, st.lookupAllI(ctx.getText()), reg.toString(), "sp");
