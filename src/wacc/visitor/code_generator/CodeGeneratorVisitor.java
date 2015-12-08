@@ -1,5 +1,7 @@
 package wacc.visitor.code_generator;
 
+import java.util.List;
+
 import antlr.*;
 import antlr.BasicParser.*;
 import wacc.visitor.SymbolTable;
@@ -11,13 +13,13 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private SymbolTable st;
   private int sp;
   private Reg reg;
-  private int numberOfPushes;
+  private int pushedReg;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
     this.sp = 0;
     this.reg = Reg.R4;
-    this.numberOfPushes = 0;
+    this.pushedReg = 0;
   }
 
   @Override
@@ -269,6 +271,73 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitArrayElem(ArrayElemContext ctx) {
+    boolean isRead = ctx.getParent() instanceof ArrayElemExprContext;
+    Reg previousReg = isRead ? reg : reg.next();
+    reg = isRead ? reg.next() : reg.next().next();
+
+    String ident = ctx.ident().getText();
+    int offset = st.lookupAllI(ident) - sp;
+    writer.addInst(Inst.ADD, previousReg + ", sp, #" + offset);
+
+    Type type = Utils.getType(ctx, st);
+    int level = ((ArrayType) Utils.getType(ctx.ident(), st)).getLevel();
+    for (int i = 0; i < ctx.expr().size(); i++) {
+      visit(ctx.expr(i));
+      writer.addInst(Inst.LDR, previousReg + ", [" + previousReg + "]");
+      writer.addInst(Inst.MOV, "r0, " + reg);
+      writer.addInst(Inst.MOV, "r1, " + previousReg);
+      writer.addInst(Inst.BL, writer.p_check_array_bounds());
+      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", #4");
+      if (i < level - 1 || getSize(type) == 4) {
+        writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg + ", LSL #2");
+      } else {
+        writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg);
+      }
+    }
+
+    reg = reg.previous();
+    if (isRead) {
+      load(type, 0, "r4", reg.toString());
+    } else {
+      store(type, 0, "r4", reg.toString());
+      reg = reg.previous();
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitArrayLiter(ArrayLiterContext ctx) {
+    Type type;
+    int size;
+    if (ctx.expr().size() != 0) {
+      type = Utils.getType(ctx.expr(0), st);
+      size = getSize(type);
+    } else {
+      type = null;
+      size = 0;
+    }
+    int offset = 4;
+
+    writer.addInst(Inst.LDR, "r0, =" + (ctx.expr().size() * size + offset));
+    writer.addInst(Inst.BL, "malloc");
+    writer.addInst(Inst.MOV, reg + ", r0");
+
+    Reg previousReg = reg;
+    reg = reg.next();
+    for (ExprContext c : ctx.expr()) {
+      visit(c);
+      store(type, offset, reg.toString(), previousReg.toString());
+      offset += size;
+    }
+
+    writer.addInst(Inst.LDR, reg + ", =" + ctx.expr().size());
+    writer.addInst(Inst.STR, reg + ", [" + previousReg + "]");
+    reg = reg.previous();
+    return null;
+  }
+
+  @Override
   public Void visitRhsNewPair(RhsNewPairContext ctx) {
     writer.addInst(Inst.LDR, "r0, =8");
     writer.addInst(Inst.BL, "malloc");
@@ -335,7 +404,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   @Override
   public Void visitPairElem(PairElemContext ctx) {
     boolean isRead = ctx.getParent() instanceof AssignRhsContext;
-    reg = isRead ? reg : reg.next();
+    if (!isRead) {
+      reg = reg.next();
+    }
     visit(ctx.expr()); // puts res of expr in reg
     writer.addInst(Inst.MOV, "r0, " + reg);
     writer.addInst(Inst.BL, writer.p_check_null_pointer());
@@ -351,8 +422,8 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       load(type, 0, "r4", reg.toString());
     } else {
       store(type, 0, "r4", reg.toString());
+      reg = reg.previous();
     }
-    reg = isRead ? reg : reg.previous();
     return null;
   }
 
@@ -427,31 +498,48 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  private Void visitBinOpExprChildren(ExprContext expr1, ExprContext expr2) {
-
-    visit(expr1);
-
-    if (reg == Reg.R10) {
-      writer.addInst(Inst.PUSH, "{r10}");
-      numberOfPushes++;
+  @Override
+  public Void visitUnOpExpr(UnOpExprContext ctx) {
+    visit(ctx.expr());
+    if (ctx.unaryOper().UNARY_OPER() != null) {
+      String operator = ctx.unaryOper().UNARY_OPER().getText();
+      if (operator.equals("len")) {
+        // length of array stored as first elem in array, visiting expr will
+        // put start of array into r4
+        writer.addInst(Inst.LDR, reg + ", [" + reg + "]");
+      } else if (operator.equals("!")) {
+        // negate r4, as this is value of evaluated bool expr
+        writer.addInst(Inst.EOR, reg + ", " + reg + ", #1");
+      } // do nothing if ord or chr, chars treated as nums in ass
     } else {
-      reg = reg.next();
-    }
-
-    visit(expr2);
-
-    if (reg == Reg.R10 && numberOfPushes > 0) {
-      writer.addInst(Inst.POP, "{r11}");
-      numberOfPushes--;
-    } else {
-      reg = reg.previous();
+      // only minus left
+      writer.addInst(Inst.RSBS, reg + ", " + reg + ", #0");
+      writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
     }
     return null;
   }
 
+  private void visitBinOpExprChildren(List<ExprContext> expr) {
+    visit(expr.get(0));
+    if (reg == Reg.R10) {
+      writer.addInst(Inst.PUSH, "{r10}");
+      pushedReg++;
+    } else {
+      reg = reg.next();
+    }
+
+    visit(expr.get(1));
+    if (pushedReg > 0) {
+      writer.addInst(Inst.POP, "{r11}");
+      pushedReg--;
+    } else {
+      reg = reg.previous();
+    }
+  }
+
   @Override
   public Void visitBinOpPrec1Expr(BinOpPrec1ExprContext ctx) {
-    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    visitBinOpExprChildren(ctx.expr());
     Reg nextReg = reg.next();
 
     if (ctx.MULT() != null) {
@@ -475,7 +563,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitBinOpPrec2Expr(BinOpPrec2ExprContext ctx) {
-    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    visitBinOpExprChildren(ctx.expr());
     Reg nextReg = reg.next();
 
     if (ctx.PLUS() != null) {
@@ -489,7 +577,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitBinOpPrec3Expr(BinOpPrec3ExprContext ctx) {
-    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    visitBinOpExprChildren(ctx.expr());
     Reg nextReg = reg.next();
 
     writer.addInst(Inst.CMP, reg + ", " + nextReg);
@@ -511,7 +599,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitBinOpPrec4Expr(BinOpPrec4ExprContext ctx) {
-    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    visitBinOpExprChildren(ctx.expr());
     Reg nextReg = reg.next();
 
     writer.addInst(Inst.CMP, reg + ", " + nextReg);
@@ -527,7 +615,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitBinOpPrec5Expr(BinOpPrec5ExprContext ctx) {
-    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    visitBinOpExprChildren(ctx.expr());
     Reg nextReg = reg.next();
     writer.addInst(Inst.AND, reg + ", " + reg + ", " + nextReg);
     return null;
@@ -535,99 +623,9 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitBinOpPrec6Expr(BinOpPrec6ExprContext ctx) {
-    visitBinOpExprChildren(ctx.expr(0), ctx.expr(1));
+    visitBinOpExprChildren(ctx.expr());
     Reg nextReg = reg.next();
     writer.addInst(Inst.ORR, reg + ", " + reg + ", " + nextReg);
-    return null;
-  }
-
-  @Override
-  public Void visitUnOpExpr(UnOpExprContext ctx) {
-    visit(ctx.expr());
-    if (ctx.unaryOper().UNARY_OPER() != null) {
-      String operator = ctx.unaryOper().UNARY_OPER().getText();
-      if (operator.equals("len")) {
-        // length of array stored as first elem in array, visiting expr will
-        // put start of array into r4
-        writer.addInst(Inst.LDR, "r4, [r4]");
-      } else if (operator.equals("!")) {
-        // negate r4, as this is value of evaluated bool expr
-        writer.addInst(Inst.EOR, "r4, r4, #1");
-      } else {
-        // do nothing, chars treated as nums in ass
-      }
-    } else {
-      // only minus left
-      writer.addInst(Inst.RSBS, "r4, r4, #0");
-      writer.addInst(Inst.BLVS, writer.p_throw_overflow_error());
-    }
-    return null;
-  }
-
-  @Override
-  public Void visitArrayLiter(ArrayLiterContext ctx) {
-    Type type;
-    int size;
-    if (ctx.expr().size() != 0) {
-      type = Utils.getType(ctx.expr(0), st);
-      size = getSize(type);
-    } else {
-      type = null;
-      size = 0;
-    }
-    int offset = 4;
-
-    writer.addInst(Inst.LDR, "r0, =" + (ctx.expr().size() * size + offset));
-    writer.addInst(Inst.BL, "malloc");
-    writer.addInst(Inst.MOV, reg + ", r0");
-
-    Reg previousReg = reg;
-    reg = reg.next();
-    for (ExprContext c : ctx.expr()) {
-      visit(c);
-      store(type, offset, reg.toString(), previousReg.toString());
-      offset += size;
-    }
-
-    writer.addInst(Inst.LDR, reg + ", =" + ctx.expr().size());
-    writer.addInst(Inst.STR, reg + ", [" + previousReg + "]");
-    reg = reg.previous();
-    return null;
-  }
-
-  @Override
-  public Void visitArrayElem(ArrayElemContext ctx) {
-    boolean isRead = ctx.getParent() instanceof ArrayElemExprContext;
-    Reg previousReg = isRead ? reg : reg.next();
-    reg = isRead ? reg.next() : reg.next().next();
-
-    String ident = ctx.ident().getText();
-    int offset = st.lookupAllI(ident) - sp;
-    writer.addInst(Inst.ADD, previousReg + ", sp, #" + offset);
-
-    Type type = Utils.getType(ctx, st);
-    int level = ((ArrayType) Utils.getType(ctx.ident(), st)).getLevel();
-    for (int i = 0; i < ctx.expr().size(); i++) {
-      visit(ctx.expr(i));
-      writer.addInst(Inst.LDR, previousReg + ", [" + previousReg + "]");
-      writer.addInst(Inst.MOV, "r0, " + reg);
-      writer.addInst(Inst.MOV, "r1, " + previousReg);
-      writer.addInst(Inst.BL, writer.p_check_array_bounds());
-      writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", #4");
-      if (i < level - 1 || getSize(type) == 4) {
-        writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg + ", LSL #2");
-      } else {
-        writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg);
-      }
-    }
-
-    reg = reg.previous();
-    if (isRead) {
-      load(type, 0, "r4", reg.toString());
-    } else {
-      store(type, 0, "r4", reg.toString());
-      reg = reg.previous();
-    }
     return null;
   }
 
