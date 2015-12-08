@@ -135,7 +135,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     visit(ctx.assignRhs());
     String ident = ctx.ident().getText();
     st.add(ident, ctx.type());
-    int offset = st.lookupI(ident);
+    int offset = st.lookupI(ident) - sp;
     store(Utils.getType(ctx.type()), offset, "r4", "sp");
     return null;
   }
@@ -656,7 +656,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       previousReg = reg;
       reg = reg.next();
     }
-    int offset = st.lookupAllI(ctx.ident().getText());
+    int offset = st.lookupAllI(ctx.ident().getText()) - sp;
     writer.addInst(Inst.ADD, previousReg + ", sp, #" + offset);
     Type type = Utils.getType(ctx.ident(), st);
     String typeString = type.toString();
@@ -720,7 +720,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   }
 
   @Override
-  public Void visitPairExpr(PairExprContext ctx) {
+  public Void visitPairLiter(PairLiterContext ctx) {
     writer.addInst(Inst.LDR, reg + ", =0");
     return null;
   }

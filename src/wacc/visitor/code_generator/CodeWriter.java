@@ -13,17 +13,15 @@ public class CodeWriter {
   private final StringBuilder text;
   private final List<StringBuilder> textP = new ArrayList<>();
   private final Set<String> definedP = new HashSet<>();
-  private static final String DATA_HEADER = "\t.data\n\n";
-  private static final String TEXT_HEADER = "\t.text\n\n\t.global main\n";
-  private int lCount;
   private int msgCount;
+  private int lCount;
 
   public CodeWriter(PrintWriter file) {
     this.file = file;
-    this.data = new StringBuilder(DATA_HEADER);
-    this.text = new StringBuilder(TEXT_HEADER);
-    this.lCount = -1;
+    this.data = new StringBuilder("\t.data\n\n");
+    this.text = new StringBuilder("\t.text\n\n\t.global main\n");
     this.msgCount = -1;
+    this.lCount = -1;
   }
 
   public String addMsg(String ascii) {
