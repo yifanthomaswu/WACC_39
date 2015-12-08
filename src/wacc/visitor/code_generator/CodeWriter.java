@@ -67,11 +67,11 @@ public class CodeWriter {
   }
 
   public String[] getLabelLPair() {
-    String[] pair = new String[2];
-    for (int i = 0; i < pair.length; i++) {
-      pair[i] = getLabelL();
+    String[] lpair = new String[2];
+    for (int i = 0; i < lpair.length; i++) {
+      lpair[i] = getLabelL();
     }
-    return pair;
+    return lpair;
   }
 
   private String getLabelL() {
