@@ -31,7 +31,15 @@ public class SymbolTable {
     }
     for (Object object : objects) {
       if (c.isInstance(object)) {
-        return object;
+        if (c.isAssignableFrom(Integer.class)) {
+          if (lookupT(name) != null) {
+            return object;
+          } else {
+            return null;
+          }
+        } else {
+          return object;
+        }
       }
     }
     return null;
@@ -54,7 +62,7 @@ public class SymbolTable {
     do {
       Object object = s.lookup(name, c);
       if (object != null) {
-          return object;
+        return object;
       }
       s = s.encSymTable;
     } while (s != null);
@@ -70,17 +78,7 @@ public class SymbolTable {
   }
 
   public Integer lookupAllI(String name) {
-    SymbolTable s = this;
-    do {
-      Object object = s.lookup(name, Integer.class);
-      if (object != null) {
-        Object objectT = s.lookup(name, TypeContext.class);
-        if (objectT != null)
-          return (Integer) object;
-      }
-      s = s.encSymTable;
-    } while (s != null);
-    return null;
+    return (Integer) lookupAll(name, Integer.class);
   }
 
 }

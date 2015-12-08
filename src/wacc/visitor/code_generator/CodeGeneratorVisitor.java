@@ -14,14 +14,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
   private int sp;
   private Reg reg;
   private int numberOfPushes;
-  private int scopingOffset;
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
     this.sp = 0;
     this.reg = Reg.R4;
     this.numberOfPushes = 0;
-    this.scopingOffset = 0;
   }
 
   @Override
@@ -134,11 +132,11 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
 
   @Override
   public Void visitVarDeclStat(VarDeclStatContext ctx) {
+    visit(ctx.assignRhs());
     String ident = ctx.ident().getText();
     st.add(ident, ctx.type());
-    visit(ctx.assignRhs());
     int offset = st.lookupI(ident);
-    strWithOffset(Utils.getType(ctx.type()), offset, "r4", "sp");
+    store(Utils.getType(ctx.type()), offset, "r4", "sp");
     return null;
   }
 
@@ -265,7 +263,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     String ident = ctx.ident().getText();
     int offset = st.lookupAllI(ident) - sp;
     if (ctx.getParent() instanceof AssignStatContext) {
-      strWithOffset(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
+      store(Utils.getType(st.lookupAllT(ident)), offset, "r4", "sp");
     } else {
       writer.addInst(Inst.ADD, "r4, sp, #" + offset);
     }
@@ -284,14 +282,14 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     Type type0 = Utils.getType(ctx.expr(0), st);
     writer.addInst(Inst.LDR, "r0, =" + getSize(type0));
     writer.addInst(Inst.BL, "malloc");
-    strWithOffset(type0, 0, "r5", "r0");
+    store(type0, 0, "r5", "r0");
     writer.addInst(Inst.STR, "r0, [r4]");
 
     visit(ctx.expr(1));
     Type type1 = Utils.getType(ctx.expr(1), st);
     writer.addInst(Inst.LDR, "r0, =" + getSize(type1));
     writer.addInst(Inst.BL, "malloc");
-    strWithOffset(type1, 0, "r5", "r0");
+    store(type1, 0, "r5", "r0");
     writer.addInst(Inst.STR, "r0, [r4, #4]");
 
     reg = reg.previous();
@@ -477,13 +475,27 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     return null;
   }
 
-  private void strWithOffset(Type type, int offset, String rd, String rn) {
+  private void store(Type type, int offset, String rd, String rn) {
     Inst inst;
     if (getSize(type) == 1) {
       inst = Inst.STRB;
     } else {
       inst = Inst.STR;
     }
+    storeAndLoadHelper(inst, offset, rd, rn);
+  }
+
+  private void load(Type type, int offset, String rd, String rn) {
+    Inst inst;
+    if (getSize(type) == 1) {
+      inst = Inst.LDRSB;
+    } else {
+      inst = Inst.LDR;
+    }
+    storeAndLoadHelper(inst, offset, rd, rn);
+  }
+
+  private void storeAndLoadHelper(Inst inst, int offset, String rd, String rn) {
     if (offset == 0) {
       writer.addInst(inst, rd + ", [" + rn + "]");
     } else {
@@ -507,33 +519,16 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       // writer.addInst(Inst.LDR, "r4, [" + reg + "]");
       Type type = ((ArrayType) Utils.getType(ctx, st)).getBase();
       load(type, 0, "r4", reg.toString());
-    } else if (context instanceof WhileStatContext) {
-      Type type = Utils.getType(st.lookupAllT(ctx.getText()));
-      load(type, st.lookupAllI(ctx.getText()), reg.toString(), "sp");
-    } else if (!(context instanceof FuncContext)
-        && !(context instanceof RhsCallContext)
-        && !(context instanceof ParamContext)) {
-      int stackPointerOffset = st.lookupAllI(ctx.getText());
-      if (st.lookupT(ctx.getText()) == null) {
-        stackPointerOffset += scopingOffset;
-      }
-      Type type = Utils.getType(st.lookupAllT(ctx.getText()));
-      load(type, stackPointerOffset, reg.toString(), "sp");
     }
     return null;
   }
 
-  private void load(Type type, int stackPointerOffset, String reg1, String reg2) {
-    String msg = "[" + reg2 + "]";
-    if (stackPointerOffset > 0) {
-      msg = "[" + reg2 + ", #" + stackPointerOffset + "]";
-    }
-    if (Utils.isSameBaseType(type, BaseLiter.CHAR)
-        || Utils.isSameBaseType(type, BaseLiter.BOOL)) {
-      writer.addInst(Inst.LDRSB, reg1 + ", " + msg);
-    } else {
-      writer.addInst(Inst.LDR, reg1 + ", " + msg);
-    }
+  @Override
+  public Void visitIdentExpr(IdentExprContext ctx) {
+    String ident = ctx.ident().getText();
+    int offset = st.lookupAllI(ident) - sp;
+    load(Utils.getType(st.lookupAllT(ident)), offset, reg.toString(), "sp");
+    return null;
   }
 
   @Override
@@ -717,7 +712,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
     if (right) {
       load(type, 0, "r4", "r4");
     } else {
-      strWithOffset(type, 0, "r4", reg.toString());
+      store(type, 0, "r4", reg.toString());
     }
 
     reg = right ? Reg.R4 : reg.previous();
