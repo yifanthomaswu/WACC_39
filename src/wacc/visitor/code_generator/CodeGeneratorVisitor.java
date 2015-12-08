@@ -621,11 +621,12 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       }
     }
 
-    reg = isRead ? reg.previous() : reg.previous().previous();
+    reg = reg.previous();
     if (isRead) {
       load(type, 0, "r4", reg.toString());
     } else {
       store(type, 0, "r4", reg.toString());
+      reg = reg.previous();
     }
     return null;
   }
