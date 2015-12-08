@@ -654,7 +654,7 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       } else {
         type = Utils.getType(((IdentExprContext) ctx.expr(0)).ident(), st);
       }
-
+/*
       if (Utils.isSameBaseType(type, BaseLiter.INT)
               || type instanceof wacc.visitor.type.ArrayType) {
         typeSize = 4;
@@ -662,6 +662,15 @@ public class CodeGeneratorVisitor extends BasicParserBaseVisitor<Void> {
       } else { // is a bool or char
         typeSize = 1;
         instruction = Inst.STRB;
+      }*/
+
+      if (Utils.isSameBaseType(type, BaseLiter.CHAR)
+              || Utils.isSameBaseType(type, BaseLiter.BOOL)){ // is a bool or char
+        typeSize = 1;
+        instruction = Inst.STRB;
+      } else {
+        typeSize = 4;
+        instruction = Inst.STR;
       }
 
     } else { // is a bool or char
