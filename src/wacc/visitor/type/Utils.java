@@ -33,7 +33,7 @@ public class Utils {
     }
   }
 
-  private static Type getType(ArrayElemContext ctx, SymbolTable st) {
+  public static Type getType(ArrayElemContext ctx, SymbolTable st) {
     Type identType = getType(ctx.ident(), st);
     if (!(identType instanceof ArrayType)
         || ((ArrayType) identType).getLevel() < ctx.expr().size()) {
@@ -65,7 +65,7 @@ public class Utils {
     }
   }
 
-  private static Type getType(PairElemContext ctx, SymbolTable st) {
+  public static Type getType(PairElemContext ctx, SymbolTable st) {
     PairType pair = (PairType) getType(ctx.expr(), st);
     if (ctx.FST() != null) {
       return pair.getElem(0);
