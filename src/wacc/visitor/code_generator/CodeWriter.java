@@ -311,9 +311,9 @@ public class CodeWriter {
     addInstToSB(Inst.PUSH, "{r0}", sb);
     addInstToSB(Inst.LDR, "r0, [r0]", sb);
     addInstToSB(Inst.BL, "free", sb);
-    addInstToSB(Inst.CMP, "r0, #66", sb);
-    addInstToSB(Inst.MOVEQ, "r0, #134", sb);
-    addInstToSB(Inst.BLEQ, "exit", sb);
+    addInstToSB(Inst.CMP, "r0, #0", sb);
+    addInstToSB(Inst.MOVNE, "r0, #134", sb);
+    addInstToSB(Inst.BLNE, "exit", sb);
     addInstToSB(Inst.LDR, "r0, [sp]", sb);
     addInstToSB(Inst.LDR, "r0, [r0, #4]", sb);
     addInstToSB(Inst.BL, "free", sb);
@@ -336,9 +336,9 @@ public class CodeWriter {
     addInstToSB(Inst.LDREQ, "r0, =" + msg, sb);
     addInstToSB(Inst.BEQ, p_throw_runtime_error(), sb);
     addInstToSB(Inst.BL, "free", sb);
-    addInstToSB(Inst.CMP, "r0, #78", sb);
-    addInstToSB(Inst.MOVEQ, "r0, #134", sb);
-    addInstToSB(Inst.BLEQ, "exit", sb);
+    addInstToSB(Inst.CMP, "r0, #0", sb);
+    addInstToSB(Inst.MOVNE, "r0, #134", sb);
+    addInstToSB(Inst.BLNE, "exit", sb);
     addInstToSB(Inst.POP, "{pc}", sb);
     return label;
   }
