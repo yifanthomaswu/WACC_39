@@ -1,6 +1,8 @@
 package wacc.visitor.code_generator;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import antlr.*;
 import antlr.WACCParser.*;
@@ -11,6 +13,7 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
   private SymbolTable st;
+  private Map<FuncContext, String> fl = new HashMap<>();
   private int sp;
   private Reg reg;
   private int pushedReg;
@@ -108,7 +111,9 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
       visit(ctx.paramList());
     }
 
-    writer.addLabel("f_" + ctx.ident().getText());
+    String label = "f" + fl.size() + "_" + ctx.ident().getText();
+    fl.put(ctx, label);
+    writer.addLabel(label);
     writer.addInst(Inst.PUSH, "{lr}");
     buildStat(ctx.stat());
     writer.addInst(Inst.POP, "{pc}");
@@ -290,7 +295,8 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
       writer.addInst(Inst.BL, writer.p_check_array_bounds());
       writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", #4");
       if (i < level - 1 || getSize(type) == 4) {
-        writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg + ", LSL #2");
+        writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg
+            + ", LSL #2");
       } else {
         writer.addInst(Inst.ADD, previousReg + ", " + previousReg + ", " + reg);
       }
@@ -365,11 +371,13 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
     if (ctx.argList() != null) {
       visit(ctx.argList());
     }
-    String ident = ctx.ident().getText();
-    writer.addInst(Inst.BL, "f_" + ident);
-//    int size = paramSize(st.lookupAllF(ident));
-//    addSP(size);
-//    sp += size;
+
+    FuncContext func = Utils.getFuncWithSameSignature(ctx, st);
+    String label = fl.get(func);
+    writer.addInst(Inst.BL, label);
+    int size = paramSize(func);
+    addSP(size);
+    sp += size;
     writer.addInst(Inst.MOV, "r4, r0");
     return null;
   }
@@ -543,7 +551,8 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
     Reg nextReg = reg.next();
 
     if (ctx.MULT() != null) {
-      writer.addInst(Inst.SMULL, reg + ", " + nextReg + ", " + reg + ", " + nextReg);
+      writer.addInst(Inst.SMULL, reg + ", " + nextReg + ", " + reg + ", "
+          + nextReg);
       writer.addInst(Inst.CMP, nextReg + ", " + reg + ", ASR #31");
       writer.addInst(Inst.BLNE, writer.p_throw_overflow_error());
     } else {
