@@ -29,7 +29,9 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
   public Void visitProgram(ProgramContext ctx) {
     st = new SymbolTable(null);
     for (FuncContext c : ctx.func()) {
-      st.add(c.ident().getText(), c);
+      String ident = c.ident().getText();
+      st.add(ident, c);
+      fl.put(c, "f" + fl.size() + "_" + ident);
     }
     for (FuncContext c : ctx.func()) {
       visit(c);
@@ -111,9 +113,7 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
       visit(ctx.paramList());
     }
 
-    String label = "f" + fl.size() + "_" + ctx.ident().getText();
-    fl.put(ctx, label);
-    writer.addLabel(label);
+    writer.addLabel(fl.get(ctx));
     writer.addInst(Inst.PUSH, "{lr}");
     buildStat(ctx.stat());
     writer.addInst(Inst.POP, "{pc}");
@@ -373,8 +373,7 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
     }
 
     FuncContext func = Utils.getFuncWithSameSignature(ctx, st);
-    String label = fl.get(func);
-    writer.addInst(Inst.BL, label);
+    writer.addInst(Inst.BL, fl.get(func));
     int size = paramSize(func);
     addSP(size);
     sp += size;
