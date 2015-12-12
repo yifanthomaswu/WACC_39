@@ -16,8 +16,16 @@ public class SemanticVisitor extends WACCParserBaseVisitor<Void> {
     st = new SymbolTable(null);
     for (FuncContext func : ctx.func()) {
       String ident = func.ident().getText();
-      if (st.lookupF(ident) != null) {
-        String msg = "\"" + ident + "\" is already defined in this scope";
+      if (!Utils.isDefinable(func, st)) {
+        String signature = ident + "(";
+        if (Utils.getParamSize(func) != 0) {
+          for (ParamContext c : func.paramList().param()) {
+            signature += Utils.getType(c.type()).toString() + ",";
+          }
+          signature = signature.substring(0, signature.length() - 1);
+        }
+        signature += ")";
+        String msg = "\"" + signature + "\" is already defined in this scope";
         throw new SemanticErrorException(ctx.getStart(), msg);
       } else {
         st.add(ident, func);
@@ -190,7 +198,7 @@ public class SemanticVisitor extends WACCParserBaseVisitor<Void> {
   @Override
   public Void visitIdent(IdentContext ctx) {
     String ident = ctx.getText();
-    if (st.lookupAllT(ident) == null && st.lookupAllF(ident) == null) {
+    if (st.lookupAllT(ident) == null && st.lookupAllF(ident).size() == 0) {
       String msg = "\"" + ident + "\" is not defined in this scope";
       throw new SemanticErrorException(ctx.getParent().getStart(), msg);
     }
@@ -199,30 +207,17 @@ public class SemanticVisitor extends WACCParserBaseVisitor<Void> {
 
   @Override
   public Void visitRhsCall(RhsCallContext ctx) {
-    String ident = ctx.ident().getText();
-    FuncContext func = st.lookupAllF(ident);
-    int paramSize = 0;
-    if (func.paramList() != null) {
-      paramSize = func.paramList().param().size();
-    }
-    int argSize = 0;
-    if (ctx.argList() != null) {
-      argSize = ctx.argList().expr().size();
-    }
-    if (paramSize != argSize) {
-      String msg = "Incorrect number of parameters for \"" + ident
-          + "\" (expected: " + paramSize + ", actual: " + argSize + ")";
-      throw new SemanticErrorException(ctx.getStart(), msg);
-    }
-
-    for (int i = 0; i < paramSize; i++) {
-      Type paramType = Utils.getType(func.paramList().param(i).type());
-      Type argType = Utils.getType(ctx.argList().expr(i), st);
-      if (!paramType.equals(argType)) {
-        String msg = "Incompatible type at " + ctx.argList().expr(i).getText()
-            + " (expected: " + paramType + ", actual: " + argType + ")";
-        throw new SemanticErrorException(ctx.getStart(), msg);
+    if (!Utils.isCallable(ctx, st)) {
+      String signature = ctx.ident().getText() + "(";
+      if (Utils.getArgSize(ctx) != 0) {
+        for (ExprContext c : ctx.argList().expr()) {
+          signature += Utils.getType(c, st).toString() + ",";
+        }
+        signature = signature.substring(0, signature.length() - 1);
       }
+      signature += ")";
+      String msg = "\"" + signature + "\" is not defined in this scope";
+      throw new SemanticErrorException(ctx.getStart(), msg);
     }
     return visitChildren(ctx);
   }
@@ -233,7 +228,7 @@ public class SemanticVisitor extends WACCParserBaseVisitor<Void> {
       Type exprType = Utils.getType(c, st);
       if (!Utils.isSameBaseType(exprType, BaseLiter.INT)) {
         String msg = "Incompatible type at \"" + c.getText()
-        + "\" (expected: INT, actual: " + exprType + ")";
+            + "\" (expected: INT, actual: " + exprType + ")";
         throw new SemanticErrorException(c.getStart(), msg);
       }
     }

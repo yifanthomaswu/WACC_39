@@ -1,5 +1,7 @@
 package wacc.visitor.type;
 
+import java.util.List;
+
 import antlr.WACCParser.*;
 import wacc.visitor.SymbolTable;
 import wacc.visitor.semantic_error.SemanticErrorException;
@@ -99,8 +101,8 @@ public class Utils {
       for (ExprContext c : context.expr()) {
         Type cType = getType(c, st);
         if (!exprType.equals(cType)) {
-          String msg = "Incompatible type at \"" + c.getText() + "\" (expected: "
-              + exprType + ", actual: " + cType + ")";
+          String msg = "Incompatible type at \"" + c.getText()
+              + "\" (expected: " + exprType + ", actual: " + cType + ")";
           throw new SemanticErrorException(c.getStart(), msg);
         }
       }
@@ -114,13 +116,20 @@ public class Utils {
     } else if (ctx instanceof RhsPairElemContext) {
       return getType(((RhsPairElemContext) ctx).pairElem(), st);
     } else {
-      String ident = ((RhsCallContext) ctx).ident().getText();
-      FuncContext context = st.lookupAllF(ident);
-      if (context == null) {
-        String msg = "Function \"" + ident + "\" is not defined in this scope";
-        throw new SemanticErrorException(ctx.getParent().getStart(), msg);
+      RhsCallContext context = (RhsCallContext) ctx;
+      if (!Utils.isCallable(context, st)) {
+        String signature = context.ident().getText() + "(";
+        if (Utils.getArgSize(context) != 0) {
+          for (ExprContext c : context.argList().expr()) {
+            signature += Utils.getType(c, st).toString() + ",";
+          }
+          signature = signature.substring(0, signature.length() - 1);
+        }
+        signature += ")";
+        String msg = "\"" + signature + "\" is not defined in this scope";
+        throw new SemanticErrorException(context.getStart(), msg);
       }
-      return getType(context.type());
+      return getType(getFuncWithSameSignature(context, st).type());
     }
   }
 
@@ -134,6 +143,97 @@ public class Utils {
 
   public static boolean isStringType(Type type) {
     return type.toString().equals("CHAR[]");
+  }
+
+  public static boolean isDefinable(FuncContext ctx, SymbolTable st) {
+    List<FuncContext> funcs = st.lookupAllF(ctx.ident().getText());
+    if (funcs.size() == 0) {
+      return true;
+    }
+    for (FuncContext func : funcs) {
+      if (isSameSignature(ctx, func)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean isCallable(RhsCallContext ctx, SymbolTable st) {
+    List<FuncContext> funcs = st.lookupAllF(ctx.ident().getText());
+    if (funcs.size() == 0) {
+      return false;
+    }
+    for (FuncContext func : funcs) {
+      if (isSameSignature(ctx, func, st)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isSameSignature(FuncContext ctx, FuncContext func) {
+    boolean isSame = true;
+    int paramSize = getParamSize(ctx);
+    if (paramSize == getParamSize(func)) {
+      for (int i = 0; i < paramSize; i++) {
+        Type paramType = getType(ctx.paramList().param(i).type());
+        if (!paramType.equals(getType(func.paramList().param(i).type()))) {
+          isSame = false;
+          break;
+        }
+      }
+    } else {
+      isSame = false;
+    }
+    return isSame;
+  }
+
+  public static boolean isSameSignature(RhsCallContext ctx, FuncContext func,
+      SymbolTable st) {
+    boolean isSame = true;
+    int argSize = getArgSize(ctx);
+    if (argSize == getParamSize(func)) {
+      for (int i = 0; i < argSize; i++) {
+        Type argType = getType(ctx.argList().expr(i), st);
+        if (!argType.equals(getType(func.paramList().param(i).type()))) {
+          isSame = false;
+          break;
+        }
+      }
+    } else {
+      isSame = false;
+    }
+    return isSame;
+  }
+
+  public static FuncContext getFuncWithSameSignature(RhsCallContext ctx,
+      SymbolTable st) {
+    List<FuncContext> funcs = st.lookupAllF(ctx.ident().getText());
+    if (funcs.size() == 0) {
+      return null;
+    }
+    for (FuncContext func : funcs) {
+      if (isSameSignature(ctx, func, st)) {
+        return func;
+      }
+    }
+    return null;
+  }
+
+  public static int getParamSize(FuncContext ctx) {
+    int paramSize = 0;
+    if (ctx.paramList() != null) {
+      paramSize = ctx.paramList().param().size();
+    }
+    return paramSize;
+  }
+
+  public static int getArgSize(RhsCallContext ctx) {
+    int argSize = 0;
+    if (ctx.argList() != null) {
+      argSize = ctx.argList().expr().size();
+    }
+    return argSize;
   }
 
 }

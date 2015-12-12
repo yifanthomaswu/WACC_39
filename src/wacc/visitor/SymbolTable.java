@@ -1,5 +1,6 @@
 package wacc.visitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.misc.MultiMap;
@@ -49,15 +50,11 @@ public class SymbolTable {
     return (TypeContext) lookup(name, TypeContext.class);
   }
 
-  public FuncContext lookupF(String name) {
-    return (FuncContext) lookup(name, FuncContext.class);
-  }
-
   public Integer lookupI(String name) {
     return (Integer) lookup(name, Integer.class);
   }
 
-  public Object lookupAll(String name, Class<?> c) {
+  private Object lookupAll(String name, Class<?> c) {
     SymbolTable s = this;
     do {
       Object object = s.lookup(name, c);
@@ -73,8 +70,17 @@ public class SymbolTable {
     return (TypeContext) lookupAll(name, TypeContext.class);
   }
 
-  public FuncContext lookupAllF(String name) {
-    return (FuncContext) lookupAll(name, FuncContext.class);
+  public List<FuncContext> lookupAllF(String name) {
+    List<FuncContext> funcs = new ArrayList<>();
+    List<Object> objects = dict.get(name);
+    if (objects != null) {
+      for (Object object : objects) {
+        if (object instanceof FuncContext) {
+          funcs.add((FuncContext) object);
+        }
+      }
+    }
+    return funcs;
   }
 
   public Integer lookupAllI(String name) {

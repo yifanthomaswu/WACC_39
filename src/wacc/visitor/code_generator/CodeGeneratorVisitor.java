@@ -367,9 +367,9 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
     }
     String ident = ctx.ident().getText();
     writer.addInst(Inst.BL, "f_" + ident);
-    int size = paramSize(st.lookupAllF(ident));
-    addSP(size);
-    sp += size;
+//    int size = paramSize(st.lookupAllF(ident));
+//    addSP(size);
+//    sp += size;
     writer.addInst(Inst.MOV, "r4, r0");
     return null;
   }
