@@ -72,14 +72,18 @@ public class SymbolTable {
 
   public List<FuncContext> lookupAllF(String name) {
     List<FuncContext> funcs = new ArrayList<>();
-    List<Object> objects = dict.get(name);
-    if (objects != null) {
-      for (Object object : objects) {
-        if (object instanceof FuncContext) {
-          funcs.add((FuncContext) object);
+    SymbolTable s = this;
+    do {
+      List<Object> objects = s.dict.get(name);
+      if (objects != null) {
+        for (Object object : objects) {
+          if (object instanceof FuncContext) {
+            funcs.add((FuncContext) object);
+          }
         }
       }
-    }
+      s = s.encSymTable;
+    } while (s != null);
     return funcs;
   }
 
