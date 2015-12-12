@@ -12,8 +12,8 @@ import wacc.visitor.type.*;
 public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
 
   private final CodeWriter writer;
+  private final Map<FuncContext, String> fl = new HashMap<>();
   private SymbolTable st;
-  private Map<FuncContext, String> fl = new HashMap<>();
   private int sp;
   private Reg reg;
   private int pushedReg;
@@ -30,8 +30,8 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
     st = new SymbolTable(null);
     for (FuncContext c : ctx.func()) {
       String ident = c.ident().getText();
-      st.add(ident, c);
       fl.put(c, "f" + fl.size() + "_" + ident);
+      st.add(ident, c);
     }
     for (FuncContext c : ctx.func()) {
       visit(c);
