@@ -20,6 +20,7 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
 
   public CodeGeneratorVisitor(CodeWriter writer) {
     this.writer = writer;
+    this.st = null;
     this.sp = 0;
     this.reg = Reg.R4;
     this.pushedReg = 0;
@@ -147,6 +148,18 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
 
   @Override
   public Void visitAssignStat(AssignStatContext ctx) {
+    if (ctx.assignLhs() instanceof LhsIdentContext
+        && ctx.assignRhs() instanceof RhsExprContext
+        && ((RhsExprContext) ctx.assignRhs()).expr() instanceof IdentExprContext
+        && ((LhsIdentContext) ctx.assignLhs())
+            .ident()
+            .getText()
+            .equals(
+                ((IdentExprContext) ((RhsExprContext) ctx.assignRhs()).expr())
+                    .ident().getText())) {
+      return null;
+    }
+
     visit(ctx.assignRhs());
     visit(ctx.assignLhs());
     return null;
@@ -226,6 +239,15 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
 
   @Override
   public Void visitIfStat(IfStatContext ctx) {
+    if (ctx.expr() instanceof BoolExprContext) {
+      if (ctx.expr().getText().equals("true")) {
+        buildStatInNewScope(ctx.stat(0));
+      } else {
+        buildStatInNewScope(ctx.stat(1));
+      }
+      return null;
+    }
+
     visit(ctx.expr());
     writer.addInst(Inst.CMP, "r4, #0");
     String[] lpair = writer.getLabelLPair();
@@ -244,6 +266,16 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
 
   @Override
   public Void visitWhileStat(WhileStatContext ctx) {
+    if (ctx.expr() instanceof BoolExprContext) {
+      if (ctx.expr().getText().equals("true")) {
+        String[] lpair = writer.getLabelLPair();
+        writer.addLabel(lpair[1]);
+        buildStatInNewScope(ctx.stat());
+        writer.addInst(Inst.B, lpair[1]);
+      }
+      return null;
+    }
+
     String[] lpair = writer.getLabelLPair();
     writer.addInst(Inst.B, lpair[0]);
     writer.addLabel(lpair[1]);
@@ -261,6 +293,16 @@ public class CodeGeneratorVisitor extends WACCParserBaseVisitor<Void> {
   public Void visitScopingStat(ScopingStatContext ctx) {
     buildStatInNewScope(ctx.stat());
     return null;
+  }
+
+  @Override
+  public Void visitCompStat(CompStatContext ctx) {
+    if (ctx.stat(0) instanceof ReturnStatContext
+        || ctx.stat(0) instanceof ExitStatContext) {
+      visit(ctx.stat(0));
+      return null;
+    }
+    return visitChildren(ctx);
   }
 
   @Override
